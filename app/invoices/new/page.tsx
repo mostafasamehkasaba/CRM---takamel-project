@@ -1,10 +1,10 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import DashboardShell from "../../components/DashboardShell";
 
-const page = () => {
+const InvoiceNewPageContent = () => {
   const searchParams = useSearchParams();
   const normalizeInvoiceType = (value: string | null) => {
     if (value === "sales" || value === "tax" || value === "simple") {
@@ -667,5 +667,13 @@ const page = () => {
     </DashboardShell>
   );
 };
+
+const page = () => (
+  <Suspense
+    fallback={<div className="rounded-3xl border border-(--dash-border) bg-(--dash-panel) p-6 text-sm text-(--dash-muted)">جارٍ التحميل...</div>}
+  >
+    <InvoiceNewPageContent />
+  </Suspense>
+);
 
 export default page;

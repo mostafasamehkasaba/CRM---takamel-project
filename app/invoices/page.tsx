@@ -164,6 +164,7 @@ const page = () => {
   const isSimple = invoiceType === "simple";
   const isSales = invoiceType === "sales";
   const isTax = invoiceType === "tax";
+  const invoiceTypeLabel = isSimple ? "فاتورة بسيطة" : isSales ? "فاتورة مبيعات" : "فاتورة ضريبية";
 
   const handleSelectInvoiceType = (type: "simple" | "sales" | "tax") => {
     setInvoiceType(type);
