@@ -28,6 +28,15 @@ const sidebarItems = [
 type SidebarLink = { label: string; href: string; badge?: string };
 type SidebarGroup = { label: string; children: SidebarLink[]; iconKey?: string };
 
+const iconPlus = (
+  <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+    <path
+      fill="currentColor"
+      d="M12 5a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6a1 1 0 0 1 1-1Z"
+    />
+  </svg>
+);
+
 const sidebarIconMap: Record<string, ReactNode> = {
   "/dashboard": (
     <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
@@ -53,6 +62,31 @@ const sidebarIconMap: Record<string, ReactNode> = {
       />
     </svg>
   ),
+  "/payments/new": iconPlus,
+  "/payments/expense": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 3a1 1 0 0 1 1 1v1h2a1 1 0 1 1 0 2h-2v2h2a1 1 0 1 1 0 2h-2v2h2a1 1 0 1 1 0 2h-2v1a1 1 0 1 1-2 0v-1H9a1 1 0 1 1 0-2h2v-2H9a1 1 0 1 1 0-2h2V9H9a1 1 0 1 1 0-2h2V4a1 1 0 0 1 1-1Z"
+      />
+    </svg>
+  ),
+  "/payments/expense/new": iconPlus,
+  "/payments/deposit": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path fill="currentColor" d="M12 3 2 8v2h20V8l-10-5Zm-8 9h2v7H4v-7Zm5 0h2v7H9v-7Zm5 0h2v7h-2v-7Zm5 0h2v7h-2v-7Z" />
+    </svg>
+  ),
+  "/payments/deposit/new": iconPlus,
+  "/payments/withdraw": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M7 7h9l-1.5-1.5a1 1 0 1 1 1.4-1.4l3.2 3.2a1 1 0 0 1 0 1.4l-3.2 3.2a1 1 0 0 1-1.4-1.4L16 9H7a1 1 0 1 1 0-2Zm10 10H8l1.5 1.5a1 1 0 1 1-1.4 1.4l-3.2-3.2a1 1 0 0 1 0-1.4l3.2-3.2a1 1 0 0 1 1.4 1.4L8 15h9a1 1 0 1 1 0 2Z"
+      />
+    </svg>
+  ),
+  "/payments/withdraw/new": iconPlus,
   "/customers": (
     <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
       <path
@@ -257,19 +291,39 @@ const sidebarNavigation: Array<SidebarLink | SidebarGroup> = [
       { label: "وحدة الصنف", href: "/item-units" },
     ],
   },
+  { label: "الفواتير", href: "/invoices", badge: "5" },
   { label: "العملاء", href: "/customers" },
+  { label: "المنتجات", href: "/products" },
   { label: "المشتريات", href: "/purchases" },
   { label: "الموردين", href: "/suppliers" },
-  { label: "البنوك", href: "/banks" },
-  { label: "الحسابات", href: "/wallets" },
+  {
+    label: "الحسابات",
+    iconKey: "/wallets",
+    children: [
+      { label: "إدارة الورديات", href: "/shifts" },
+      { label: "المحافظ المالية", href: "/wallets" },
+    ],
+  },
   { label: "التقرير", href: "/reports" },
-  { label: "السندات", href: "/payments" },
+  {
+    label: "السندات",
+    iconKey: "/payments",
+    children: [
+      { label: "سندات قبض نقدية", href: "/payments" },
+      { label: "إضافة سند قبض نقدية", href: "/payments/new" },
+      { label: "سندات صرف نقدية", href: "/payments/expense" },
+      { label: "إضافة سند صرف نقدية", href: "/payments/expense/new" },
+      { label: "سندات إيداع نقدية في البنك", href: "/payments/deposit" },
+      { label: "إضافة سند إيداع نقدية في البنك", href: "/payments/deposit/new" },
+      { label: "سحوبات نقدية من البنك", href: "/payments/withdraw" },
+      { label: "إضافة سند سحب نقدية من البنك", href: "/payments/withdraw/new" },
+    ],
+  },
   { label: "الاعدادات", href: "/settings" },
   {
     label: "المزيد",
     iconKey: "/reports",
     children: [
-      { label: "الفواتير", href: "/invoices", badge: "5" },
       { label: "المخزون", href: "/inventory", badge: "3" },
       { label: "المصروفات", href: "/expenses" },
       { label: "الخزينة", href: "/cash" },
@@ -339,6 +393,8 @@ const DashboardShell = ({
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState(false);
   const [toast, setToast] = useState<{ message: string; tone: "success" | "info" | "warning" } | null>(null);
   const filterRef = useRef<HTMLDetailsElement | null>(null);
   const exportRef = useRef<HTMLDetailsElement | null>(null);
@@ -411,6 +467,161 @@ const DashboardShell = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showProfileMenu]);
 
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [pathname]);
+
+  const sidebarContent = (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) p-4">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--dash-panel-glass) text-(--dash-primary)">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z"
+              />
+            </svg>
+          </span>
+          <div className="text-sm">
+            <p className="font-semibold">تكامل البيانات</p>
+            <p className="text-xs text-(--dash-muted)">نظام إدارة الأعمال</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsSidebarOpen(false)}
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-(--dash-border) bg-(--dash-panel-glass) text-(--dash-muted) lg:hidden"
+          aria-label="إغلاق الشريط الجانبي"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+            <path fill="currentColor" d="M6 6l12 12M18 6l-12 12" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={() => setIsDesktopSidebarCollapsed(true)}
+          className="hidden h-9 w-9 items-center justify-center rounded-xl border border-(--dash-border) bg-(--dash-panel-glass) text-(--dash-muted) lg:flex"
+          aria-label="إخفاء الشريط الجانبي"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+            <path fill="currentColor" d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
+      </div>
+
+      <nav className="dash-scroll mt-8 flex-1 space-y-3 overflow-y-auto pr-1 text-sm">
+        {sidebarNavigation.map((item) => {
+          const isGroup = "children" in item;
+          const isActive = isGroup ? item.children.some((child) => child.href === pathname) : pathname === item.href;
+
+          if (isGroup) {
+            return (
+              <details
+                key={item.label}
+                open={isActive}
+                className="group rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+              >
+                <summary
+                  className={`flex cursor-pointer list-none items-center justify-between rounded-lg px-2 py-2 transition ${
+                    isActive ? "text-(--dash-text)" : "text-(--dash-muted)"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <span
+                      className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                        isActive
+                          ? "bg-(--dash-primary) text-white"
+                          : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
+                      }`}
+                    >
+                      {getSidebarIcon(item.iconKey ?? "wallets-group")}
+                    </span>
+                    <span className="font-medium">{item.label}</span>
+                  </span>
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4 text-(--dash-muted-2) transition group-open:rotate-180"
+                    aria-hidden="true"
+                  >
+                    <path fill="currentColor" d="M7 10l5 5 5-5H7Z" />
+                  </svg>
+                </summary>
+                <div className="mt-2 space-y-2 pb-2">
+                  {item.children.map((child) => {
+                    const isChildActive = pathname === child.href;
+                    return (
+                      <Link
+                        key={child.label}
+                        href={child.href}
+                        className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs transition ${
+                          isChildActive
+                            ? "bg-(--dash-primary) text-white shadow-(--dash-primary-soft)"
+                            : "text-(--dash-muted) hover:bg-(--dash-panel-glass)"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span
+                            className={`flex h-7 w-7 items-center justify-center rounded-lg ${
+                              isChildActive
+                                ? "bg-white/15 text-white"
+                                : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
+                            }`}
+                          >
+                            {getSidebarIcon(child.href)}
+                          </span>
+                          <span>{child.label}</span>
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </details>
+            );
+          }
+
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`flex w-full items-center justify-between rounded-xl px-4 py-3 transition ${
+                isActive
+                  ? "bg-(--dash-primary) text-white shadow-(--dash-primary-soft)"
+                  : "text-(--dash-muted) hover:bg-(--dash-panel-soft)"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span
+                  className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                    isActive ? "bg-white/15 text-white" : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
+                  }`}
+                >
+                  {getSidebarIcon(item.href)}
+                </span>
+                <span className="font-medium">{item.label}</span>
+              </span>
+              {item.badge ? (
+                <span className="rounded-full bg-(--dash-danger) px-2 py-0.5 text-xs font-semibold text-white">
+                  {item.badge}
+                </span>
+              ) : null}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <button
+        type="button"
+        className="mt-8 flex w-full items-center justify-between rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-muted)"
+      >
+        <span>مركز المساعدة</span>
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-(--dash-panel-glass) text-(--dash-text)">
+          ?
+        </span>
+      </button>
+    </div>
+  );
+
   return (
     <div dir="rtl" className="min-h-screen bg-(--dash-bg) text-(--dash-text)">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -418,142 +629,59 @@ const DashboardShell = ({
         <div className="absolute bottom-10 right-28 h-80 w-80 rounded-full bg-indigo-500/15 dark:bg-indigo-500/20 blur-3xl" />
       </div>
 
-      <aside className="fixed right-0 top-0 z-20 hidden h-full w-72 border-l border-(--dash-border) bg-(--dash-panel) p-6 backdrop-blur lg:block">
-                <div className="flex h-full flex-col">
-          <div className="flex items-center gap-3 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) p-4">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--dash-panel-glass) text-(--dash-primary)">
-              <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z"
-                />
-              </svg>
-            </span>
-            <div className="text-sm">
-              <p className="font-semibold">تكامل البيانات</p>
-              <p className="text-xs text-(--dash-muted)">نظام إدارة الأعمال</p>
-            </div>
-          </div>
+      {isSidebarOpen ? (
+        <div
+          className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      ) : null}
 
-          <nav className="dash-scroll mt-8 flex-1 space-y-3 overflow-y-auto pr-1 text-sm">
-            {sidebarNavigation.map((item) => {
-              const isGroup = "children" in item;
-              const isActive = isGroup
-                ? item.children.some((child) => child.href === pathname)
-                : pathname === item.href;
-
-              if (isGroup) {
-                return (
-                  <details
-                    key={item.label}
-                    open={isActive}
-                    className="group rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
-                  >
-                    <summary
-                      className={`flex cursor-pointer list-none items-center justify-between rounded-lg px-2 py-2 transition ${
-                        isActive ? "text-(--dash-text)" : "text-(--dash-muted)"
-                      }`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <span
-                          className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                            isActive
-                              ? "bg-(--dash-primary) text-white"
-                              : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
-                          }`}
-                        >
-                          {getSidebarIcon(item.iconKey ?? "wallets-group")}
-                        </span>
-                        <span className="font-medium">{item.label}</span>
-                      </span>
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="h-4 w-4 text-(--dash-muted-2) transition group-open:rotate-180"
-                        aria-hidden="true"
-                      >
-                        <path fill="currentColor" d="M7 10l5 5 5-5H7Z" />
-                      </svg>
-                    </summary>
-                    <div className="mt-2 space-y-2 pb-2">
-                      {item.children.map((child) => {
-                        const isChildActive = pathname === child.href;
-                        return (
-                          <Link
-                            key={child.label}
-                            href={child.href}
-                            className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs transition ${
-                              isChildActive
-                                ? "bg-(--dash-primary) text-white shadow-(--dash-primary-soft)"
-                                : "text-(--dash-muted) hover:bg-(--dash-panel-glass)"
-                            }`}
-                          >
-                            <span className="flex items-center gap-2">
-                              <span
-                                className={`flex h-7 w-7 items-center justify-center rounded-lg ${
-                                  isChildActive
-                                    ? "bg-white/15 text-white"
-                                    : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
-                                }`}
-                              >
-                                {getSidebarIcon(child.href)}
-                              </span>
-                              <span>{child.label}</span>
-                            </span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </details>
-                );
-              }
-
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className={`flex w-full items-center justify-between rounded-xl px-4 py-3 transition ${
-                    isActive
-                      ? "bg-(--dash-primary) text-white shadow-(--dash-primary-soft)"
-                      : "text-(--dash-muted) hover:bg-(--dash-panel-soft)"
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <span
-                      className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                        isActive
-                          ? "bg-white/15 text-white"
-                          : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
-                      }`}
-                    >
-                      {getSidebarIcon(item.href)}
-                    </span>
-                    <span className="font-medium">{item.label}</span>
-                  </span>
-                  {item.badge ? (
-                    <span className="rounded-full bg-(--dash-danger) px-2 py-0.5 text-xs font-semibold text-white">
-                      {item.badge}
-                    </span>
-                  ) : null}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <button
-            type="button"
-            className="mt-8 flex w-full items-center justify-between rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-muted)"
-          >
-            <span>مركز المساعدة</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-(--dash-panel-glass) text-(--dash-text)">?
-            </span>
-          </button>
-        </div>
+      <aside
+        className={`fixed right-0 top-0 z-40 h-full w-72 border-l border-(--dash-border) bg-(--dash-panel) p-6 backdrop-blur transition-transform lg:hidden ${
+          isSidebarOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        {sidebarContent}
       </aside>
 
-      <main className="relative z-10 px-6 pb-16 pt-10 lg:pr-76 lg:pl-12">
+      <aside
+        className={`fixed right-0 top-0 z-20 hidden h-full w-72 border-l border-(--dash-border) bg-(--dash-panel) p-6 backdrop-blur transition-transform lg:block ${
+          isDesktopSidebarCollapsed ? "lg:translate-x-full" : "lg:translate-x-0"
+        }`}
+      >
+        {sidebarContent}
+      </aside>
+
+      <main
+        className={`relative z-10 px-4 pb-16 pt-10 sm:px-6 lg:pl-12 ${isDesktopSidebarCollapsed ? "lg:pr-6" : "lg:pr-76"}`}
+      >
         <header className="flex flex-col gap-4">
   <div className="flex flex-wrap items-center justify-between gap-3">
     <div className="flex w-full max-w-xl flex-1 items-center gap-3 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2">
+      <button
+        type="button"
+        onClick={() => setIsSidebarOpen(true)}
+        className="flex h-10 w-10 items-center justify-center rounded-xl border border-(--dash-border) bg-(--dash-panel-glass) text-(--dash-muted) lg:hidden"
+        aria-label="فتح الشريط الجانبي"
+      >
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+          <path fill="currentColor" d="M3 6h18v2H3V6Zm0 5h18v2H3v-2Zm0 5h18v2H3v-2Z" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        onClick={() => setIsDesktopSidebarCollapsed((prev) => !prev)}
+        className="hidden h-10 w-10 items-center justify-center rounded-xl border border-(--dash-border) bg-(--dash-panel-glass) text-(--dash-muted) lg:flex"
+        aria-label={isDesktopSidebarCollapsed ? "إظهار الشريط الجانبي" : "إخفاء الشريط الجانبي"}
+      >
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+          {isDesktopSidebarCollapsed ? (
+            <path fill="currentColor" d="M3 6h18v2H3V6Zm0 5h18v2H3v-2Zm0 5h18v2H3v-2Z" />
+          ) : (
+            <path fill="currentColor" d="M9 6l6 6-6 6" />
+          )}
+        </svg>
+      </button>
       <svg viewBox="0 0 24 24" className="h-5 w-5 text-(--dash-muted-2)" aria-hidden="true">
         <path
           fill="currentColor"
@@ -571,7 +699,7 @@ const DashboardShell = ({
       />
     </div>
 
-    <div className="flex items-center gap-3">
+    <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
       <div className="relative" ref={quickActionsRef}>
         <button
           type="button"

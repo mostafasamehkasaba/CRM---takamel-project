@@ -685,7 +685,7 @@ const page = () => {
           <p className="mt-2 text-sm text-(--dash-muted)">استيراد البيانات من ملف نسخة احتياطية</p>
           <button
             type="button"
-            className="mt-4 flex items-center gap-2 rounded-xl border border-(--dash-border) bg-white px-4 py-2 text-sm font-semibold text-(--dash-text) shadow-(--dash-shadow)"
+            className="mt-4 flex items-center gap-2 rounded-xl border border-(--dash-border) bg-(--dash-panel) px-4 py-2 text-sm font-semibold text-(--dash-text) shadow-(--dash-shadow)"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
               <path
@@ -872,7 +872,6 @@ const page = () => {
 };
 
 export default page;
-
 
 
 

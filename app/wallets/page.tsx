@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import DashboardShell from "../components/DashboardShell";
+import { useRouter } from "next/navigation";
 
 type Wallet = {
   id: string;
@@ -129,10 +130,12 @@ const formatCurrency = (value: number, currency: string) =>
   `${value.toLocaleString("en-US", { maximumFractionDigits: 2 })} ${currency}`;
 
 const page = () => {
+  const router = useRouter();
   const [walletsData, setWalletsData] = useState<Wallet[]>(wallets);
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("كل الأنواع");
   const [statusFilter, setStatusFilter] = useState("كل الحالات");
+  const [navigationTarget, setNavigationTarget] = useState("wallets");
   const [showNewWallet, setShowNewWallet] = useState(false);
   const [formData, setFormData] = useState<{
     name: string;
@@ -229,6 +232,13 @@ const page = () => {
     }));
   };
 
+  const handleNavigationChange = (value: string) => {
+    setNavigationTarget(value);
+    if (value === "shifts") {
+      router.push("/shifts");
+    }
+  };
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!formData.name.trim()) {
@@ -308,7 +318,7 @@ const page = () => {
   return (
     <DashboardShell
       title="المحافظ المالية"
-      subtitle="إدارة المحافظ المالية والحسابات البنكية"
+      subtitle="إدارة المحافظ المالية والحسابات"
       searchValue={query}
       onSearchChange={setQuery}
       searchPlaceholder="بحث في المحافظ..."
@@ -365,6 +375,13 @@ const page = () => {
             <option value="محفظة توفير">محفظة توفير</option>
             <option value="محفظة استثمارية">محفظة استثمارية</option>
             <option value="محفظة طوارئ">محفظة طوارئ</option>
+          </select>
+          <select
+            value={navigationTarget}
+            onChange={(event) => handleNavigationChange(event.target.value)}
+            className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) px-4 py-2 text-sm text-(--dash-text)"
+          >
+            <option value="wallets">المحافظ المالية</option>
           </select>
           <div className="relative flex-1 min-w-[240px]">
             <svg viewBox="0 0 24 24" className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-(--dash-muted)">
@@ -563,8 +580,3 @@ const page = () => {
 };
 
 export default page;
-
-
-
-
-

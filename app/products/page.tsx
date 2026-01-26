@@ -15,6 +15,7 @@ type Product = {
   stock: number;
   price: number;
   imageTone: string;
+  expiryDate?: string;
 };
 
 const initialProducts: Product[] = [
@@ -75,6 +76,7 @@ const statusStyles: Record<ProductStatus, string> = {
 const page = () => {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [showForm, setShowForm] = useState(false);
+  const [formMode, setFormMode] = useState<"new" | "edit" | "view">("new");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProductStatus | "all">("all");
@@ -88,8 +90,11 @@ const page = () => {
     stock: "0",
     price: "",
     image: "",
+    expiryDate: "",
   });
   const [imageObjectUrl, setImageObjectUrl] = useState<string | null>(null);
+  const isReadOnly = formMode === "view";
+  const isEditing = formMode === "edit";
 
   const summaryCards = useMemo(() => {
     const total = products.length;
@@ -143,6 +148,9 @@ const page = () => {
     setForm((prev) => ({ ...prev, image: nextUrl }));
   };
 
+  const isStoredImage = (value: string) =>
+    value.startsWith("/") || value.startsWith("blob:") || value.startsWith("data:");
+
   const handleAddProduct = () => {
     const name = form.name.trim();
     const price = Number.parseFloat(form.price);
@@ -159,6 +167,7 @@ const page = () => {
       stock: Number.parseInt(form.stock, 10) || 0,
       price,
       imageTone: form.image.trim() || "from-slate-200 via-slate-50 to-slate-200",
+      expiryDate: form.expiryDate.trim() || undefined,
     };
     setProducts((prev) => {
       if (editingId) {
@@ -175,12 +184,11 @@ const page = () => {
       stock: "0",
       price: "",
       image: "",
+      expiryDate: "",
     });
-    if (imageObjectUrl) {
-      URL.revokeObjectURL(imageObjectUrl);
-      setImageObjectUrl(null);
-    }
+    setImageObjectUrl(null);
     setEditingId(null);
+    setFormMode("new");
     setShowForm(false);
   };
 
@@ -197,9 +205,53 @@ const page = () => {
       status: target.status,
       stock: String(target.stock),
       price: String(target.price),
-      image: target.imageTone.startsWith("/") || target.imageTone.startsWith("blob:") ? target.imageTone : "",
+      image: isStoredImage(target.imageTone) ? target.imageTone : "",
+      expiryDate: target.expiryDate ?? "",
     });
     setEditingId(target.id);
+    setFormMode("edit");
+    setShowForm(true);
+  };
+
+  const handleViewProduct = (productId: string) => {
+    const target = products.find((item) => item.id === productId);
+    if (!target) {
+      return;
+    }
+    setForm({
+      name: target.name,
+      category: target.category,
+      sku: target.sku,
+      supplier: target.supplier,
+      status: target.status,
+      stock: String(target.stock),
+      price: String(target.price),
+      image: isStoredImage(target.imageTone) ? target.imageTone : "",
+      expiryDate: target.expiryDate ?? "",
+    });
+    setEditingId(null);
+    setFormMode("view");
+    setShowForm(true);
+  };
+
+  const handleStartNewProduct = () => {
+    if (imageObjectUrl) {
+      URL.revokeObjectURL(imageObjectUrl);
+      setImageObjectUrl(null);
+    }
+    setForm({
+      name: "",
+      category: "",
+      sku: "",
+      supplier: "",
+      status: "متوفر",
+      stock: "0",
+      price: "",
+      image: "",
+      expiryDate: "",
+    });
+    setEditingId(null);
+    setFormMode("new");
     setShowForm(true);
   };
 
@@ -223,7 +275,7 @@ const page = () => {
       subtitle="إدارة بيانات المنتجات والمخزون"
       exportData={{
         filename: "products",
-        headers: ["رقم المنتج", "الاسم", "التصنيف", "رمز المنتج", "المورد", "الحالة", "المخزون", "السعر"],
+        headers: ["رقم المنتج", "الاسم", "التصنيف", "رمز المنتج", "المورد", "الحالة", "المخزون", "السعر", "تاريخ الصلاحية"],
         rows: products.map((item) => [
           item.id,
           item.name,
@@ -233,6 +285,7 @@ const page = () => {
           item.status,
           item.stock,
           item.price,
+          item.expiryDate ?? "-",
         ]),
       }}
 
@@ -240,7 +293,7 @@ const page = () => {
         <button
           type="button"
           className="flex items-center gap-2 rounded-xl bg-(--dash-primary) px-4 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft)"
-          onClick={() => setShowForm((prev) => !prev)}
+          onClick={handleStartNewProduct}
         >
           <span className="text-lg">+</span>
           منتج جديد
@@ -252,35 +305,44 @@ const page = () => {
           ref={formRef}
           className="mb-6 rounded-3xl border border-(--dash-border) bg-(--dash-panel) p-6 shadow-(--dash-shadow)"
         >
-          <h2 className="text-lg font-semibold">{editingId ? "تعديل المنتج" : "إضافة منتج جديد"}</h2>
+          <h2 className="text-lg font-semibold">
+            {formMode === "view" ? "عرض المنتج" : formMode === "edit" ? "تعديل المنتج" : "إضافة منتج جديد"}
+          </h2>
           <div className="mt-4 grid gap-4 lg:grid-cols-3">
             <label className="text-sm text-(--dash-muted)">
               <span className="mb-2 block font-semibold text-(--dash-text)">اسم المنتج</span>
               <input
                 type="text"
                 value={form.name}
-                onChange={(event) => handleFormChange("name", event.target.value)}
+                onChange={isReadOnly ? undefined : (event) => handleFormChange("name", event.target.value)}
                 placeholder="اسم المنتج"
+                readOnly={isReadOnly}
                 className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
               />
             </label>
             <label className="text-sm text-(--dash-muted)">
               <span className="mb-2 block font-semibold text-(--dash-text)">التصنيف</span>
-              <input
-                type="text"
+              <select
                 value={form.category}
-                onChange={(event) => handleFormChange("category", event.target.value)}
-                placeholder="الإلكترونيات"
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
-              />
+                onChange={isReadOnly ? undefined : (event) => handleFormChange("category", event.target.value)}
+                disabled={isReadOnly}
+                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
+              >
+                <option value="">اختر الفئة</option>
+                <option value="إلكترونيات">إلكترونيات</option>
+                <option value="أغذية">أغذية</option>
+                <option value="ملابس">ملابس</option>
+                <option value="أدوات منزلية">أدوات منزلية</option>
+              </select>
             </label>
             <label className="text-sm text-(--dash-muted)">
               <span className="mb-2 block font-semibold text-(--dash-text)">رمز المنتج</span>
               <input
                 type="text"
                 value={form.sku}
-                onChange={(event) => handleFormChange("sku", event.target.value)}
+                onChange={isReadOnly ? undefined : (event) => handleFormChange("sku", event.target.value)}
                 placeholder="SKU-000"
+                readOnly={isReadOnly}
                 className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
               />
             </label>
@@ -289,8 +351,9 @@ const page = () => {
               <input
                 type="text"
                 value={form.supplier}
-                onChange={(event) => handleFormChange("supplier", event.target.value)}
+                onChange={isReadOnly ? undefined : (event) => handleFormChange("supplier", event.target.value)}
                 placeholder="شركة التوريدات التقنية"
+                readOnly={isReadOnly}
                 className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
               />
             </label>
@@ -298,7 +361,8 @@ const page = () => {
               <span className="mb-2 block font-semibold text-(--dash-text)">الحالة</span>
               <select
                 value={form.status}
-                onChange={(event) => handleFormChange("status", event.target.value)}
+                onChange={isReadOnly ? undefined : (event) => handleFormChange("status", event.target.value)}
+                disabled={isReadOnly}
                 className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
               >
                 <option value="متوفر">متوفر</option>
@@ -311,7 +375,18 @@ const page = () => {
               <input
                 type="number"
                 value={form.stock}
-                onChange={(event) => handleFormChange("stock", event.target.value)}
+                onChange={isReadOnly ? undefined : (event) => handleFormChange("stock", event.target.value)}
+                readOnly={isReadOnly}
+                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
+              />
+            </label>
+            <label className="text-sm text-(--dash-muted)">
+              <span className="mb-2 block font-semibold text-(--dash-text)">تاريخ الصلاحية</span>
+              <input
+                type="date"
+                value={form.expiryDate}
+                onChange={isReadOnly ? undefined : (event) => handleFormChange("expiryDate", event.target.value)}
+                readOnly={isReadOnly}
                 className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
               />
             </label>
@@ -320,8 +395,9 @@ const page = () => {
               <input
                 type="number"
                 value={form.price}
-                onChange={(event) => handleFormChange("price", event.target.value)}
+                onChange={isReadOnly ? undefined : (event) => handleFormChange("price", event.target.value)}
                 placeholder="0"
+                readOnly={isReadOnly}
                 className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
               />
             </label>
@@ -330,11 +406,15 @@ const page = () => {
               <input
                 type="file"
                 accept="image/*"
-                onChange={handleImageChange}
+                onChange={isReadOnly ? undefined : handleImageChange}
+                disabled={isReadOnly}
                 className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
               />
               {form.image ? (
-                <p className="mt-2 text-xs text-(--dash-muted)">تم اختيار صورة للمنتج</p>
+                <div className="mt-3 flex items-center gap-3">
+                  <img src={form.image} alt="معاينة صورة المنتج" className="h-16 w-16 rounded-xl object-cover" />
+                  <p className="text-xs text-(--dash-muted)">تم اختيار صورة للمنتج</p>
+                </div>
               ) : null}
             </label>
           </div>
@@ -345,17 +425,20 @@ const page = () => {
               onClick={() => {
                 setShowForm(false);
                 setEditingId(null);
+                setFormMode("new");
               }}
             >
-              إلغاء
+              {isReadOnly ? "إغلاق" : "إلغاء"}
             </button>
-            <button
-              type="button"
-              className="rounded-xl bg-(--dash-primary) px-4 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft)"
-              onClick={handleAddProduct}
-            >
-              {editingId ? "حفظ التعديلات" : "إضافة المنتج"}
-            </button>
+            {isReadOnly ? null : (
+              <button
+                type="button"
+                className="rounded-xl bg-(--dash-primary) px-4 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft)"
+                onClick={handleAddProduct}
+              >
+                {isEditing ? "حفظ التعديلات" : "إضافة المنتج"}
+              </button>
+            )}
           </div>
         </section>
       ) : null}
@@ -448,6 +531,8 @@ const page = () => {
                   sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 25vw, 100vw"
                   className="object-cover"
                 />
+              ) : isStoredImage(product.imageTone) ? (
+                <img src={product.imageTone} alt={product.name} className="h-full w-full object-cover" />
               ) : (
                 <div className={`absolute inset-0 bg-gradient-to-br ${product.imageTone}`} />
               )}
@@ -468,6 +553,7 @@ const page = () => {
               <div className="mt-3 space-y-1 text-xs text-(--dash-muted)">
                 <p>المورد: {product.supplier}</p>
                 <p>رمز المنتج: {product.sku}</p>
+                <p>تاريخ الصلاحية: {product.expiryDate || "غير محدد"}</p>
               </div>
               <div className="my-3 border-t border-(--dash-border)" />
               <div className="grid grid-cols-2 gap-4 text-xs text-(--dash-muted)">
@@ -485,6 +571,7 @@ const page = () => {
               <div className="mt-4 flex items-center gap-3">
                 <button
                   type="button"
+                  onClick={() => handleViewProduct(product.id)}
                   className="flex-1 rounded-xl border border-(--dash-border) px-3 py-2 text-xs text-(--dash-text) hover:bg-(--dash-panel-soft)"
                 >
                   عرض

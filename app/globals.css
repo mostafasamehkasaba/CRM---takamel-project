@@ -104,6 +104,93 @@ select option {
   color: var(--dash-text);
 }
 
+@layer components {
+  .dash-card {
+    border: 1px solid var(--dash-border);
+    border-radius: 24px;
+    background: var(--dash-panel);
+    padding: 1.5rem;
+    box-shadow: 0 18px 42px var(--dash-shadow);
+  }
+
+  .dash-icon {
+    display: inline-flex;
+    height: 2.5rem;
+    width: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1rem;
+    background: var(--dash-panel-soft);
+    color: var(--dash-muted-2);
+  }
+
+  .dash-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 1rem;
+    border: 1px solid var(--dash-border);
+    background: var(--dash-panel-soft);
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--dash-text);
+    cursor: pointer;
+    transition: border-color 200ms ease, background-color 200ms ease, color 200ms ease;
+  }
+
+  .dash-filter:hover {
+    border-color: var(--dash-primary);
+    background: var(--dash-panel);
+  }
+
+  .dash-select {
+    border-radius: 1rem;
+    border: 1px solid var(--dash-border);
+    background: var(--dash-panel-soft);
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    color: var(--dash-text);
+    transition: border-color 200ms ease, background-color 200ms ease;
+  }
+
+  .dash-select:focus {
+    outline: none;
+    border-color: var(--dash-primary);
+    box-shadow: 0 0 0 3px var(--dash-primary-soft);
+    background: var(--dash-panel);
+  }
+
+  .dash-input {
+    width: 100%;
+    border-radius: 1rem;
+    border: 1px solid var(--dash-border);
+    background: var(--dash-panel-soft);
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    color: var(--dash-text);
+    transition: border-color 200ms ease, background-color 200ms ease, box-shadow 200ms ease;
+  }
+
+  .dash-input::placeholder {
+    color: var(--dash-muted-2);
+  }
+
+  .dash-input:focus {
+    outline: none;
+    border-color: var(--dash-primary);
+    box-shadow: 0 0 0 3px var(--dash-primary-soft);
+    background: var(--dash-panel);
+  }
+
+  .dash-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--dash-muted);
+  }
+}
+
 .dash-modal {
   position: fixed;
   inset: 0;

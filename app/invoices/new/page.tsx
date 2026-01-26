@@ -1,21 +1,105 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import DashboardShell from "../../components/DashboardShell";
 
 const page = () => {
+  const searchParams = useSearchParams();
+  const normalizeInvoiceType = (value: string | null) => {
+    if (value === "sales" || value === "tax" || value === "simple") {
+      return value;
+    }
+    return "simple";
+  };
   const [items, setItems] = useState([
     { name: "منتج تجريبي", desc: "وصف", qty: "2", price: "500", tax: "15", total: "1,150" },
     { name: "إضافة يدوية", desc: "وصف", qty: "1", price: "0", tax: "15", total: "0" },
   ]);
+  const invoiceTypeParam = searchParams.get("type");
+  const [invoiceType, setInvoiceType] = useState<"simple" | "sales" | "tax">(
+    normalizeInvoiceType(invoiceTypeParam)
+  );
   const [showProductModal, setShowProductModal] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: "", desc: "", price: "0", tax: "15" });
   const [toast, setToast] = useState<{ message: string; tone: "success" | "info" } | null>(null);
+
+  const invoiceTypeOptions = [
+    {
+      key: "simple",
+      title: "فاتورة بسيطة",
+      description: "مناسبة للطلبات السريعة بدون تفاصيل ضريبية.",
+      features: ["حقول أساسية فقط", "بدون ضريبة", "إرسال سريع"],
+      accent: "from-emerald-500/10 via-emerald-500/5 to-transparent",
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+          <path
+            fill="currentColor"
+            d="M5 4h10l4 4v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm3 9h8v2H8v-2Zm0-4h8v2H8V9Z"
+          />
+        </svg>
+      ),
+    },
+    {
+      key: "sales",
+      title: "فاتورة مبيعات",
+      description: "تشمل الشحن وطريقة الدفع ومندوب المبيعات.",
+      features: ["شحن وتوصيل", "طريقة الدفع", "مندوب المبيعات"],
+      accent: "from-sky-500/10 via-sky-500/5 to-transparent",
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+          <path
+            fill="currentColor"
+            d="M4 6h14a2 2 0 0 1 2 2v6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6Zm3 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm10 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"
+          />
+        </svg>
+      ),
+    },
+    {
+      key: "tax",
+      title: "فاتورة ضريبية",
+      description: "مخصصة للضريبة مع رقم تسجيل وتاريخ توريد.",
+      features: ["رقم ضريبي", "نسبة الضريبة", "تاريخ التوريد"],
+      accent: "from-amber-500/10 via-amber-500/5 to-transparent",
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+          <path
+            fill="currentColor"
+            d="M4 4h9l5 5v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm3 10h8v2H7v-2Zm0-4h8v2H7v-2Z"
+          />
+        </svg>
+      ),
+    },
+  ];
+
+  const isSimple = invoiceType === "simple";
+  const isSales = invoiceType === "sales";
+  const isTax = invoiceType === "tax";
+  const itemGridColumns = isSimple
+    ? "lg:grid-cols-[28px_1.4fr_1fr_0.8fr_0.8fr_1fr]"
+    : "lg:grid-cols-[28px_1.2fr_1fr_0.8fr_0.8fr_1fr_1fr]";
+  const extraFields = isSimple
+    ? [{ label: "الخصم", value: "0" }]
+    : isSales
+    ? [
+        { label: "الخصم", value: "0" },
+        { label: "الشحن", value: "0" },
+        { label: "رسوم الخدمة", value: "0" },
+      ]
+    : [
+        { label: "الخصم", value: "0" },
+        { label: "الضريبة %", value: "15" },
+        { label: "الشحن", value: "0" },
+      ];
 
   const showToast = (message: string, tone: "success" | "info" = "info") => {
     setToast({ message, tone });
     window.setTimeout(() => setToast(null), 2500);
   };
+
+  useEffect(() => {
+    setInvoiceType(normalizeInvoiceType(invoiceTypeParam));
+  }, [invoiceTypeParam]);
 
   const handleAddItem = () => {
     setItems((prev) => [
@@ -106,6 +190,64 @@ const page = () => {
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)] lg:items-start">
         <div className="min-w-0 space-y-6">
           <div className="rounded-3xl border border-(--dash-border) bg-(--dash-panel) p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">نوع الفاتورة</h2>
+                <p className="text-sm text-(--dash-muted)">اختر القالب المناسب قبل إدخال البيانات.</p>
+              </div>
+              <span className="rounded-full bg-(--dash-panel-soft) px-3 py-1 text-xs text-(--dash-muted)">
+                3 خيارات
+              </span>
+            </div>
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              {invoiceTypeOptions.map((option) => {
+                const isActive = invoiceType === option.key;
+                return (
+                  <button
+                    key={option.key}
+                    type="button"
+                    onClick={() => setInvoiceType(option.key as "simple" | "sales" | "tax")}
+                    className={`group relative overflow-hidden rounded-2xl border p-4 text-right transition ${
+                      isActive
+                        ? "border-(--dash-primary) bg-(--dash-panel) shadow-(--dash-shadow)"
+                        : "border-(--dash-border) bg-(--dash-panel-soft) hover:border-(--dash-primary)"
+                    }`}
+                  >
+                    <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${option.accent}`} />
+                    <div className="relative space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span
+                          className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                            isActive ? "bg-(--dash-primary) text-white" : "bg-(--dash-panel) text-(--dash-primary)"
+                          }`}
+                        >
+                          {option.icon}
+                        </span>
+                        <span className={`text-xs font-semibold ${isActive ? "text-(--dash-primary)" : "text-(--dash-muted)"}`}>
+                          {isActive ? "محدد" : "اختر"}
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold">{option.title}</h3>
+                        <p className="mt-1 text-xs text-(--dash-muted)">{option.description}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {option.features.map((feature) => (
+                          <span
+                            key={feature}
+                            className="rounded-full border border-(--dash-border) bg-(--dash-panel) px-2.5 py-1 text-[11px] text-(--dash-muted)"
+                          >
+                            {feature}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="rounded-3xl border border-(--dash-border) bg-(--dash-panel) p-6">
             <div className="grid gap-4 lg:grid-cols-2">
               <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
                 <span>العميل *</span>
@@ -140,6 +282,67 @@ const page = () => {
                   className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none"
                 />
               </label>
+              {isSales ? (
+                <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
+                  <span>طريقة الدفع *</span>
+                  <select className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none">
+                    <option value="">اختر طريقة الدفع</option>
+                    <option>بطاقة بنكية</option>
+                    <option>تحويل بنكي</option>
+                    <option>نقدي</option>
+                    <option>آجل</option>
+                  </select>
+                </label>
+              ) : null}
+              {isSales ? (
+                <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
+                  <span>تاريخ التسليم</span>
+                  <input
+                    type="date"
+                    className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none"
+                  />
+                </label>
+              ) : null}
+              {isSales ? (
+                <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
+                  <span>مندوب المبيعات</span>
+                  <select className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none">
+                    <option value="">اختر المندوب</option>
+                    <option>سارة أحمد</option>
+                    <option>خالد سالم</option>
+                    <option>مروان يوسف</option>
+                  </select>
+                </label>
+              ) : null}
+              {isTax ? (
+                <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
+                  <span>الرقم الضريبي *</span>
+                  <input
+                    type="text"
+                    placeholder="مثال: 310123456700003"
+                    className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none"
+                  />
+                </label>
+              ) : null}
+              {isTax ? (
+                <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
+                  <span>تاريخ التوريد *</span>
+                  <input
+                    type="date"
+                    className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none"
+                  />
+                </label>
+              ) : null}
+              {isTax ? (
+                <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
+                  <span>نوع الضريبة</span>
+                  <select className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none">
+                    <option>ضريبة قيمة مضافة</option>
+                    <option>ضريبة انتقائية</option>
+                    <option>معفى</option>
+                  </select>
+                </label>
+              ) : null}
               <label className="flex flex-col gap-2 text-sm text-(--dash-muted) lg:col-span-2">
                 <span>المحفظة / الحساب</span>
                 <select className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none">
@@ -176,19 +379,21 @@ const page = () => {
             <div className="mt-6 overflow-hidden rounded-2xl border border-(--dash-border)">
               <div className="overflow-x-hidden lg:overflow-x-auto">
                 <div className="min-w-0 lg:min-w-[760px]">
-                  <div className="hidden grid-cols-[28px_1.2fr_1fr_0.8fr_0.8fr_1fr_1fr] gap-3 bg-(--dash-panel-soft) px-4 py-3 text-xs text-(--dash-muted) lg:grid">
+                  <div
+                    className={`hidden gap-3 bg-(--dash-panel-soft) px-4 py-3 text-xs text-(--dash-muted) lg:grid ${itemGridColumns}`}
+                  >
                     <span />
                     <span>المنتج</span>
                     <span>الوصف</span>
                     <span>الكمية</span>
                     <span>السعر</span>
-                    <span>الضريبة %</span>
+                    {isSimple ? null : <span>الضريبة %</span>}
                     <span>المجموع</span>
                   </div>
                   {items.map((row, index) => (
                     <div
                       key={`${row.name}-${index}`}
-                      className="grid gap-3 border-t border-(--dash-border) px-4 py-4 text-sm lg:grid-cols-[28px_1.2fr_1fr_0.8fr_0.8fr_1fr_1fr] lg:items-center"
+                      className={`grid gap-3 border-t border-(--dash-border) px-4 py-4 text-sm lg:items-center ${itemGridColumns}`}
                     >
                       <button
                         type="button"
@@ -235,14 +440,16 @@ const page = () => {
                           className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-xs focus:outline-none"
                         />
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <span className="text-xs text-(--dash-muted) lg:hidden">الضريبة %</span>
-                        <input
-                          type="text"
-                          defaultValue={row.tax}
-                          className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-xs focus:outline-none"
-                        />
-                      </div>
+                      {isSimple ? null : (
+                        <div className="flex flex-col gap-2">
+                          <span className="text-xs text-(--dash-muted) lg:hidden">الضريبة %</span>
+                          <input
+                            type="text"
+                            defaultValue={row.tax}
+                            className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-xs focus:outline-none"
+                          />
+                        </div>
+                      )}
                       <div className="flex flex-col gap-2">
                         <span className="text-xs text-(--dash-muted) lg:hidden">المجموع</span>
                         <div className="text-sm">{row.total}</div>
@@ -255,13 +462,14 @@ const page = () => {
           </div>
 
           <div className="rounded-3xl border border-(--dash-border) bg-(--dash-panel) p-6">
-            <h3 className="text-lg font-semibold">خيارات إضافية</h3>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-lg font-semibold">خيارات إضافية</h3>
+              <span className="text-xs text-(--dash-muted)">
+                {isSimple ? "بدون ضريبة" : isSales ? "خيارات مبيعات" : "خيارات ضريبية"}
+              </span>
+            </div>
             <div className="mt-4 grid gap-4 lg:grid-cols-3">
-              {[
-                { label: "الخصم", value: "0" },
-                { label: "الضريبة %", value: "15" },
-                { label: "الشحن", value: "0" },
-              ].map((field) => (
+              {extraFields.map((field) => (
                 <label key={field.label} className="flex flex-col gap-2 text-sm text-(--dash-muted)">
                   <span>{field.label}</span>
                   <input
@@ -291,10 +499,17 @@ const page = () => {
                 <span>المجموع الفرعي</span>
                 <span className="text-(--dash-text)">1,000 ريال</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span>الضريبة (15%)</span>
-                <span className="text-(--dash-text)">150 ريال</span>
-              </div>
+              {isSimple ? (
+                <div className="flex items-center justify-between">
+                  <span>الضريبة</span>
+                  <span className="text-(--dash-text)">0 ريال</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <span>الضريبة (15%)</span>
+                  <span className="text-(--dash-text)">150 ريال</span>
+                </div>
+              )}
               <div className="mt-4 flex items-center justify-between text-base font-semibold text-(--dash-text)">
                 <span>الإجمالي</span>
                 <span>1,150 ريال</span>

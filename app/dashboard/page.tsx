@@ -404,7 +404,7 @@ const page = () => {
                   { key: "stock", label: "تحويل مخزون" },
                   { key: "customers", label: "العملاء" },
                   { key: "suppliers", label: "الموردين" },
-].map((tab) => (
+              ].map((tab) => (
                   <button
                     key={tab.key}
                     type="button"
@@ -480,32 +480,34 @@ const page = () => {
               تصدير التقرير
             </button>
           </div>
-          <div className="mt-6 overflow-hidden rounded-2xl border border-(--dash-border)">
-            <div className="grid grid-cols-6 gap-4 border-b border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-xs font-semibold text-(--dash-muted)">
-              <span className="text-right">رقم الفاتورة</span>
-              <span className="text-right">العميل</span>
-              <span className="text-right">الإجمالي</span>
-              <span className="text-right">الحالة</span>
-              <span className="text-right">التاريخ</span>
-              <span className="text-right">الإجراء</span>
-            </div>
-            {filteredInvoices.map((item) => (
-              <div
-                key={item.id}
-                className="grid grid-cols-6 gap-4 border-b border-(--dash-border) px-4 py-3 text-sm text-(--dash-text) last:border-b-0"
-              >
-                <span>{item.id}</span>
-                <span>{item.client}</span>
-                <span>{item.amount}</span>
-                <span className="flex">
-                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${item.statusTone}`}>{item.status}</span>
-                </span>
-                <span className="text-(--dash-muted)">{item.date}</span>
-                <button type="button" className="text-xs text-(--dash-primary) hover:underline">
-                  عرض
-                </button>
+          <div className="mt-6 overflow-x-auto">
+            <div className="min-w-[720px] overflow-hidden rounded-2xl border border-(--dash-border)">
+              <div className="grid grid-cols-6 gap-4 border-b border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-xs font-semibold text-(--dash-muted)">
+                <span className="text-right">رقم الفاتورة</span>
+                <span className="text-right">العميل</span>
+                <span className="text-right">الإجمالي</span>
+                <span className="text-right">الحالة</span>
+                <span className="text-right">التاريخ</span>
+                <span className="text-right">الإجراء</span>
               </div>
-            ))}
+              {filteredInvoices.map((item) => (
+                <div
+                  key={item.id}
+                  className="grid grid-cols-6 gap-4 border-b border-(--dash-border) px-4 py-3 text-sm text-(--dash-text) last:border-b-0"
+                >
+                  <span>{item.id}</span>
+                  <span>{item.client}</span>
+                  <span>{item.amount}</span>
+                  <span className="flex">
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${item.statusTone}`}>{item.status}</span>
+                  </span>
+                  <span className="text-(--dash-muted)">{item.date}</span>
+                  <button type="button" className="text-xs text-(--dash-primary) hover:underline">
+                    عرض
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -514,8 +516,6 @@ const page = () => {
 };
 
 export default page;
-
-
 
 
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import DashboardShell from "../components/DashboardShell";
 
 type InvoiceStatus = "مدفوعة" | "قيد الانتظار" | "متأخرة" | "مدفوعة جزئيا";
@@ -81,8 +81,11 @@ const formatCurrency = (value: number) => `${value.toLocaleString()} ريال`;
 const page = () => {
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
   const [showForm, setShowForm] = useState(false);
+  const [invoiceType, setInvoiceType] = useState<"simple" | "sales" | "tax">("simple");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const detailsRef = useRef<HTMLDetailsElement | null>(null);
+  const formRef = useRef<HTMLElement | null>(null);
   const [form, setForm] = useState({
     client: "",
     amount: "",
@@ -91,6 +94,12 @@ const page = () => {
     status: "قيد الانتظار",
     date: "",
     dueDate: "",
+    paymentMethod: "",
+    deliveryDate: "",
+    salesRep: "",
+    taxNumber: "",
+    supplyDate: "",
+    taxType: "ضريبة قيمة مضافة",
   });
 
   useEffect(() => {
@@ -110,6 +119,12 @@ const page = () => {
   useEffect(() => {
     window.localStorage.setItem("invoices-data", JSON.stringify(invoices));
   }, [invoices]);
+
+  useEffect(() => {
+    if (showForm && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [showForm]);
 
   const summaryCards = useMemo(() => {
     const totalAmount = invoices.reduce((sum, item) => sum + item.amount, 0);
@@ -146,6 +161,18 @@ const page = () => {
     });
   }, [invoices, query, statusFilter]);
 
+  const isSimple = invoiceType === "simple";
+  const isSales = invoiceType === "sales";
+  const isTax = invoiceType === "tax";
+
+  const handleSelectInvoiceType = (type: "simple" | "sales" | "tax") => {
+    setInvoiceType(type);
+    setShowForm(true);
+    if (detailsRef.current) {
+      detailsRef.current.open = false;
+    }
+  };
+
   const handleFormChange = (field: keyof typeof form, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -177,6 +204,12 @@ const page = () => {
       status: "قيد الانتظار",
       date: "",
       dueDate: "",
+      paymentMethod: "",
+      deliveryDate: "",
+      salesRep: "",
+      taxNumber: "",
+      supplyDate: "",
+      taxType: "ضريبة قيمة مضافة",
     });
     setShowForm(false);
   };
@@ -201,19 +234,124 @@ const page = () => {
       }}
 
       headerAction={
-        <button
-          type="button"
-          className="flex items-center gap-2 rounded-xl bg-(--dash-primary) px-4 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft)"
-          onClick={() => setShowForm((prev) => !prev)}
-        >
-          <span className="text-lg">+</span>
-          فاتورة جديدة
-        </button>
+        <details ref={detailsRef} className="relative">
+          <summary className="flex cursor-pointer list-none items-center gap-2 rounded-xl bg-(--dash-primary) px-4 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft)">
+            <span className="text-lg">+</span>
+            فاتورة جديدة
+            <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+              <path fill="currentColor" d="M7 10l5 5 5-5H7Z" />
+            </svg>
+          </summary>
+          <div className="absolute right-0 top-12 z-30 w-60 translate-x-2 rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-2 text-sm shadow-(--dash-shadow)">
+            <button
+              type="button"
+              onClick={() => handleSelectInvoiceType("simple")}
+              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-(--dash-text) hover:bg-(--dash-panel-soft)"
+            >
+              <span className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M5 4h10l4 4v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm3 9h8v2H8v-2Zm0-4h8v2H8V9Z"
+                    />
+                  </svg>
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold">فاتورة بسيطة</span>
+                  <span className="text-xs text-(--dash-muted)">بدون تفاصيل ضريبية</span>
+                </span>
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSelectInvoiceType("sales")}
+              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-(--dash-text) hover:bg-(--dash-panel-soft)"
+            >
+              <span className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 text-sky-700">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M4 6h14a2 2 0 0 1 2 2v6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6Zm3 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm10 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"
+                    />
+                  </svg>
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold">فاتورة مبيعات</span>
+                  <span className="text-xs text-(--dash-muted)">شحن وطريقة دفع</span>
+                </span>
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSelectInvoiceType("tax")}
+              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-(--dash-text) hover:bg-(--dash-panel-soft)"
+            >
+              <span className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M4 4h9l5 5v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm3 10h8v2H7v-2Zm0-4h8v2H7v-2Z"
+                    />
+                  </svg>
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold">فاتورة ضريبية</span>
+                  <span className="text-xs text-(--dash-muted)">رقم وتاريخ توريد</span>
+                </span>
+              </span>
+            </button>
+          </div>
+        </details>
       }
     >
       {showForm ? (
-        <section className="mb-6 rounded-3xl border border-(--dash-border) bg-(--dash-panel) p-6 shadow-(--dash-shadow)">
-          <h2 className="text-lg font-semibold">إنشاء فاتورة جديدة</h2>
+        <section
+          ref={formRef}
+          className="mb-6 rounded-3xl border border-(--dash-border) bg-(--dash-panel) p-6 shadow-(--dash-shadow)"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold">إنشاء فاتورة جديدة</h2>
+              <p className="text-sm text-(--dash-muted)">اختر نوع الفاتورة وأكمل البيانات الأساسية.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-(--dash-panel-soft) px-3 py-1 text-xs text-(--dash-muted)">
+                {invoiceTypeLabel}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setInvoiceType("simple")}
+                  className={`rounded-full px-3 py-1 text-xs ${
+                    isSimple ? "bg-(--dash-primary) text-white" : "border border-(--dash-border) text-(--dash-muted)"
+                  }`}
+                >
+                  بسيطة
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInvoiceType("sales")}
+                  className={`rounded-full px-3 py-1 text-xs ${
+                    isSales ? "bg-(--dash-primary) text-white" : "border border-(--dash-border) text-(--dash-muted)"
+                  }`}
+                >
+                  مبيعات
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInvoiceType("tax")}
+                  className={`rounded-full px-3 py-1 text-xs ${
+                    isTax ? "bg-(--dash-primary) text-white" : "border border-(--dash-border) text-(--dash-muted)"
+                  }`}
+                >
+                  ضريبية
+                </button>
+              </div>
+            </div>
+          </div>
           <div className="mt-4 grid gap-4 lg:grid-cols-3">
             <label className="text-sm text-(--dash-muted)">
               <span className="mb-2 block font-semibold text-(--dash-text)">اسم العميل</span>
@@ -286,6 +424,85 @@ const page = () => {
                 className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
               />
             </label>
+            {isSales ? (
+              <label className="text-sm text-(--dash-muted)">
+                <span className="mb-2 block font-semibold text-(--dash-text)">طريقة الدفع</span>
+                <select
+                  value={form.paymentMethod}
+                  onChange={(event) => handleFormChange("paymentMethod", event.target.value)}
+                  className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
+                >
+                  <option value="">اختر طريقة الدفع</option>
+                  <option value="بطاقة">بطاقة بنكية</option>
+                  <option value="تحويل">تحويل بنكي</option>
+                  <option value="نقدي">نقدي</option>
+                  <option value="آجل">آجل</option>
+                </select>
+              </label>
+            ) : null}
+            {isSales ? (
+              <label className="text-sm text-(--dash-muted)">
+                <span className="mb-2 block font-semibold text-(--dash-text)">تاريخ التسليم</span>
+                <input
+                  type="date"
+                  value={form.deliveryDate}
+                  onChange={(event) => handleFormChange("deliveryDate", event.target.value)}
+                  className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
+                />
+              </label>
+            ) : null}
+            {isSales ? (
+              <label className="text-sm text-(--dash-muted)">
+                <span className="mb-2 block font-semibold text-(--dash-text)">مندوب المبيعات</span>
+                <select
+                  value={form.salesRep}
+                  onChange={(event) => handleFormChange("salesRep", event.target.value)}
+                  className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
+                >
+                  <option value="">اختر المندوب</option>
+                  <option value="سارة أحمد">سارة أحمد</option>
+                  <option value="خالد سالم">خالد سالم</option>
+                  <option value="مروان يوسف">مروان يوسف</option>
+                </select>
+              </label>
+            ) : null}
+            {isTax ? (
+              <label className="text-sm text-(--dash-muted)">
+                <span className="mb-2 block font-semibold text-(--dash-text)">الرقم الضريبي</span>
+                <input
+                  type="text"
+                  value={form.taxNumber}
+                  onChange={(event) => handleFormChange("taxNumber", event.target.value)}
+                  placeholder="310123456700003"
+                  className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
+                />
+              </label>
+            ) : null}
+            {isTax ? (
+              <label className="text-sm text-(--dash-muted)">
+                <span className="mb-2 block font-semibold text-(--dash-text)">تاريخ التوريد</span>
+                <input
+                  type="date"
+                  value={form.supplyDate}
+                  onChange={(event) => handleFormChange("supplyDate", event.target.value)}
+                  className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
+                />
+              </label>
+            ) : null}
+            {isTax ? (
+              <label className="text-sm text-(--dash-muted)">
+                <span className="mb-2 block font-semibold text-(--dash-text)">نوع الضريبة</span>
+                <select
+                  value={form.taxType}
+                  onChange={(event) => handleFormChange("taxType", event.target.value)}
+                  className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
+                >
+                  <option value="ضريبة قيمة مضافة">ضريبة قيمة مضافة</option>
+                  <option value="ضريبة انتقائية">ضريبة انتقائية</option>
+                  <option value="معفى">معفى</option>
+                </select>
+              </label>
+            ) : null}
           </div>
           <div className="mt-4 flex justify-end gap-3">
             <button

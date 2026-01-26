@@ -28,9 +28,12 @@ type BankTransaction = {
 };
 
 const accountTypes = ["حساب جاري", "حساب توفير"];
-const currencies = ["ريال سعودي (SAR)", "دولار أمريكي (USD)"];
+const currencies = [
+  { label: "ريال سعودي (SAR)", value: "SAR" },
+  { label: "دولار أمريكي (USD)", value: "USD" },
+];
 
-const accounts: BankAccount[] = [
+const initialAccounts: BankAccount[] = [
   {
     id: "BANK-001",
     name: "البنك الأهلي - حساب جاري",
@@ -119,11 +122,14 @@ const formatCurrency = (value: number, currency: string) =>
 
 const page = () => {
   const [transactions, setTransactions] = useState<BankTransaction[]>(transactionsData);
+  const [accounts, setAccounts] = useState<BankAccount[]>(initialAccounts);
   const [query, setQuery] = useState("");
   const [accountFilter, setAccountFilter] = useState("كل الحسابات");
   const [typeFilter, setTypeFilter] = useState("كل المعاملات");
   const [showNewAccount, setShowNewAccount] = useState(false);
   const [showNewTransaction, setShowNewTransaction] = useState(false);
+  const [accountModalMode, setAccountModalMode] = useState<"view" | "edit" | null>(null);
+  const [activeAccount, setActiveAccount] = useState<BankAccount | null>(null);
   const [transactionModalMode, setTransactionModalMode] = useState<"view" | "edit" | null>(null);
   const [activeTransaction, setActiveTransaction] = useState<BankTransaction | null>(null);
   const [accountForm, setAccountForm] = useState({
@@ -131,7 +137,7 @@ const page = () => {
     bankName: "",
     iban: "",
     accountType: "",
-    currency: currencies[0],
+    currency: currencies[0].value,
     openingBalance: "0.00",
     branch: "",
   });
@@ -200,6 +206,27 @@ const page = () => {
     setTransactionForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const openAccountModal = (mode: "view" | "edit", account: BankAccount) => {
+    setAccountModalMode(mode);
+    setActiveAccount(account);
+    if (mode === "edit") {
+      setAccountForm({
+        accountName: account.name,
+        bankName: account.bankName,
+        iban: account.iban,
+        accountType: account.type,
+        currency: account.currency,
+        openingBalance: account.balance.toFixed(2),
+        branch: account.branch,
+      });
+    }
+  };
+
+  const closeAccountModal = () => {
+    setAccountModalMode(null);
+    setActiveAccount(null);
+  };
+
   const openTransactionModal = (mode: "view" | "edit", transaction: BankTransaction) => {
     setTransactionModalMode(mode);
     setActiveTransaction(transaction);
@@ -221,16 +248,82 @@ const page = () => {
 
   const handleAccountSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const balanceValue = Number.parseFloat(accountForm.openingBalance);
+    if (
+      !accountForm.accountName.trim() ||
+      !accountForm.bankName.trim() ||
+      !accountForm.accountType ||
+      Number.isNaN(balanceValue)
+    ) {
+      return;
+    }
+
+    const newAccount: BankAccount = {
+      id: `BANK-${String(accounts.length + 1).padStart(3, "0")}`,
+      name: accountForm.accountName.trim(),
+      bankName: accountForm.bankName.trim(),
+      type: accountForm.accountType,
+      currency: accountForm.currency,
+      balance: balanceValue,
+      iban: accountForm.iban.trim() || "-",
+      branch: accountForm.branch.trim() || "-",
+    };
+
+    setAccounts((prev) => [newAccount, ...prev]);
     setShowNewAccount(false);
     setAccountForm({
       accountName: "",
       bankName: "",
       iban: "",
       accountType: "",
-      currency: currencies[0],
+      currency: currencies[0].value,
       openingBalance: "0.00",
       branch: "",
     });
+  };
+
+  const handleAccountEditSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!activeAccount) {
+      return;
+    }
+    const balanceValue = Number.parseFloat(accountForm.openingBalance);
+    if (
+      !accountForm.accountName.trim() ||
+      !accountForm.bankName.trim() ||
+      !accountForm.accountType ||
+      Number.isNaN(balanceValue)
+    ) {
+      return;
+    }
+
+    const nextName = accountForm.accountName.trim();
+    const previousName = activeAccount.name;
+    setAccounts((prev) =>
+      prev.map((account) =>
+        account.id === activeAccount.id
+          ? {
+              ...account,
+              name: nextName,
+              bankName: accountForm.bankName.trim(),
+              iban: accountForm.iban.trim() || "-",
+              type: accountForm.accountType,
+              currency: accountForm.currency,
+              balance: balanceValue,
+              branch: accountForm.branch.trim() || "-",
+            }
+          : account
+      )
+    );
+    if (previousName !== nextName) {
+      setTransactions((prev) =>
+        prev.map((item) => (item.account === previousName ? { ...item, account: nextName } : item))
+      );
+      if (accountFilter === previousName) {
+        setAccountFilter(nextName);
+      }
+    }
+    closeAccountModal();
   };
 
   const handleTransactionSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -346,6 +439,9 @@ const page = () => {
     );
   };
 
+  const getCurrencyLabel = (value: string) =>
+    currencies.find((currency) => currency.value === value)?.label ?? value;
+
   return (
     <DashboardShell
       title="البنوك"
@@ -364,7 +460,18 @@ const page = () => {
           </button>
           <button
             type="button"
-            onClick={() => setShowNewAccount(true)}
+            onClick={() => {
+              setShowNewAccount(true);
+              setAccountForm({
+                accountName: "",
+                bankName: "",
+                iban: "",
+                accountType: "",
+                currency: currencies[0].value,
+                openingBalance: "0.00",
+                branch: "",
+              });
+            }}
             className="rounded-xl bg-(--dash-primary) px-4 py-2 text-xs font-semibold text-white shadow-(--dash-primary-soft)"
           >
             + حساب بنكي جديد
@@ -429,13 +536,15 @@ const page = () => {
             <div className="mt-4 grid grid-cols-2 gap-2">
               <button
                 type="button"
-                className="rounded-lg border border-(--dash-border) bg-white py-2 text-xs text-(--dash-muted)"
+                onClick={() => openAccountModal("view", account)}
+                className="rounded-lg border border-(--dash-border) bg-(--dash-panel-soft) py-2 text-xs font-semibold text-(--dash-text) transition hover:border-(--dash-primary) hover:text-(--dash-primary)"
               >
                 عرض
               </button>
               <button
                 type="button"
-                className="rounded-lg border border-(--dash-border) bg-white py-2 text-xs text-(--dash-muted)"
+                onClick={() => openAccountModal("edit", account)}
+                className="rounded-lg border border-(--dash-border) bg-(--dash-panel-soft) py-2 text-xs font-semibold text-(--dash-text) transition hover:border-(--dash-primary) hover:text-(--dash-primary)"
               >
                 تعديل
               </button>
@@ -625,8 +734,8 @@ const page = () => {
                     className="dash-select mt-2"
                   >
                     {currencies.map((currency) => (
-                      <option key={currency} value={currency}>
-                        {currency}
+                      <option key={currency.value} value={currency.value}>
+                        {currency.label}
                       </option>
                     ))}
                   </select>
@@ -666,6 +775,152 @@ const page = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {accountModalMode && activeAccount && (
+        <div className="dash-modal">
+          <div className="dash-modal-body max-w-xl">
+            <div className="flex items-center justify-between border-b border-(--dash-border) pb-3">
+              <div>
+                <h3 className="text-sm font-semibold text-(--dash-text)">
+                  {accountModalMode === "view" ? "تفاصيل الحساب البنكي" : "تعديل الحساب البنكي"}
+                </h3>
+                <p className="mt-1 text-xs text-(--dash-muted)">{activeAccount.name}</p>
+              </div>
+              <button
+                type="button"
+                onClick={closeAccountModal}
+                className="rounded-lg border border-(--dash-border) px-2 py-1 text-xs text-(--dash-muted)"
+              >
+                إغلاق
+              </button>
+            </div>
+            {accountModalMode === "view" ? (
+              <div className="mt-4 grid gap-3 text-sm text-(--dash-muted) sm:grid-cols-2">
+                <div className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) p-3">
+                  <p className="text-[10px] text-(--dash-muted-2)">البنك</p>
+                  <p className="mt-1 font-semibold text-(--dash-text)">{activeAccount.bankName}</p>
+                </div>
+                <div className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) p-3">
+                  <p className="text-[10px] text-(--dash-muted-2)">نوع الحساب</p>
+                  <p className="mt-1 font-semibold text-(--dash-text)">{activeAccount.type}</p>
+                </div>
+                <div className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) p-3">
+                  <p className="text-[10px] text-(--dash-muted-2)">العملة</p>
+                  <p className="mt-1 font-semibold text-(--dash-text)">{getCurrencyLabel(activeAccount.currency)}</p>
+                </div>
+                <div className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) p-3">
+                  <p className="text-[10px] text-(--dash-muted-2)">الرصيد الحالي</p>
+                  <p className="mt-1 font-semibold text-(--dash-text)">
+                    {formatCurrency(activeAccount.balance, activeAccount.currency)}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) p-3">
+                  <p className="text-[10px] text-(--dash-muted-2)">رقم الحساب (IBAN)</p>
+                  <p className="mt-1 font-semibold text-(--dash-text)">{activeAccount.iban}</p>
+                </div>
+                <div className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) p-3">
+                  <p className="text-[10px] text-(--dash-muted-2)">الفرع</p>
+                  <p className="mt-1 font-semibold text-(--dash-text)">{activeAccount.branch}</p>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleAccountEditSubmit} className="mt-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="dash-label sm:col-span-2">
+                    اسم الحساب
+                    <input
+                      value={accountForm.accountName}
+                      onChange={(event) => handleAccountChange("accountName", event.target.value)}
+                      className="dash-input mt-2"
+                      placeholder="مثال: البنك الأهلي - حساب جاري"
+                    />
+                  </label>
+                  <label className="dash-label sm:col-span-2">
+                    اسم البنك
+                    <input
+                      value={accountForm.bankName}
+                      onChange={(event) => handleAccountChange("bankName", event.target.value)}
+                      className="dash-input mt-2"
+                      placeholder="مثال: البنك الأهلي السعودي"
+                    />
+                  </label>
+                  <label className="dash-label">
+                    رقم الحساب (IBAN)
+                    <input
+                      value={accountForm.iban}
+                      onChange={(event) => handleAccountChange("iban", event.target.value)}
+                      className="dash-input mt-2"
+                      placeholder="SA..."
+                    />
+                  </label>
+                  <label className="dash-label">
+                    الفرع
+                    <input
+                      value={accountForm.branch}
+                      onChange={(event) => handleAccountChange("branch", event.target.value)}
+                      className="dash-input mt-2"
+                      placeholder="مثال: الرياض - المركز"
+                    />
+                  </label>
+                  <label className="dash-label">
+                    نوع الحساب
+                    <select
+                      value={accountForm.accountType}
+                      onChange={(event) => handleAccountChange("accountType", event.target.value)}
+                      className="dash-select mt-2"
+                    >
+                      <option value="">اختر نوع الحساب</option>
+                      {accountTypes.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="dash-label">
+                    العملة
+                    <select
+                      value={accountForm.currency}
+                      onChange={(event) => handleAccountChange("currency", event.target.value)}
+                      className="dash-select mt-2"
+                    >
+                      {currencies.map((currency) => (
+                        <option key={currency.value} value={currency.value}>
+                          {currency.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="dash-label sm:col-span-2">
+                    الرصيد الحالي
+                    <input
+                      value={accountForm.openingBalance}
+                      onChange={(event) => handleAccountChange("openingBalance", event.target.value)}
+                      className="dash-input mt-2"
+                      placeholder="0.00"
+                    />
+                  </label>
+                </div>
+                <div className="mt-4 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={closeAccountModal}
+                    className="rounded-lg border border-(--dash-border) px-4 py-2 text-xs text-(--dash-muted)"
+                  >
+                    إلغاء
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-lg bg-(--dash-primary) px-4 py-2 text-xs font-semibold text-white"
+                  >
+                    حفظ التعديل
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
