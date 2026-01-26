@@ -25,7 +25,7 @@ const page = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                   isActive
-                    ? "border-emerald-700 bg-emerald-700 text-white"
+                    ? "border-(--dash-primary) bg-(--dash-primary) text-white"
                     : "border-(--dash-border) bg-(--dash-panel-soft) text-(--dash-text)"
                 }`}
               >
@@ -66,7 +66,7 @@ const page = () => {
           <div className="mt-6 flex justify-end">
             <button
               type="button"
-              className="rounded-2xl bg-emerald-700 px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20"
+              className="rounded-2xl bg-(--dash-primary) px-6 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft)"
             >
               إضافة سند
             </button>

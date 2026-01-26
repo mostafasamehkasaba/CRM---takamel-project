@@ -143,6 +143,11 @@ const sidebarIconMap: Record<string, ReactNode> = {
       <path fill="currentColor" d="M3 7 12 2l9 5-9 5-9-5Zm2 6 7 4 7-4v7l-7 4-7-4v-7Z" />
     </svg>
   ),
+  "/item-display": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path fill="currentColor" d="M3 7 12 2l9 5-9 5-9-5Zm2 6 7 4 7-4v7l-7 4-7-4v-7Z" />
+    </svg>
+  ),
   "/inventory": (
     <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
       <path
@@ -289,6 +294,7 @@ const sidebarNavigation: Array<SidebarLink | SidebarGroup> = [
       { label: "تكلفة الصنف", href: "/item-costs" },
       { label: "أقصى كمية للصنف", href: "/item-max-qty" },
       { label: "وحدة الصنف", href: "/item-units" },
+      { label: "عرض الصنف", href: "/item-display" },
     ],
   },
   { label: "الفواتير", href: "/invoices", badge: "5" },

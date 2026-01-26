@@ -383,24 +383,24 @@ const page = () => {
       ) : null}
 
       <section className="rounded-3xl border border-(--dash-border) bg-(--dash-panel) p-6 shadow-(--dash-shadow)">
-        <div className="relative overflow-hidden rounded-2xl bg-emerald-700 px-5 py-4 text-white">
-          <div className="absolute inset-y-0 left-0 w-28 bg-emerald-600/40" />
+        <div className="relative overflow-hidden rounded-2xl bg-(--dash-primary) px-5 py-4 text-white">
+          <div className="absolute inset-y-0 left-0 w-28 bg-(--dash-primary-soft)" />
           <div className="relative flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-lg font-semibold">سندات قبض نقدية</h3>
-            <span className="text-xs text-emerald-100">عرض سندات القبض مع الحالة.</span>
+            <span className="text-xs text-white/80">عرض سندات القبض مع الحالة.</span>
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
             type="button"
-            className="flex items-center gap-2 rounded-2xl bg-emerald-700 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20"
+            className="flex items-center gap-2 rounded-2xl bg-(--dash-primary) px-5 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft)"
             onClick={() => setShowForm(true)}
           >
             <span className="text-lg">+</span>
             سند قبض جديد
           </button>
           <div className="relative flex-1 min-w-[220px]">
-            <svg viewBox="0 0 24 24" className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-700/70">
+            <svg viewBox="0 0 24 24" className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-(--dash-muted-2)">
               <path
                 fill="currentColor"
                 d="M15.5 14h-.8l-.3-.3a6.5 6.5 0 10-.7.7l.3.3v.8l4.5 4.5 1.3-1.3zM10.5 15a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"
@@ -418,7 +418,7 @@ const page = () => {
         <div className="mt-4 overflow-x-auto">
           <div className="min-w-full overflow-hidden rounded-2xl border border-(--dash-border)">
             <table className="min-w-full text-sm">
-              <thead className="bg-emerald-700 text-white">
+              <thead className="bg-(--dash-primary) text-white">
                 <tr>
                   <th className="px-4 py-3 text-right font-semibold">رقم السند</th>
                   <th className="px-4 py-3 text-right font-semibold">العميل</th>

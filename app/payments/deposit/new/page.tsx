@@ -59,7 +59,7 @@ const page = () => {
             </button>
             <button
               type="button"
-              className="rounded-2xl bg-emerald-700 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20"
+              className="rounded-2xl bg-(--dash-primary) px-5 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft)"
             >
               حفظ الإيداع
             </button>

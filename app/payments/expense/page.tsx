@@ -60,7 +60,7 @@ const page = () => {
         <div className="flex flex-wrap items-center gap-4">
           <Link
             href="/payments/expense/new"
-            className="flex-1 rounded-2xl bg-emerald-900 px-5 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-emerald-600/20"
+            className="flex-1 rounded-2xl bg-(--dash-primary) px-5 py-3 text-center text-sm font-semibold text-white shadow-(--dash-primary-soft)"
           >
             سند صرف جديد
           </Link>
@@ -78,7 +78,7 @@ const page = () => {
         <div className="mt-6 overflow-x-auto">
           <div className="min-w-full overflow-hidden rounded-2xl border border-(--dash-border)">
             <table className="min-w-full text-sm">
-              <thead className="bg-emerald-900 text-white">
+              <thead className="bg-(--dash-primary) text-white">
                 <tr>
                   <th className="px-4 py-3 text-right font-semibold">رقم السند</th>
                   <th className="px-4 py-3 text-right font-semibold">المستفيد</th>
