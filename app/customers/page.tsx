@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import DashboardShell from "../components/DashboardShell";
 
@@ -59,7 +59,7 @@ const initialCustomers = [
   },
 ];
 
-const page = () => {
+const CustomersPageContent = () => {
   const [customers, setCustomers] = useState(initialCustomers);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -555,5 +555,17 @@ const page = () => {
     </DashboardShell>
   );
 };
+
+const page = () => (
+  <Suspense
+    fallback={
+      <div className="rounded-3xl border border-(--dash-border) bg-(--dash-panel) p-6 text-sm text-(--dash-muted)">
+        جارٍ التحميل...
+      </div>
+    }
+  >
+    <CustomersPageContent />
+  </Suspense>
+);
 
 export default page;
