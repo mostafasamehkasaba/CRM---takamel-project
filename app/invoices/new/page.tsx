@@ -1,13 +1,15 @@
 ﻿"use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import DashboardShell from "../../components/DashboardShell";
+import { initialProducts } from "../../data/products";
 
 const InvoiceNewPageContent = () => {
   const searchParams = useSearchParams();
   const normalizeInvoiceType = (value: string | null) => {
-    if (value === "sales" || value === "tax" || value === "simple") {
+    if (value === "tax" || value === "simple") {
       return value;
     }
     return "simple";
@@ -17,11 +19,15 @@ const InvoiceNewPageContent = () => {
     { name: "إضافة يدوية", desc: "وصف", qty: "1", price: "0", tax: "15", total: "0" },
   ]);
   const invoiceTypeParam = searchParams.get("type");
-  const [invoiceType, setInvoiceType] = useState<"simple" | "sales" | "tax">(
+  const [invoiceType, setInvoiceType] = useState<"simple" | "tax">(
     normalizeInvoiceType(invoiceTypeParam)
   );
-  const [showProductModal, setShowProductModal] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: "", desc: "", price: "0", tax: "15" });
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [taxType, setTaxType] = useState("ضريبة قيمة مضافة");
+  const productOptions = useMemo(() => {
+    const names = items.map((item) => item.name).filter(Boolean);
+    return Array.from(new Set([...initialProducts.map((item) => item.name), ...names]));
+  }, [items]);
   const [toast, setToast] = useState<{ message: string; tone: "success" | "info" } | null>(null);
 
   const invoiceTypeOptions = [
@@ -36,21 +42,6 @@ const InvoiceNewPageContent = () => {
           <path
             fill="currentColor"
             d="M5 4h10l4 4v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm3 9h8v2H8v-2Zm0-4h8v2H8V9Z"
-          />
-        </svg>
-      ),
-    },
-    {
-      key: "sales",
-      title: "فاتورة مبيعات",
-      description: "تشمل الشحن وطريقة الدفع ومندوب المبيعات.",
-      features: ["شحن وتوصيل", "طريقة الدفع", "مندوب المبيعات"],
-      accent: "from-sky-500/10 via-sky-500/5 to-transparent",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M4 6h14a2 2 0 0 1 2 2v6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6Zm3 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm10 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"
           />
         </svg>
       ),
@@ -73,22 +64,12 @@ const InvoiceNewPageContent = () => {
   ];
 
   const isSimple = invoiceType === "simple";
-  const isSales = invoiceType === "sales";
   const isTax = invoiceType === "tax";
-  const itemGridColumns = isSimple
-    ? "lg:grid-cols-[28px_1.4fr_1fr_0.8fr_0.8fr_1fr]"
-    : "lg:grid-cols-[28px_1.2fr_1fr_0.8fr_0.8fr_1fr_1fr]";
+  const itemGridColumns = "lg:grid-cols-[28px_1.4fr_1fr_0.8fr_0.8fr_1fr]";
   const extraFields = isSimple
     ? [{ label: "الخصم", value: "0" }]
-    : isSales
-    ? [
-        { label: "الخصم", value: "0" },
-        { label: "الشحن", value: "0" },
-        { label: "رسوم الخدمة", value: "0" },
-      ]
     : [
         { label: "الخصم", value: "0" },
-        { label: "الضريبة %", value: "15" },
         { label: "الشحن", value: "0" },
       ];
 
@@ -104,7 +85,7 @@ const InvoiceNewPageContent = () => {
   const handleAddItem = () => {
     setItems((prev) => [
       ...prev,
-      { name: "منتج جديد", desc: "وصف", qty: "1", price: "0", tax: "15", total: "0" },
+      { name: "", desc: "وصف", qty: "1", price: "0", tax: "15", total: "0" },
     ]);
   };
 
@@ -112,20 +93,10 @@ const InvoiceNewPageContent = () => {
     setItems((prev) => prev.filter((_, currentIndex) => currentIndex !== index));
   };
 
-  const handleSaveProduct = () => {
-    setItems((prev) => [
-      ...prev,
-      {
-        name: newProduct.name || "منتج جديد",
-        desc: newProduct.desc || "وصف",
-        qty: "1",
-        price: newProduct.price || "0",
-        tax: newProduct.tax || "15",
-        total: "0",
-      },
-    ]);
-    setNewProduct({ name: "", desc: "", price: "0", tax: "15" });
-    setShowProductModal(false);
+  const handleItemChange = (index: number, field: "name", value: string) => {
+    setItems((prev) =>
+      prev.map((item, currentIndex) => (currentIndex === index ? { ...item, [field]: value } : item))
+    );
   };
 
   const handleSaveDraft = () => {
@@ -206,7 +177,7 @@ const InvoiceNewPageContent = () => {
                   <button
                     key={option.key}
                     type="button"
-                    onClick={() => setInvoiceType(option.key as "simple" | "sales" | "tax")}
+                    onClick={() => setInvoiceType(option.key as "simple" | "tax")}
                     className={`group relative overflow-hidden rounded-2xl border p-4 text-right transition ${
                       isActive
                         ? "border-(--dash-primary) bg-(--dash-panel) shadow-(--dash-shadow)"
@@ -249,16 +220,44 @@ const InvoiceNewPageContent = () => {
           </div>
           <div className="rounded-3xl border border-(--dash-border) bg-(--dash-panel) p-6">
             <div className="grid gap-4 lg:grid-cols-2">
-              <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
-                <span>العميل *</span>
-                <select className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none">
-                  <option value="">اختر العميل</option>
-                  <option>أحمد محمد</option>
-                  <option>سارة العبدالله</option>
-                  <option>مؤسسة النور</option>
-                  <option>شركة المدار</option>
-                </select>
-              </label>
+              <div className="flex flex-col gap-2 text-sm text-(--dash-muted)">
+                <div className="flex items-center justify-between gap-2">
+                  <span>العميل *</span>
+                  {isTax ? (
+                    <Link
+                      href="/customers?new=1"
+                      className="rounded-full border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-1 text-xs text-(--dash-text) hover:bg-(--dash-panel)"
+                    >
+                      عميل جديد
+                    </Link>
+                  ) : null}
+                </div>
+                {isSimple ? (
+                  <input
+                    type="text"
+                    placeholder="اكتب اسم العميل"
+                    className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
+                  />
+                ) : (
+                  <select className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none">
+                    <option value="">اختر العميل</option>
+                    <option>أحمد محمد</option>
+                    <option>سارة العبدالله</option>
+                    <option>مؤسسة النور</option>
+                    <option>شركة المدار</option>
+                  </select>
+                )}
+              </div>
+              {isSimple ? (
+                <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
+                  <span>رقم الموبايل</span>
+                  <input
+                    type="tel"
+                    placeholder="مثال: 05xxxxxxxx"
+                    className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
+                  />
+                </label>
+              ) : null}
               <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
                 <span>العملة *</span>
                 <select className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none">
@@ -275,55 +274,29 @@ const InvoiceNewPageContent = () => {
                   className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none"
                 />
               </label>
-              <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
-                <span>تاريخ الاستحقاق *</span>
-                <input
-                  type="date"
-                  className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none"
-                />
-              </label>
-              {isSales ? (
+              {isTax && paymentMethod === "آجل" ? (
                 <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
-                  <span>طريقة الدفع *</span>
-                  <select className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none">
-                    <option value="">اختر طريقة الدفع</option>
-                    <option>بطاقة بنكية</option>
-                    <option>تحويل بنكي</option>
-                    <option>نقدي</option>
-                    <option>آجل</option>
-                  </select>
-                </label>
-              ) : null}
-              {isSales ? (
-                <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
-                  <span>تاريخ التسليم</span>
+                  <span>تاريخ الاستحقاق *</span>
                   <input
                     type="date"
                     className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none"
                   />
                 </label>
               ) : null}
-              {isSales ? (
-                <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
-                  <span>مندوب المبيعات</span>
-                  <select className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none">
-                    <option value="">اختر المندوب</option>
-                    <option>سارة أحمد</option>
-                    <option>خالد سالم</option>
-                    <option>مروان يوسف</option>
-                  </select>
-                </label>
-              ) : null}
-              {isTax ? (
-                <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
-                  <span>الرقم الضريبي *</span>
-                  <input
-                    type="text"
-                    placeholder="مثال: 310123456700003"
-                    className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none"
-                  />
-                </label>
-              ) : null}
+              <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
+                <span>طريقة الدفع *</span>
+                <select
+                  value={paymentMethod}
+                  onChange={(event) => setPaymentMethod(event.target.value)}
+                  className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none"
+                >
+                  <option value="">اختر طريقة الدفع</option>
+                  <option value="بطاقة">بطاقة بنكية</option>
+                  <option value="تحويل">تحويل بنكي</option>
+                  <option value="نقدي">نقدي</option>
+                  <option value="آجل">آجل</option>
+                </select>
+              </label>
               {isTax ? (
                 <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
                   <span>تاريخ التوريد *</span>
@@ -336,11 +309,25 @@ const InvoiceNewPageContent = () => {
               {isTax ? (
                 <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
                   <span>نوع الضريبة</span>
-                  <select className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none">
+                  <select
+                    value={taxType}
+                    onChange={(event) => setTaxType(event.target.value)}
+                    className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none"
+                  >
                     <option>ضريبة قيمة مضافة</option>
                     <option>ضريبة انتقائية</option>
                     <option>معفى</option>
                   </select>
+                </label>
+              ) : null}
+              {isTax && taxType !== "معفى" ? (
+                <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
+                  <span>نسبة الضريبة %</span>
+                  <input
+                    type="text"
+                    defaultValue="15"
+                    className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none"
+                  />
                 </label>
               ) : null}
               <label className="flex flex-col gap-2 text-sm text-(--dash-muted) lg:col-span-2">
@@ -368,7 +355,7 @@ const InvoiceNewPageContent = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setShowProductModal(true)}
+                onClick={handleAddItem}
                 className="inline-flex items-center gap-2 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-sm text-(--dash-text)"
               >
                 <span className="text-lg">+</span>
@@ -387,7 +374,6 @@ const InvoiceNewPageContent = () => {
                     <span>الوصف</span>
                     <span>الكمية</span>
                     <span>السعر</span>
-                    {isSimple ? null : <span>الضريبة %</span>}
                     <span>المجموع</span>
                   </div>
                   {items.map((row, index) => (
@@ -410,11 +396,18 @@ const InvoiceNewPageContent = () => {
                       </button>
                       <div className="flex flex-col gap-2">
                         <span className="text-xs text-(--dash-muted) lg:hidden">المنتج</span>
-                        <input
-                          type="text"
-                          defaultValue={row.name}
+                        <select
+                          value={row.name}
+                          onChange={(event) => handleItemChange(index, "name", event.target.value)}
                           className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-xs focus:outline-none"
-                        />
+                        >
+                          <option value="">اختر المنتج</option>
+                          {productOptions.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <div className="flex flex-col gap-2">
                         <span className="text-xs text-(--dash-muted) lg:hidden">الوصف</span>
@@ -440,16 +433,6 @@ const InvoiceNewPageContent = () => {
                           className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-xs focus:outline-none"
                         />
                       </div>
-                      {isSimple ? null : (
-                        <div className="flex flex-col gap-2">
-                          <span className="text-xs text-(--dash-muted) lg:hidden">الضريبة %</span>
-                          <input
-                            type="text"
-                            defaultValue={row.tax}
-                            className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-xs focus:outline-none"
-                          />
-                        </div>
-                      )}
                       <div className="flex flex-col gap-2">
                         <span className="text-xs text-(--dash-muted) lg:hidden">المجموع</span>
                         <div className="text-sm">{row.total}</div>
@@ -465,7 +448,7 @@ const InvoiceNewPageContent = () => {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h3 className="text-lg font-semibold">خيارات إضافية</h3>
               <span className="text-xs text-(--dash-muted)">
-                {isSimple ? "بدون ضريبة" : isSales ? "خيارات مبيعات" : "خيارات ضريبية"}
+                {isSimple ? "بدون ضريبة" : taxType === "معفى" ? "بدون ضريبة" : "خيارات ضريبية"}
               </span>
             </div>
             <div className="mt-4 grid gap-4 lg:grid-cols-3">
@@ -500,6 +483,11 @@ const InvoiceNewPageContent = () => {
                 <span className="text-(--dash-text)">1,000 ريال</span>
               </div>
               {isSimple ? (
+                <div className="flex items-center justify-between">
+                  <span>الضريبة</span>
+                  <span className="text-(--dash-text)">0 ريال</span>
+                </div>
+              ) : taxType === "معفى" ? (
                 <div className="flex items-center justify-between">
                   <span>الضريبة</span>
                   <span className="text-(--dash-text)">0 ريال</span>
@@ -559,89 +547,6 @@ const InvoiceNewPageContent = () => {
           </div>
         </aside>
       </section>
-
-      {showProductModal ? (
-        <div className="dash-modal">
-          <div className="dash-modal-body max-w-2xl p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-semibold">إضافة منتج جديد</h3>
-                <p className="mt-1 text-sm text-(--dash-muted)">أضف منتج جديد بسرعة من هنا</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowProductModal(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-(--dash-border) bg-(--dash-panel-soft) text-(--dash-muted)"
-                aria-label="إغلاق النافذة"
-              >
-                <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-                  <path
-                    fill="currentColor"
-                    d="M6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12 19 6.4 17.6 5 12 10.6 6.4 5Z"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            <div className="mt-6 grid gap-4">
-              <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
-                <span>اسم المنتج *</span>
-                <input
-                  type="text"
-                  placeholder="أدخل اسم المنتج"
-                  value={newProduct.name}
-                  onChange={(event) => setNewProduct((prev) => ({ ...prev, name: event.target.value }))}
-                  className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none"
-                />
-              </label>
-              <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
-                <span>الباركود</span>
-                <input
-                  type="text"
-                  placeholder="أدخل الباركود"
-                  className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none"
-                />
-              </label>
-              <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
-                <span>السعر *</span>
-                <input
-                  type="number"
-                  value={newProduct.price}
-                  onChange={(event) => setNewProduct((prev) => ({ ...prev, price: event.target.value }))}
-                  className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none"
-                />
-              </label>
-              <label className="flex flex-col gap-2 text-sm text-(--dash-muted)">
-                <span>الفئة</span>
-                <select className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-text) focus:outline-none">
-                  <option value="">اختر الفئة</option>
-                  <option>إلكترونيات</option>
-                  <option>أغذية</option>
-                  <option>ملابس</option>
-                  <option>أدوات منزلية</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="mt-6 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowProductModal(false)}
-                className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-sm text-(--dash-text)"
-              >
-                إلغاء
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveProduct}
-                className="rounded-xl bg-(--dash-primary) px-4 py-2 text-sm font-semibold text-white"
-              >
-                حفظ المنتج
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       {toast ? (
         <div className="fixed bottom-6 left-6 z-50">

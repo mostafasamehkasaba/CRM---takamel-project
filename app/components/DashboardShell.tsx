@@ -302,6 +302,7 @@ const sidebarNavigation: Array<SidebarLink | SidebarGroup> = [
   { label: "المنتجات", href: "/products" },
   { label: "المشتريات", href: "/purchases" },
   { label: "الموردين", href: "/suppliers" },
+  { label: "المستخدمين", href: "/users" },
   {
     label: "الحسابات",
     iconKey: "/wallets",
@@ -335,7 +336,6 @@ const sidebarNavigation: Array<SidebarLink | SidebarGroup> = [
       { label: "الخزينة", href: "/cash" },
       { label: "التحويلات المالية", href: "/financial-transfers" },
       { label: "سجل الحركة", href: "/movement-log" },
-      { label: "المستخدمين", href: "/users" },
       { label: "سجل النشاط", href: "/activity-log" },
       { label: "خطط الاشتراك", href: "/subscription-plans" },
     ],

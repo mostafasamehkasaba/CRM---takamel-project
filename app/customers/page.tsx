@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import DashboardShell from "../components/DashboardShell";
 
 const initialCustomers = [
@@ -10,6 +11,7 @@ const initialCustomers = [
     status: "نشط",
     email: "info@alnour.com",
     phone: "+966 50 123 4567",
+    taxNumber: "",
     city: "الرياض، المملكة العربية السعودية",
     invoices: 15,
     sales: "125,000 ريال",
@@ -22,6 +24,7 @@ const initialCustomers = [
     status: "نشط",
     email: "contact@alamal.com",
     phone: "+966 50 765 4321",
+    taxNumber: "",
     city: "جدة، المملكة العربية السعودية",
     invoices: 8,
     sales: "65,000 ريال",
@@ -34,6 +37,7 @@ const initialCustomers = [
     status: "نشط",
     email: "info@almustaqbal.com",
     phone: "+966 55 987 6543",
+    taxNumber: "",
     city: "الدمام، المملكة العربية السعودية",
     invoices: 22,
     sales: "185,000 ريال",
@@ -46,6 +50,7 @@ const initialCustomers = [
     status: "غير نشط",
     email: "sales@altaqadum.com",
     phone: "+966 56 034 5678",
+    taxNumber: "",
     city: "مكة المكرمة، المملكة العربية السعودية",
     invoices: 5,
     sales: "42,000 ريال",
@@ -60,12 +65,14 @@ const page = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<(typeof initialCustomers)[number] | null>(null);
   const [query, setQuery] = useState("");
+  const searchParams = useSearchParams();
   const formRef = useRef<HTMLElement | null>(null);
   const viewRef = useRef<HTMLElement | null>(null);
   const [form, setForm] = useState({
     name: "",
     email: "",
     phone: "",
+    taxNumber: "",
     city: "",
     status: "نشط",
     invoices: "0",
@@ -95,6 +102,7 @@ const page = () => {
         item.name,
         item.email,
         item.phone,
+        item.taxNumber,
         item.city,
         item.status,
         item.id,
@@ -120,6 +128,7 @@ const page = () => {
       status: form.status,
       email: form.email.trim() || "info@company.com",
       phone: form.phone.trim() || "+966 50 000 0000",
+      taxNumber: form.taxNumber.trim(),
       city: form.city.trim() || "الرياض، المملكة العربية السعودية",
       invoices: Number.parseInt(form.invoices, 10) || 0,
       sales: form.sales.trim() || "0 ريال",
@@ -136,6 +145,7 @@ const page = () => {
       name: "",
       email: "",
       phone: "",
+      taxNumber: "",
       city: "",
       status: "نشط",
       invoices: "0",
@@ -156,6 +166,7 @@ const page = () => {
       name: target.name,
       email: target.email,
       phone: target.phone,
+      taxNumber: target.taxNumber ?? "",
       city: target.city,
       status: target.status,
       invoices: String(target.invoices),
@@ -177,6 +188,26 @@ const page = () => {
   };
 
   useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      setSelectedCustomer(null);
+      setEditingId(null);
+      setForm({
+        name: "",
+        email: "",
+        phone: "",
+        taxNumber: "",
+        city: "",
+        status: "نشط",
+        invoices: "0",
+        sales: "",
+        paid: "",
+        due: "",
+      });
+      setShowForm(true);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     if (showForm && formRef.current) {
       formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -194,7 +225,7 @@ const page = () => {
       subtitle="إدارة قاعدة بيانات العملاء"
       exportData={{
         filename: "customers",
-        headers: ["رقم العميل", "الاسم", "الحالة", "البريد الإلكتروني", "رقم الهاتف", "المدينة", "عدد الفواتير", "إجمالي المبيعات", "المدفوع", "المستحق"],
+        headers: ["رقم العميل", "الاسم", "الحالة", "البريد الإلكتروني", "رقم الهاتف", "المدينة", "عدد الفواتير", "إجمالي المبيعات", "المدفوع", "المستحق", "الرقم الضريبي"],
         rows: customers.map((item) => [
           item.id,
           item.name,
@@ -206,6 +237,7 @@ const page = () => {
           item.sales,
           item.paid,
           item.due,
+          item.taxNumber,
         ]),
       }}
 
@@ -254,6 +286,16 @@ const page = () => {
                 value={form.phone}
                 onChange={(event) => handleFormChange("phone", event.target.value)}
                 placeholder="+966 50 000 0000"
+                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
+              />
+            </label>
+            <label className="text-sm text-(--dash-muted)">
+              <span className="mb-2 block font-semibold text-(--dash-text)">الرقم الضريبي</span>
+              <input
+                type="text"
+                value={form.taxNumber}
+                onChange={(event) => handleFormChange("taxNumber", event.target.value)}
+                placeholder="مثال: 310123456700003"
                 className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
               />
             </label>
@@ -364,9 +406,10 @@ const page = () => {
             <div className="rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) p-4 text-sm">
               <p className="font-semibold text-(--dash-text)">بيانات التواصل</p>
               <div className="mt-3 space-y-2 text-(--dash-muted)">
-                <p>البريد: {selectedCustomer.email}</p>
-                <p>الهاتف: {selectedCustomer.phone}</p>
-                <p>المدينة: {selectedCustomer.city}</p>
+              <p>البريد: {selectedCustomer.email}</p>
+              <p>الهاتف: {selectedCustomer.phone}</p>
+              <p>الرقم الضريبي: {selectedCustomer.taxNumber || "-"}</p>
+              <p>المدينة: {selectedCustomer.city}</p>
               </div>
             </div>
             <div className="rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) p-4 text-sm">
