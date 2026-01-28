@@ -15,7 +15,17 @@ const sidebarItems = [
   { label: "الموردين", href: "/suppliers" },
   { label: "المنتجات", href: "/products" },
   { label: "المخزون", href: "/inventory", badge: "3" },
-  { label: "المشتريات", href: "/purchases" },
+  {
+    label: "المشتريات",
+    iconKey: "/purchases",
+    children: [
+      { label: "قائمة المشتريات", href: "/purchases" },
+      { label: "إضافة عملية شراء", href: "/purchases/new" },
+      { label: "إضافة شراء من ملف CSV", href: "/purchases/import-csv" },
+      { label: "قائمة المصروفات", href: "/expenses" },
+      { label: "إضافة المصروفات", href: "/expenses/new" },
+    ],
+  },
   { label: "المصروفات", href: "/expenses" },
   { label: "الخزنة والبنوك", href: "/wallets" },
   { label: "التقارير", href: "/reports" },
@@ -26,7 +36,8 @@ const sidebarItems = [
 ];
 
 type SidebarLink = { label: string; href: string; badge?: string };
-type SidebarGroup = { label: string; children: SidebarLink[]; iconKey?: string };
+type SidebarGroup = { label: string; children: Array<SidebarLink | SidebarGroup>; iconKey?: string };
+type SidebarItem = SidebarLink | SidebarGroup;
 
 const iconPlus = (
   <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
@@ -51,6 +62,66 @@ const sidebarIconMap: Record<string, ReactNode> = {
       <path
         fill="currentColor"
         d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5Z"
+      />
+    </svg>
+  ),
+  "/invoices/tax": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5Z"
+      />
+    </svg>
+  ),
+  "/invoices/tax-simplified": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5Z"
+      />
+    </svg>
+  ),
+  "/reservations": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v3H3V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1Zm14 9v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9h18Zm-4 3h-4v4h4v-4Z"
+      />
+    </svg>
+  ),
+  "/quotes": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5Z"
+      />
+    </svg>
+  ),
+  "/quotes/new": iconPlus,
+  "/invoices/new": iconPlus,
+  "/sales/new": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 3a1 1 0 0 1 1 1v1h2a1 1 0 1 1 0 2h-2v2h2a1 1 0 1 1 0 2h-2v2h2a1 1 0 1 1 0 2h-2v1a1 1 0 1 1-2 0v-1H9a1 1 0 1 1 0-2h2v-2H9a1 1 0 1 1 0-2h2V9H9a1 1 0 1 1 0-2h2V4a1 1 0 0 1 1-1Z"
+      />
+    </svg>
+  ),
+  "/sales/new/tax-invoice": iconPlus,
+  "/sales/new/simplified-tax-invoice": iconPlus,
+  "/sales/new/import-csv": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 3a1 1 0 0 1 1 1v8.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4a1 1 0 0 1 1-1Zm-7 14a1 1 0 0 1 1 1v2h12v-2a1 1 0 1 1 2 0v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a1 1 0 0 1 1-1Z"
+      />
+    </svg>
+  ),
+  "/gift-cards": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M3 6h18a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Zm0 3h18V8H3v1Zm3 5h5v2H6v-2Z"
       />
     </svg>
   ),
@@ -95,6 +166,7 @@ const sidebarIconMap: Record<string, ReactNode> = {
       />
     </svg>
   ),
+  "/customers/new": iconPlus,
   "/suppliers": (
     <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
       <path
@@ -103,6 +175,7 @@ const sidebarIconMap: Record<string, ReactNode> = {
       />
     </svg>
   ),
+  "/suppliers/new": iconPlus,
   "/products": (
     <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
       <path fill="currentColor" d="M3 7 12 2l9 5-9 5-9-5Zm2 6 7 4 7-4v7l-7 4-7-4v-7Z" />
@@ -164,6 +237,15 @@ const sidebarIconMap: Record<string, ReactNode> = {
       />
     </svg>
   ),
+  "/purchases/new": iconPlus,
+  "/purchases/import-csv": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 3a1 1 0 0 1 1 1v8.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4a1 1 0 0 1 1-1Zm-7 14a1 1 0 0 1 1 1v2h12v-2a1 1 0 1 1 2 0v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a1 1 0 0 1 1-1Z"
+      />
+    </svg>
+  ),
   "/expenses": (
     <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
       <path
@@ -172,6 +254,7 @@ const sidebarIconMap: Record<string, ReactNode> = {
       />
     </svg>
   ),
+  "/expenses/new": iconPlus,
   "/wallets": (
     <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
       <path
@@ -190,6 +273,46 @@ const sidebarIconMap: Record<string, ReactNode> = {
       <path
         fill="currentColor"
         d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm6 8H6a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4Z"
+      />
+    </svg>
+  ),
+  "/users/new": iconPlus,
+  "/devices/reports": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-6v2h3a1 1 0 1 1 0 2H7a1 1 0 1 1 0-2h3v-2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm0 2v10h16V6H4Z"
+      />
+    </svg>
+  ),
+  "/devices/new": iconPlus,
+  "/marketers": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm6 8H6a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4Z"
+      />
+    </svg>
+  ),
+  "/marketers/new": iconPlus,
+  "/profile": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12Zm0 2c-4.97 0-9 2.52-9 5.5V21h18v-1.5c0-2.98-4.03-5.5-9-5.5Z"
+      />
+    </svg>
+  ),
+  "/profile/activity": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path fill="currentColor" d="M4 13h5l2-5 4 10 2-5h3v2h-2l-3 7-4-10-2 5H4v-4h2v2Z" />
+    </svg>
+  ),
+  "/profile/notifications": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 2a6 6 0 0 1 6 6v3.2l1.6 2.4a1 1 0 0 1-.84 1.44H5.24a1 1 0 0 1-.84-1.44L6 11.2V8a6 6 0 0 1 6-6Zm0 20a2.5 2.5 0 0 0 2.4-1.8h-4.8A2.5 2.5 0 0 0 12 22Z"
       />
     </svg>
   ),
@@ -227,11 +350,64 @@ const sidebarIconMap: Record<string, ReactNode> = {
       <path fill="currentColor" d="M12 3 2 8v2h20V8l-10-5Zm-8 9h2v7H4v-7Zm5 0h2v7H9v-7Zm5 0h2v7h-2v-7Zm5 0h2v7h-2v-7Z" />
     </svg>
   ),
+  "/banks/new": iconPlus,
+  "/banks/external-transfers": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M7 7h9l-1.5-1.5a1 1 0 1 1 1.4-1.4l3.2 3.2a1 1 0 0 1 0 1.4l-3.2 3.2a1 1 0 0 1-1.4-1.4L16 9H7a1 1 0 1 1 0-2Zm10 10H8l1.5 1.5a1 1 0 1 1-1.4 1.4l-3.2-3.2a1 1 0 0 1 0-1.4l3.2-3.2a1 1 0 0 1 1.4 1.4L8 15h9a1 1 0 1 1 0 2Z"
+      />
+    </svg>
+  ),
+  "/banks/external-transfers/new": iconPlus,
+  "/banks/internal-transfers": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M7 7h9l-1.5-1.5a1 1 0 1 1 1.4-1.4l3.2 3.2a1 1 0 0 1 0 1.4l-3.2 3.2a1 1 0 0 1-1.4-1.4L16 9H7a1 1 0 1 1 0-2Zm10 10H8l1.5 1.5a1 1 0 1 1-1.4 1.4l-3.2-3.2a1 1 0 0 1 0-1.4l3.2-3.2a1 1 0 0 1 1.4 1.4L8 15h9a1 1 0 1 1 0 2Z"
+      />
+    </svg>
+  ),
   "/financial-transfers": (
     <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
       <path
         fill="currentColor"
         d="M7 7h9l-1.5-1.5a1 1 0 1 1 1.4-1.4l3.2 3.2a1 1 0 0 1 0 1.4l-3.2 3.2a1 1 0 0 1-1.4-1.4L16 9H7a1 1 0 1 1 0-2Zm10 10H8l1.5 1.5a1 1 0 1 1-1.4 1.4l-3.2-3.2a1 1 0 0 1 0-1.4l3.2-3.2a1 1 0 0 1 1.4 1.4L8 15h9a1 1 0 1 1 0 2Z"
+      />
+    </svg>
+  ),
+  "/accounts/tree": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M6 3h4v4H6V3Zm8 0h4v4h-4V3ZM4 10h16v2h-7v3h3v6h-8v-6h3v-3H4v-2Z"
+      />
+    </svg>
+  ),
+  "/accounts/new": iconPlus,
+  "/accounts/links": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M7.5 12a3.5 3.5 0 0 1 3.5-3.5h3v2h-3a1.5 1.5 0 0 0 0 3h3v2h-3A3.5 3.5 0 0 1 7.5 12Zm3.5 1.5h3a3.5 3.5 0 0 0 0-7h-3v2h3a1.5 1.5 0 0 1 0 3h-3v2Z"
+      />
+    </svg>
+  ),
+  "/accounts/links/new": iconPlus,
+  "/accounts/entries": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M4 3h16v2H4V3Zm0 6h16v2H4V9Zm0 6h16v2H4v-2Zm0 4h10v2H4v-2Z"
+      />
+    </svg>
+  ),
+  "/accounts/entries/new-cash": iconPlus,
+  "/accounts/opening-entry": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M4 4h16v3H4V4Zm0 5h16v11H4V9Zm4 2v7h2v-7H8Zm4 0v7h2v-7h-2Z"
       />
     </svg>
   ),
@@ -257,11 +433,35 @@ const legacySidebarNavigation: Array<SidebarLink | SidebarGroup> = [
   { label: "لوحة التحكم", href: "/dashboard" },
   { label: "الفواتير", href: "/invoices", badge: "5" },
   { label: "الدفعات", href: "/payments" },
-  { label: "العملاء", href: "/customers" },
-  { label: "الموردين", href: "/suppliers" },
+  {
+    label: "العملاء",
+    iconKey: "/customers",
+    children: [
+      { label: "قائمة العملاء", href: "/customers" },
+      { label: "إضافة العملاء", href: "/customers/new" },
+    ],
+  },
+  {
+    label: "الموردين",
+    iconKey: "/suppliers",
+    children: [
+      { label: "قائمة الموردين", href: "/suppliers" },
+      { label: "إضافة مورد", href: "/suppliers/new" },
+    ],
+  },
   { label: "المنتجات", href: "/products" },
   { label: "المخزون", href: "/inventory", badge: "3" },
-  { label: "المشتريات", href: "/purchases" },
+  {
+    label: "المشتريات",
+    iconKey: "/purchases",
+    children: [
+      { label: "قائمة المشتريات", href: "/purchases" },
+      { label: "إضافة عملية شراء", href: "/purchases/new" },
+      { label: "شراء ملف من CSV", href: "/purchases/import-csv" },
+      { label: "قائمة المصروفات", href: "/expenses" },
+      { label: "إضافة مصروفات", href: "/expenses/new" },
+    ],
+  },
   { label: "المصروفات", href: "/expenses" },
   {
     label: "الخزنة والبنوك",
@@ -281,12 +481,13 @@ const legacySidebarNavigation: Array<SidebarLink | SidebarGroup> = [
 ];
 
 */
-const sidebarNavigation: Array<SidebarLink | SidebarGroup> = [
+const sidebarNavigation: Array<SidebarItem> = [
   { label: "الرئيسية", href: "/dashboard" },
   {
     label: "الأصناف",
     iconKey: "/products",
     children: [
+      { label: "المنتجات", href: "/products" },
       { label: "نوع الصنف", href: "/item-types" },
       { label: "اسم الصنف", href: "/item-names" },
       { label: "كود الصنف", href: "/item-codes" },
@@ -297,21 +498,90 @@ const sidebarNavigation: Array<SidebarLink | SidebarGroup> = [
       { label: "عرض الصنف", href: "/item-display" },
     ],
   },
-  { label: "الفواتير", href: "/invoices", badge: "5" },
-  { label: "العملاء", href: "/customers" },
-  { label: "المنتجات", href: "/products" },
-  { label: "المشتريات", href: "/purchases" },
-  { label: "الموردين", href: "/suppliers" },
-  { label: "المستخدمين", href: "/users" },
   {
-    label: "الحسابات",
-    iconKey: "/wallets",
+    label: "المبيعات",
+    iconKey: "/invoices",
     children: [
-      { label: "إدارة الورديات", href: "/shifts" },
-      { label: "المحافظ المالية", href: "/wallets" },
+      { label: "جميع المبيعات", href: "/invoices", badge: "5" },
+      { label: "فواتير ضريبية", href: "/invoices/tax" },
+      { label: "فواتير ضريبية مبسطة", href: "/invoices/tax-simplified" },
+      { label: "الحجوزات", href: "/reservations" },
+      {
+        label: "عملية بيع جديدة",
+        iconKey: "/sales/new",
+        children: [
+          { label: "إضافة فاتورة ضريبية", href: "/sales/new/tax-invoice" },
+          { label: "إضافة فاتورة ضريبية مبسطة", href: "/sales/new/simplified-tax-invoice" },
+          { label: "إضافة بيع من ملف CSV", href: "/sales/new/import-csv" },
+        ],
+      },
+      { label: "قائمة كروت الهدايا", href: "/gift-cards" },
     ],
   },
-  { label: "التقرير", href: "/reports" },
+  {
+    label: "عروض الأسعار",
+    iconKey: "/quotes",
+    children: [
+      { label: "قائمة عروض الأسعار", href: "/quotes" },
+      { label: "إضافة عرض سعر جديد", href: "/quotes/new" },
+    ],
+  },
+  {
+    label: "المشتريات",
+    iconKey: "/purchases",
+    children: [
+      { label: "قائمة المشتريات", href: "/purchases" },
+      { label: "إضافة عملية شراء", href: "/purchases/new" },
+      { label: "إضافة شراء من ملف CSV", href: "/purchases/import-csv" },
+      { label: "قائمة المصروفات", href: "/expenses" },
+      { label: "إضافة المصروفات", href: "/expenses/new" },
+    ],
+  },
+  {
+    label: "المستخدمين والأجهزة",
+    iconKey: "/users",
+    children: [
+      { label: "قائمة المستخدمين", href: "/users" },
+      { label: "إضافة مستخدم", href: "/users/new" },
+      { label: "أجهزة إصدار التقارير", href: "/devices/reports" },
+      { label: "إضافة جهاز", href: "/devices/new" },
+    ],
+  },
+  {
+    label: "العملاء",
+    iconKey: "/customers",
+    children: [
+      { label: "قائمة العملاء", href: "/customers" },
+      { label: "إضافة العملاء", href: "/customers/new" },
+    ],
+  },
+  {
+    label: "الموردين",
+    iconKey: "/suppliers",
+    children: [
+      { label: "قائمة الموردين", href: "/suppliers" },
+      { label: "إضافة مورد", href: "/suppliers/new" },
+    ],
+  },
+  {
+    label: "المسوقين",
+    iconKey: "/marketers",
+    children: [
+      { label: "المسوقين", href: "/marketers" },
+      { label: "إضافة مسوق", href: "/marketers/new" },
+    ],
+  },
+  {
+    label: "البنوك",
+    iconKey: "/banks",
+    children: [
+      { label: "قائمة البنوك", href: "/banks" },
+      { label: "إضافة بنك", href: "/banks/new" },
+      { label: "تحويلات بنكية خارجية", href: "/banks/external-transfers" },
+      { label: "إضافة تحويل بنكي خارجي", href: "/banks/external-transfers/new" },
+      { label: "تحويلات بنكية داخلية", href: "/banks/internal-transfers" },
+    ],
+  },
   {
     label: "السندات",
     iconKey: "/payments",
@@ -326,18 +596,32 @@ const sidebarNavigation: Array<SidebarLink | SidebarGroup> = [
       { label: "إضافة سند سحب نقدية من البنك", href: "/payments/withdraw/new" },
     ],
   },
-  { label: "الاعدادات", href: "/settings" },
+  {
+    label: "الحسابات العامة",
+    iconKey: "/wallets",
+    children: [
+      { label: "الشجرة المحاسبية", href: "/accounts/tree" },
+      { label: "إضافة حساب", href: "/accounts/new" },
+      { label: "الروابط المحاسبية", href: "/accounts/links" },
+      { label: "إضافة روابط محاسبية", href: "/accounts/links/new" },
+      { label: "القيود المحاسبية", href: "/accounts/entries" },
+      { label: "إضافة سند قيد نقدي", href: "/accounts/entries/new-cash" },
+      { label: "القيد الافتتاحي", href: "/accounts/opening-entry" },
+    ],
+  },
+  { label: "إعدادات", href: "/settings" },
+  { label: "التقارير", href: "/reports" },
   {
     label: "المزيد",
     iconKey: "/reports",
     children: [
+      { label: "إضافة فاتورة", href: "/invoices/new" },
       { label: "المخزون", href: "/inventory", badge: "3" },
-      { label: "المصروفات", href: "/expenses" },
-      { label: "الخزينة", href: "/cash" },
-      { label: "التحويلات المالية", href: "/financial-transfers" },
-      { label: "سجل الحركة", href: "/movement-log" },
       { label: "سجل النشاط", href: "/activity-log" },
       { label: "خطط الاشتراك", href: "/subscription-plans" },
+      { label: "الملف الشخصي", href: "/profile" },
+      { label: "سجل النشاط الشخصي", href: "/profile/activity" },
+      { label: "إعدادات الإشعارات", href: "/profile/notifications" },
     ],
   },
 ];
@@ -477,6 +761,95 @@ const DashboardShell = ({
     setIsSidebarOpen(false);
   }, [pathname]);
 
+  const isSidebarGroup = (item: SidebarItem): item is SidebarGroup => "children" in item;
+
+  const hasActiveChild = (items: SidebarItem[]) =>
+    items.some((child) => (isSidebarGroup(child) ? hasActiveChild(child.children) : child.href === pathname));
+
+  const renderSidebarItems = (items: SidebarItem[], depth = 0) =>
+    items.map((item) => {
+      if (isSidebarGroup(item)) {
+        const isActive = hasActiveChild(item.children);
+        const isNested = depth > 0;
+        return (
+          <details
+            key={item.label}
+            open={isActive}
+            className={`group rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 ${
+              isNested ? "text-xs" : "text-sm"
+            }`}
+          >
+            <summary
+              className={`flex cursor-pointer list-none items-center justify-between rounded-lg px-2 py-2 transition ${
+                isActive ? "text-(--dash-text)" : "text-(--dash-muted)"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span
+                  className={`flex items-center justify-center rounded-lg ${
+                    isNested ? "h-7 w-7" : "h-8 w-8"
+                  } ${
+                    isActive
+                      ? "bg-(--dash-primary) text-white"
+                      : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
+                  }`}
+                >
+                  {getSidebarIcon(item.iconKey ?? "wallets-group")}
+                </span>
+                <span className={isNested ? "text-xs font-medium" : "font-medium"}>{item.label}</span>
+              </span>
+              <svg
+                viewBox="0 0 24 24"
+                className={`${isNested ? "h-3 w-3" : "h-4 w-4"} text-(--dash-muted-2) transition group-open:rotate-180`}
+                aria-hidden="true"
+              >
+                <path fill="currentColor" d="M7 10l5 5 5-5H7Z" />
+              </svg>
+            </summary>
+            <div className={`mt-2 space-y-2 pb-2 ${isNested ? "ps-3" : ""}`}>
+              {renderSidebarItems(item.children, depth + 1)}
+            </div>
+          </details>
+        );
+      }
+
+      const isActive = pathname === item.href;
+      const isNested = depth > 0;
+      return (
+        <Link
+          key={item.label}
+          href={item.href}
+          className={`${
+            isNested
+              ? "flex items-center justify-between rounded-lg px-3 py-2 text-xs transition"
+              : "flex w-full items-center justify-between rounded-xl px-4 py-3 transition"
+          } ${
+            isActive
+              ? "bg-(--dash-primary) text-white shadow-(--dash-primary-soft)"
+              : isNested
+              ? "text-(--dash-muted) hover:bg-(--dash-panel-glass)"
+              : "text-(--dash-muted) hover:bg-(--dash-panel-soft)"
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <span
+              className={`flex items-center justify-center rounded-lg ${isNested ? "h-7 w-7" : "h-8 w-8"} ${
+                isActive ? "bg-white/15 text-white" : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
+              }`}
+            >
+              {getSidebarIcon(item.href)}
+            </span>
+            <span className={isNested ? "text-xs" : "font-medium"}>{item.label}</span>
+          </span>
+          {item.badge ? (
+            <span className="rounded-full bg-(--dash-danger) px-2 py-0.5 text-xs font-semibold text-white">
+              {item.badge}
+            </span>
+          ) : null}
+        </Link>
+      );
+    });
+
   const sidebarContent = (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between gap-3 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) p-4">
@@ -517,103 +890,7 @@ const DashboardShell = ({
       </div>
 
       <nav className="dash-scroll mt-8 flex-1 space-y-3 overflow-y-auto pr-1 text-sm">
-        {sidebarNavigation.map((item) => {
-          const isGroup = "children" in item;
-          const isActive = isGroup ? item.children.some((child) => child.href === pathname) : pathname === item.href;
-
-          if (isGroup) {
-            return (
-              <details
-                key={item.label}
-                open={isActive}
-                className="group rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
-              >
-                <summary
-                  className={`flex cursor-pointer list-none items-center justify-between rounded-lg px-2 py-2 transition ${
-                    isActive ? "text-(--dash-text)" : "text-(--dash-muted)"
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <span
-                      className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                        isActive
-                          ? "bg-(--dash-primary) text-white"
-                          : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
-                      }`}
-                    >
-                      {getSidebarIcon(item.iconKey ?? "wallets-group")}
-                    </span>
-                    <span className="font-medium">{item.label}</span>
-                  </span>
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-4 w-4 text-(--dash-muted-2) transition group-open:rotate-180"
-                    aria-hidden="true"
-                  >
-                    <path fill="currentColor" d="M7 10l5 5 5-5H7Z" />
-                  </svg>
-                </summary>
-                <div className="mt-2 space-y-2 pb-2">
-                  {item.children.map((child) => {
-                    const isChildActive = pathname === child.href;
-                    return (
-                      <Link
-                        key={child.label}
-                        href={child.href}
-                        className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs transition ${
-                          isChildActive
-                            ? "bg-(--dash-primary) text-white shadow-(--dash-primary-soft)"
-                            : "text-(--dash-muted) hover:bg-(--dash-panel-glass)"
-                        }`}
-                      >
-                        <span className="flex items-center gap-2">
-                          <span
-                            className={`flex h-7 w-7 items-center justify-center rounded-lg ${
-                              isChildActive
-                                ? "bg-white/15 text-white"
-                                : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
-                            }`}
-                          >
-                            {getSidebarIcon(child.href)}
-                          </span>
-                          <span>{child.label}</span>
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </details>
-            );
-          }
-
-          return (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`flex w-full items-center justify-between rounded-xl px-4 py-3 transition ${
-                isActive
-                  ? "bg-(--dash-primary) text-white shadow-(--dash-primary-soft)"
-                  : "text-(--dash-muted) hover:bg-(--dash-panel-soft)"
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <span
-                  className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                    isActive ? "bg-white/15 text-white" : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
-                  }`}
-                >
-                  {getSidebarIcon(item.href)}
-                </span>
-                <span className="font-medium">{item.label}</span>
-              </span>
-              {item.badge ? (
-                <span className="rounded-full bg-(--dash-danger) px-2 py-0.5 text-xs font-semibold text-white">
-                  {item.badge}
-                </span>
-              ) : null}
-            </Link>
-          );
-        })}
+        {renderSidebarItems(sidebarNavigation)}
       </nav>
 
       <button

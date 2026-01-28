@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import DashboardShell from "../components/DashboardShell";
+import DashboardShell from "../../components/DashboardShell";
 
 type PaymentStatus = "مدفوع" | "معلق" | "جزئي";
 
@@ -12,7 +12,7 @@ type SaleRow = {
   reference: string;
   cashier: string;
   customer: string;
-  invoiceStatus: "مكتملة" | "ملغاة";
+  saleStatus: "مكتملة" | "مرتجع";
   total: number;
   paid: number;
   remaining: number;
@@ -30,7 +30,7 @@ const rows: SaleRow[] = [
     reference: "SALE/POS0411",
     cashier: "شركة تجريبى",
     customer: "شخص عام",
-    invoiceStatus: "مكتملة",
+    saleStatus: "مكتملة",
     total: 35,
     paid: 35,
     remaining: 0,
@@ -46,7 +46,7 @@ const rows: SaleRow[] = [
     reference: "SALE/POS0410",
     cashier: "شركة تجريبى",
     customer: "شخص عام",
-    invoiceStatus: "مكتملة",
+    saleStatus: "مكتملة",
     total: 30,
     paid: 30,
     remaining: 0,
@@ -62,7 +62,7 @@ const rows: SaleRow[] = [
     reference: "SALE/POS0409",
     cashier: "شركة تجريبى",
     customer: "شخص عام",
-    invoiceStatus: "مكتملة",
+    saleStatus: "مكتملة",
     total: 34.5,
     paid: 34.5,
     remaining: 0,
@@ -78,7 +78,7 @@ const rows: SaleRow[] = [
     reference: "SALE/POS0408",
     cashier: "شركة تجريبى",
     customer: "شخص عام",
-    invoiceStatus: "مكتملة",
+    saleStatus: "مكتملة",
     total: 16,
     paid: 16,
     remaining: 0,
@@ -94,12 +94,12 @@ const rows: SaleRow[] = [
     reference: "SALE0027",
     cashier: "شركة تجريبى",
     customer: "شخص عام",
-    invoiceStatus: "ملغاة",
-    total: 8,
+    saleStatus: "مرتجع",
+    total: -8,
     paid: 0,
-    remaining: 8,
-    subtotal: 6.96,
-    tax: 1.04,
+    remaining: -8,
+    subtotal: -6.96,
+    tax: -1.04,
     paymentStatus: "معلق",
     paymentType: "نقدي",
   },
@@ -110,7 +110,7 @@ const rows: SaleRow[] = [
     reference: "SALE/POS0407",
     cashier: "شركة تجريبى",
     customer: "شخص عام",
-    invoiceStatus: "مكتملة",
+    saleStatus: "مكتملة",
     total: 60,
     paid: 60,
     remaining: 0,
@@ -126,7 +126,7 @@ const rows: SaleRow[] = [
     reference: "SALE/POS0406",
     cashier: "شركة تجريبى",
     customer: "عميل افتراضي",
-    invoiceStatus: "مكتملة",
+    saleStatus: "مكتملة",
     total: 15,
     paid: 15,
     remaining: 0,
@@ -142,7 +142,7 @@ const rows: SaleRow[] = [
     reference: "SALE/POS0405",
     cashier: "شركة تجريبى",
     customer: "عميل افتراضي",
-    invoiceStatus: "مكتملة",
+    saleStatus: "مكتملة",
     total: 35,
     paid: 35,
     remaining: 0,
@@ -158,7 +158,7 @@ const rows: SaleRow[] = [
     reference: "SALE/POS0404",
     cashier: "شركة تجريبى",
     customer: "عميل افتراضي",
-    invoiceStatus: "مكتملة",
+    saleStatus: "مكتملة",
     total: 105,
     paid: 105,
     remaining: 0,
@@ -174,12 +174,28 @@ const rows: SaleRow[] = [
     reference: "SALE/POS0403",
     cashier: "شركة تجريبى",
     customer: "عميل افتراضي",
-    invoiceStatus: "مكتملة",
+    saleStatus: "مكتملة",
     total: 60,
     paid: 60,
     remaining: 0,
     subtotal: 52.17,
     tax: 7.83,
+    paymentStatus: "مدفوع",
+    paymentType: "شبكة",
+  },
+  {
+    id: 314,
+    date: "21/01/2026",
+    time: "20:19:53",
+    reference: "SALE/POS0402",
+    cashier: "شركة تجريبى",
+    customer: "عميل افتراضي",
+    saleStatus: "مكتملة",
+    total: 45,
+    paid: 45,
+    remaining: 0,
+    subtotal: 39.13,
+    tax: 5.87,
     paymentStatus: "مدفوع",
     paymentType: "شبكة",
   },
@@ -191,12 +207,13 @@ const statusStyles: Record<PaymentStatus, string> = {
   جزئي: "bg-(--dash-warning-soft) text-(--dash-warning)",
 };
 
-const invoiceStyles: Record<SaleRow["invoiceStatus"], string> = {
+const saleStyles: Record<SaleRow["saleStatus"], string> = {
   مكتملة: "bg-(--dash-success) text-white",
-  ملغاة: "bg-(--dash-danger) text-white",
+  مرتجع: "bg-(--dash-danger) text-white",
 };
 
-const formatNumber = (value: number) => value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatNumber = (value: number) =>
+  value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const Page = () => {
   const [selectedRows, setSelectedRows] = useState<Record<number, boolean>>({});
@@ -206,7 +223,40 @@ const Page = () => {
 
   const actionItems = [
     {
-      label: "تفاصيل فاتورة المبيعات",
+      label: "بيع مكرر",
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+          <path
+            fill="currentColor"
+            d="M12 5a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6a1 1 0 0 1 1-1Z"
+          />
+        </svg>
+      ),
+    },
+    {
+      label: "عرض الفاتورة الضريبية المبسطة",
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+          <path
+            fill="currentColor"
+            d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5ZM7 12h10v2H7v-2Zm0 4h8v2H7v-2Z"
+          />
+        </svg>
+      ),
+    },
+    {
+      label: "عرض الفاتورة الضريبية",
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+          <path
+            fill="currentColor"
+            d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5ZM7 12h10v2H7v-2Zm0 4h6v2H7v-2Z"
+          />
+        </svg>
+      ),
+    },
+    {
+      label: "تفاصيل الفاتورة",
       icon: (
         <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
           <path
@@ -217,12 +267,12 @@ const Page = () => {
       ),
     },
     {
-      label: "تكرار فاتورة المبيعات",
+      label: "ارجاع مبيعات",
       icon: (
         <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
           <path
             fill="currentColor"
-            d="M7 7h10a2 2 0 0 1 2 2v8h-2V9H7V7Zm-2 3h10a2 2 0 0 1 2 2v8H5a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2Z"
+            d="M7 7h9l-1.5-1.5a1 1 0 1 1 1.4-1.4l3.2 3.2a1 1 0 0 1 0 1.4l-3.2 3.2a1 1 0 0 1-1.4-1.4L16 9H7a1 1 0 1 1 0-2Z"
           />
         </svg>
       ),
@@ -245,17 +295,6 @@ const Page = () => {
           <path
             fill="currentColor"
             d="M12 3a1 1 0 0 1 1 1v2h2a1 1 0 1 1 0 2h-2v2h2a1 1 0 1 1 0 2h-2v2h2a1 1 0 1 1 0 2h-2v2a1 1 0 1 1-2 0v-2H9a1 1 0 1 1 0-2h2v-2H9a1 1 0 1 1 0-2h2V8H9a1 1 0 1 1 0-2h2V4a1 1 0 0 1 1-1Z"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "إرجاع مبيع",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M7 7h9l-1.5-1.5a1 1 0 1 1 1.4-1.4l3.2 3.2a1 1 0 0 1 0 1.4l-3.2 3.2a1 1 0 0 1-1.4-1.4L16 9H7a1 1 0 1 1 0-2Z"
           />
         </svg>
       ),
@@ -291,34 +330,12 @@ const Page = () => {
       ),
     },
     {
-      label: "تحميل ملف PDF",
+      label: "تحميل بصيغة PDF",
       icon: (
         <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
           <path
             fill="currentColor"
             d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5ZM8 12h8v2H8v-2Zm0 4h6v2H8v-2Z"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "تحميل ملف إكسل",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M4 3h10l6 6v12H4V3Zm10 1.5V9h4.5L14 4.5ZM7 12h2l1.5 2 1.5-2h2l-2.5 3 2.5 3h-2l-1.5-2-1.5 2H7l2.5-3L7 12Z"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "تحميل بصيغة CSV",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5ZM7 12h10v2H7v-2Zm0 4h10v2H7v-2Z"
           />
         </svg>
       ),
@@ -346,12 +363,12 @@ const Page = () => {
       ),
     },
     {
-      label: "سند مسح",
+      label: "فاتورة تسليم",
       icon: (
         <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
           <path
             fill="currentColor"
-            d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5ZM8 13h8v2H8v-2Z"
+            d="M3 7h11v6h2V9h3l2 3v3h-2a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H3V7Zm5 10a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm10 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"
           />
         </svg>
       ),
@@ -375,16 +392,10 @@ const Page = () => {
     }
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        menuRef.current &&
-        menuRef.current.contains(event.target as Node)
-      ) {
+      if (menuRef.current && menuRef.current.contains(event.target as Node)) {
         return;
       }
-      if (
-        menuButtonRef.current &&
-        menuButtonRef.current.contains(event.target as Node)
-      ) {
+      if (menuButtonRef.current && menuButtonRef.current.contains(event.target as Node)) {
         return;
       }
       setOpenMenuId(null);
@@ -419,8 +430,32 @@ const Page = () => {
   }, []);
 
   return (
-    <DashboardShell title="المبيعات" subtitle="جميع المبيعات" hideHeaderFilters>
-      <section className="overflow-hidden rounded-2xl border border-(--dash-border) bg-(--dash-panel) shadow-(--dash-shadow)">
+    <DashboardShell title="فواتير ضريبية مبسطة" subtitle="فواتير ضريبية مبسطة (جميع الفروع)" hideHeaderFilters>
+      <section className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-4 shadow-(--dash-shadow)">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+          <span className="font-semibold text-(--dash-text)">فواتير ضريبية مبسطة (جميع الفروع)</span>
+          <span className="text-(--dash-muted)">البيانات الظاهرة في اخر 30 يوم . برجاء استخدام النموذج لإظهار مزيد من النتائج</span>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 text-sm text-(--dash-muted)">
+            <span>اظهار</span>
+            <select className="rounded-lg border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-1 text-(--dash-text) focus:outline-none">
+              <option>10</option>
+              <option>20</option>
+              <option>50</option>
+            </select>
+          </div>
+          <div className="ms-auto flex min-w-60 items-center gap-2 rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
+            <input
+              type="text"
+              placeholder="بحث"
+              className="w-full bg-transparent text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-6 overflow-hidden rounded-2xl border border-(--dash-border) bg-(--dash-panel) shadow-(--dash-shadow)">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-(--dash-primary) text-white">
@@ -433,12 +468,12 @@ const Page = () => {
                 <th className="px-3 py-3 text-right font-semibold">الرقم المرجعي</th>
                 <th className="px-3 py-3 text-right font-semibold">كاشير</th>
                 <th className="px-3 py-3 text-right font-semibold">عميل</th>
-                <th className="px-3 py-3 text-right font-semibold">حالة فاتورة المبيعات</th>
+                <th className="px-3 py-3 text-right font-semibold">حالة المبيع</th>
                 <th className="px-3 py-3 text-right font-semibold">المجموع الكلي</th>
                 <th className="px-3 py-3 text-right font-semibold">مدفوع</th>
                 <th className="px-3 py-3 text-right font-semibold">المبلغ المتبقي</th>
                 <th className="px-3 py-3 text-right font-semibold">بدون ضريبة</th>
-                <th className="px-3 py-3 text-right font-semibold">ضريبة</th>
+                <th className="px-3 py-3 text-right font-semibold">الضريبة</th>
                 <th className="px-3 py-3 text-right font-semibold">حالة الدفع</th>
                 <th className="px-3 py-3 text-right font-semibold">نوع الدفع</th>
                 <th className="px-3 py-3 text-right font-semibold">الإجراءات</th>
@@ -468,8 +503,8 @@ const Page = () => {
                   <td className="px-3 py-3">{row.cashier}</td>
                   <td className="px-3 py-3">{row.customer}</td>
                   <td className="px-3 py-3">
-                    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold ${invoiceStyles[row.invoiceStatus]}`}>
-                      {row.invoiceStatus}
+                    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold ${saleStyles[row.saleStatus]}`}>
+                      {row.saleStatus}
                     </span>
                   </td>
                   <td className="px-3 py-3 font-semibold">{formatNumber(row.total)}</td>
@@ -497,7 +532,7 @@ const Page = () => {
                     {openMenuId === row.id ? (
                       <div
                         ref={menuRef}
-                        className="absolute end-3 top-12 z-20 w-56 rounded-xl border border-(--dash-border) bg-(--dash-panel) p-2 text-xs shadow-(--dash-shadow)"
+                        className="absolute end-3 top-12 z-20 w-64 rounded-xl border border-(--dash-border) bg-(--dash-panel) p-2 text-xs shadow-(--dash-shadow)"
                       >
                         {actionItems.map((item) => (
                           <button
@@ -532,7 +567,7 @@ const Page = () => {
           </table>
         </div>
       </section>
-      <div className="mt-3 text-sm text-(--dash-muted)">عرض 1 إلى 10 من 87 سجلًا</div>
+      <div className="mt-3 text-sm text-(--dash-muted)">عرض 1 إلى 10 من 75 سجلات</div>
     </DashboardShell>
   );
 };

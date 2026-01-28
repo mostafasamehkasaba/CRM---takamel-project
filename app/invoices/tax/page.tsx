@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import DashboardShell from "../components/DashboardShell";
+import DashboardShell from "../../components/DashboardShell";
 
 type PaymentStatus = "مدفوع" | "معلق" | "جزئي";
 
@@ -12,7 +12,7 @@ type SaleRow = {
   reference: string;
   cashier: string;
   customer: string;
-  invoiceStatus: "مكتملة" | "ملغاة";
+  invoiceStatus: "مكتملة" | "ملغاة" | "مرتجع";
   total: number;
   paid: number;
   remaining: number;
@@ -24,77 +24,13 @@ type SaleRow = {
 
 const rows: SaleRow[] = [
   {
-    id: 324,
-    date: "25/01/2026",
-    time: "22:32:37",
-    reference: "SALE/POS0411",
-    cashier: "شركة تجريبى",
-    customer: "شخص عام",
-    invoiceStatus: "مكتملة",
-    total: 35,
-    paid: 35,
-    remaining: 0,
-    subtotal: 30.43,
-    tax: 4.57,
-    paymentStatus: "مدفوع",
-    paymentType: "نقدي",
-  },
-  {
-    id: 323,
-    date: "25/01/2026",
-    time: "01:54:51",
-    reference: "SALE/POS0410",
-    cashier: "شركة تجريبى",
-    customer: "شخص عام",
-    invoiceStatus: "مكتملة",
-    total: 30,
-    paid: 30,
-    remaining: 0,
-    subtotal: 26.09,
-    tax: 3.91,
-    paymentStatus: "مدفوع",
-    paymentType: "بطاقة",
-  },
-  {
-    id: 322,
-    date: "25/01/2026",
-    time: "00:38:23",
-    reference: "SALE/POS0409",
-    cashier: "شركة تجريبى",
-    customer: "شخص عام",
-    invoiceStatus: "مكتملة",
-    total: 34.5,
-    paid: 34.5,
-    remaining: 0,
-    subtotal: 30,
-    tax: 4.5,
-    paymentStatus: "مدفوع",
-    paymentType: "نقدي",
-  },
-  {
-    id: 321,
-    date: "24/01/2026",
-    time: "02:27:30",
-    reference: "SALE/POS0408",
-    cashier: "شركة تجريبى",
-    customer: "شخص عام",
-    invoiceStatus: "مكتملة",
-    total: 16,
-    paid: 16,
-    remaining: 0,
-    subtotal: 13.91,
-    tax: 2.09,
-    paymentStatus: "مدفوع",
-    paymentType: "نقدي",
-  },
-  {
     id: 320,
     date: "24/01/2026",
     time: "00:24:25",
     reference: "SALE0027",
     cashier: "شركة تجريبى",
     customer: "شخص عام",
-    invoiceStatus: "ملغاة",
+    invoiceStatus: "مكتملة",
     total: 8,
     paid: 0,
     remaining: 8,
@@ -104,84 +40,148 @@ const rows: SaleRow[] = [
     paymentType: "نقدي",
   },
   {
-    id: 319,
-    date: "22/01/2026",
-    time: "23:57:40",
-    reference: "SALE/POS0407",
+    id: 269,
+    date: "05/01/2026",
+    time: "16:02:37",
+    reference: "SALE0026",
+    cashier: "شركة تجريبى",
+    customer: "123",
+    invoiceStatus: "مكتملة",
+    total: 100,
+    paid: 100,
+    remaining: 0,
+    subtotal: 86.96,
+    tax: 13.04,
+    paymentStatus: "مدفوع",
+    paymentType: "شبكة",
+  },
+  {
+    id: 268,
+    date: "05/01/2026",
+    time: "16:01:56",
+    reference: "SALE0025",
+    cashier: "شركة تجريبى",
+    customer: "123",
+    invoiceStatus: "مكتملة",
+    total: 400,
+    paid: 400,
+    remaining: 0,
+    subtotal: 347.83,
+    tax: 52.17,
+    paymentStatus: "مدفوع",
+    paymentType: "نقدي",
+  },
+  {
+    id: 267,
+    date: "05/01/2026",
+    time: "15:58:42",
+    reference: "SALE0023",
+    cashier: "شركة تجريبى",
+    customer: "123",
+    invoiceStatus: "مرتجع",
+    total: -200,
+    paid: 0,
+    remaining: -200,
+    subtotal: -173.91,
+    tax: -26.09,
+    paymentStatus: "مدفوع",
+    paymentType: "نقدي",
+  },
+  {
+    id: 266,
+    date: "05/01/2026",
+    time: "15:57:02",
+    reference: "SALE0024",
+    cashier: "شركة تجريبى",
+    customer: "123",
+    invoiceStatus: "مكتملة",
+    total: 150,
+    paid: 150,
+    remaining: 0,
+    subtotal: 130.43,
+    tax: 19.57,
+    paymentStatus: "مدفوع",
+    paymentType: "شبكة",
+  },
+  {
+    id: 265,
+    date: "05/01/2026",
+    time: "15:52:16",
+    reference: "SALE0023",
+    cashier: "شركة تجريبى",
+    customer: "123",
+    invoiceStatus: "مكتملة",
+    total: 200,
+    paid: 200,
+    remaining: 0,
+    subtotal: 173.91,
+    tax: 26.09,
+    paymentStatus: "مدفوع",
+    paymentType: "شبكة",
+  },
+  {
+    id: 264,
+    date: "05/01/2026",
+    time: "15:51:57",
+    reference: "SALE0022",
+    cashier: "شركة تجريبى",
+    customer: "123",
+    invoiceStatus: "مكتملة",
+    total: 200,
+    paid: 200,
+    remaining: 0,
+    subtotal: 173.91,
+    tax: 26.09,
+    paymentStatus: "مدفوع",
+    paymentType: "نقدي",
+  },
+  {
+    id: 263,
+    date: "05/01/2026",
+    time: "15:44:16",
+    reference: "SALE0021",
+    cashier: "شركة تجريبى",
+    customer: "123",
+    invoiceStatus: "مكتملة",
+    total: 500,
+    paid: 500,
+    remaining: 0,
+    subtotal: 434.78,
+    tax: 65.22,
+    paymentStatus: "مدفوع",
+    paymentType: "نقدي",
+  },
+  {
+    id: 262,
+    date: "05/01/2026",
+    time: "14:18:30",
+    reference: "SALE0020",
     cashier: "شركة تجريبى",
     customer: "شخص عام",
     invoiceStatus: "مكتملة",
-    total: 60,
-    paid: 60,
+    total: 11,
+    paid: 11,
     remaining: 0,
-    subtotal: 52.17,
-    tax: 7.83,
+    subtotal: 9.57,
+    tax: 1.43,
     paymentStatus: "مدفوع",
     paymentType: "شبكة",
   },
   {
-    id: 318,
-    date: "21/01/2026",
-    time: "21:01:56",
-    reference: "SALE/POS0406",
+    id: 261,
+    date: "05/01/2026",
+    time: "13:24:23",
+    reference: "SALE0019",
     cashier: "شركة تجريبى",
-    customer: "عميل افتراضي",
+    customer: "شخص عام",
     invoiceStatus: "مكتملة",
-    total: 15,
-    paid: 15,
+    total: 30,
+    paid: 30,
     remaining: 0,
-    subtotal: 13.04,
-    tax: 1.96,
+    subtotal: 26.09,
+    tax: 3.91,
     paymentStatus: "مدفوع",
-    paymentType: "شبكة",
-  },
-  {
-    id: 317,
-    date: "21/01/2026",
-    time: "21:01:32",
-    reference: "SALE/POS0405",
-    cashier: "شركة تجريبى",
-    customer: "عميل افتراضي",
-    invoiceStatus: "مكتملة",
-    total: 35,
-    paid: 35,
-    remaining: 0,
-    subtotal: 30.43,
-    tax: 4.57,
-    paymentStatus: "مدفوع",
-    paymentType: "شبكة",
-  },
-  {
-    id: 316,
-    date: "21/01/2026",
-    time: "20:22:57",
-    reference: "SALE/POS0404",
-    cashier: "شركة تجريبى",
-    customer: "عميل افتراضي",
-    invoiceStatus: "مكتملة",
-    total: 105,
-    paid: 105,
-    remaining: 0,
-    subtotal: 91.3,
-    tax: 13.7,
-    paymentStatus: "مدفوع",
-    paymentType: "شبكة",
-  },
-  {
-    id: 315,
-    date: "21/01/2026",
-    time: "20:22:38",
-    reference: "SALE/POS0403",
-    cashier: "شركة تجريبى",
-    customer: "عميل افتراضي",
-    invoiceStatus: "مكتملة",
-    total: 60,
-    paid: 60,
-    remaining: 0,
-    subtotal: 52.17,
-    tax: 7.83,
-    paymentStatus: "مدفوع",
-    paymentType: "شبكة",
+    paymentType: "نقدي",
   },
 ];
 
@@ -194,9 +194,11 @@ const statusStyles: Record<PaymentStatus, string> = {
 const invoiceStyles: Record<SaleRow["invoiceStatus"], string> = {
   مكتملة: "bg-(--dash-success) text-white",
   ملغاة: "bg-(--dash-danger) text-white",
+  مرتجع: "bg-(--dash-danger) text-white",
 };
 
-const formatNumber = (value: number) => value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatNumber = (value: number) =>
+  value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const Page = () => {
   const [selectedRows, setSelectedRows] = useState<Record<number, boolean>>({});
@@ -375,16 +377,10 @@ const Page = () => {
     }
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        menuRef.current &&
-        menuRef.current.contains(event.target as Node)
-      ) {
+      if (menuRef.current && menuRef.current.contains(event.target as Node)) {
         return;
       }
-      if (
-        menuButtonRef.current &&
-        menuButtonRef.current.contains(event.target as Node)
-      ) {
+      if (menuButtonRef.current && menuButtonRef.current.contains(event.target as Node)) {
         return;
       }
       setOpenMenuId(null);
@@ -419,8 +415,32 @@ const Page = () => {
   }, []);
 
   return (
-    <DashboardShell title="المبيعات" subtitle="جميع المبيعات" hideHeaderFilters>
-      <section className="overflow-hidden rounded-2xl border border-(--dash-border) bg-(--dash-panel) shadow-(--dash-shadow)">
+    <DashboardShell title="فواتير ضريبية" subtitle="المبيعات (جميع الفروع)" hideHeaderFilters>
+      <section className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-4 shadow-(--dash-shadow)">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+          <span className="font-semibold text-(--dash-text)">المبيعات (جميع الفروع)</span>
+          <span className="text-(--dash-muted)">البيانات الظاهرة في اخر 30 يوم . برجاء استخدام النموذج لإظهار مزيد من النتائج</span>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 text-sm text-(--dash-muted)">
+            <span>اظهار</span>
+            <select className="rounded-lg border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-1 text-(--dash-text) focus:outline-none">
+              <option>10</option>
+              <option>20</option>
+              <option>50</option>
+            </select>
+          </div>
+          <div className="ms-auto flex min-w-60 items-center gap-2 rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
+            <input
+              type="text"
+              placeholder="بحث"
+              className="w-full bg-transparent text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-6 overflow-hidden rounded-2xl border border-(--dash-border) bg-(--dash-panel) shadow-(--dash-shadow)">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-(--dash-primary) text-white">
@@ -532,7 +552,7 @@ const Page = () => {
           </table>
         </div>
       </section>
-      <div className="mt-3 text-sm text-(--dash-muted)">عرض 1 إلى 10 من 87 سجلًا</div>
+      <div className="mt-3 text-sm text-(--dash-muted)">عرض 1 إلى 10 من 12 سجلات</div>
     </DashboardShell>
   );
 };
