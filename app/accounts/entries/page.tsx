@@ -96,7 +96,18 @@ const Page = () => {
 
       <div className="dash-card">
         <div className="dash-table overflow-auto">
-          <table className="w-full min-w-[1200px] text-[13px]">
+          <table className="w-full min-w-[1200px] text-[13px] table-fixed">
+            <colgroup>
+              <col key="0" className="w-[11%]" />
+              <col key="1" className="w-[11%]" />
+              <col key="2" className="w-[11%]" />
+              <col key="3" className="w-[11%]" />
+              <col key="4" className="w-[11%]" />
+              <col key="5" className="w-[11%]" />
+              <col key="6" className="w-[11%]" />
+              <col key="7" className="w-[11%]" />
+              <col key="8" className="w-[11%]" />
+            </colgroup>
             <thead>
               <tr>
                 <th className="px-3 py-2 text-left">رقم القيد</th>
@@ -142,3 +153,4 @@ const Page = () => {
 };
 
 export default Page;
+
