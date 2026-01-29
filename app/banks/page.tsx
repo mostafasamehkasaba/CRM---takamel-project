@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import DashboardShell from "../components/DashboardShell";
+import { useRouter } from "next/navigation";
 
 type BankAccount = {
   id: string;
@@ -128,6 +129,7 @@ const page = () => {
   const [typeFilter, setTypeFilter] = useState("كل المعاملات");
   const [showNewAccount, setShowNewAccount] = useState(false);
   const [showNewTransaction, setShowNewTransaction] = useState(false);
+  const router = useRouter();
   const [accountModalMode, setAccountModalMode] = useState<"view" | "edit" | null>(null);
   const [activeAccount, setActiveAccount] = useState<BankAccount | null>(null);
   const [transactionModalMode, setTransactionModalMode] = useState<"view" | "edit" | null>(null);
@@ -460,18 +462,7 @@ const page = () => {
           </button>
           <button
             type="button"
-            onClick={() => {
-              setShowNewAccount(true);
-              setAccountForm({
-                accountName: "",
-                bankName: "",
-                iban: "",
-                accountType: "",
-                currency: currencies[0].value,
-                openingBalance: "0.00",
-                branch: "",
-              });
-            }}
+            onClick={() => router.push("/banks/new")}
             className="rounded-xl bg-(--dash-primary) px-4 py-2 text-xs font-semibold text-white shadow-(--dash-primary-soft)"
           >
             + حساب بنكي جديد

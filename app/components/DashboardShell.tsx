@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import type { ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -763,10 +763,10 @@ const DashboardShell = ({
 
   const isSidebarGroup = (item: SidebarItem): item is SidebarGroup => "children" in item;
 
-  const hasActiveChild = (items: SidebarItem[]) =>
+  const hasActiveChild = (items: SidebarItem[]): boolean =>
     items.some((child) => (isSidebarGroup(child) ? hasActiveChild(child.children) : child.href === pathname));
 
-  const renderSidebarItems = (items: SidebarItem[], depth = 0) =>
+  const renderSidebarItems = (items: SidebarItem[], depth = 0): ReactElement[] =>
     items.map((item) => {
       if (isSidebarGroup(item)) {
         const isActive = hasActiveChild(item.children);

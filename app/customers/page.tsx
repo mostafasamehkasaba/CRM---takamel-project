@@ -1,571 +1,281 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
 import DashboardShell from "../components/DashboardShell";
 
-const initialCustomers = [
+type CustomerRow = {
+  code: string;
+  name: string;
+  email: string;
+  phone: string;
+  pricingGroup: string;
+  customerGroup: string;
+  taxNumber: string;
+  actualBalance: string;
+  points: string;
+};
+
+const rows: CustomerRow[] = [
   {
-    id: "CUS-001",
-    name: "شركة النور للتجارة",
-    status: "نشط",
-    email: "info@alnour.com",
-    phone: "+966 50 123 4567",
+    code: "103",
+    name: "test010",
+    email: "",
+    phone: "",
+    pricingGroup: "عام",
+    customerGroup: "عام",
     taxNumber: "",
-    city: "الرياض، المملكة العربية السعودية",
-    invoices: 15,
-    sales: "125,000 ريال",
-    paid: "110,000 ريال",
-    due: "15,000 ريال",
+    actualBalance: "3.00-",
+    points: "0.00",
   },
   {
-    id: "CUS-002",
-    name: "مؤسسة الأمل",
-    status: "نشط",
-    email: "contact@alamal.com",
-    phone: "+966 50 765 4321",
+    code: "104",
+    name: "test",
+    email: "admin@solution.com",
+    phone: "966570357361",
+    pricingGroup: "عام",
+    customerGroup: "عام",
     taxNumber: "",
-    city: "جدة، المملكة العربية السعودية",
-    invoices: 8,
-    sales: "65,000 ريال",
-    paid: "56,500 ريال",
-    due: "8,500 ريال",
+    actualBalance: "0.00",
+    points: "0.00",
   },
   {
-    id: "CUS-003",
-    name: "شركة المستقبل",
-    status: "نشط",
-    email: "info@almustaqbal.com",
-    phone: "+966 55 987 6543",
+    code: "105",
+    name: "new55",
+    email: "",
+    phone: "",
+    pricingGroup: "عام",
+    customerGroup: "عام",
     taxNumber: "",
-    city: "الدمام، المملكة العربية السعودية",
-    invoices: 22,
-    sales: "185,000 ريال",
-    paid: "185,000 ريال",
-    due: "0 ريال",
+    actualBalance: "8.00-",
+    points: "3.25",
   },
   {
-    id: "CUS-004",
-    name: "مؤسسة التقدم",
-    status: "غير نشط",
-    email: "sales@altaqadum.com",
-    phone: "+966 56 034 5678",
+    code: "106",
+    name: "محمد",
+    email: "",
+    phone: "",
+    pricingGroup: "عام",
+    customerGroup: "عام",
     taxNumber: "",
-    city: "مكة المكرمة، المملكة العربية السعودية",
-    invoices: 5,
-    sales: "42,000 ريال",
-    paid: "35,300 ريال",
-    due: "6,700 ريال",
+    actualBalance: "0.00",
+    points: "129.25",
+  },
+  {
+    code: "110",
+    name: "123",
+    email: "",
+    phone: "",
+    pricingGroup: "عام",
+    customerGroup: "عام",
+    taxNumber: "",
+    actualBalance: "150.00-",
+    points: "0.00",
+  },
+  {
+    code: "109",
+    name: "تكامل البيانات",
+    email: "gmail.com@966540283038",
+    phone: "966540283038",
+    pricingGroup: "عام",
+    customerGroup: "عام",
+    taxNumber: "",
+    actualBalance: "0.00",
+    points: "0.00",
+  },
+  {
+    code: "1",
+    name: "عميل افتراضي",
+    email: "info@posit.sa",
+    phone: "00",
+    pricingGroup: "عام",
+    customerGroup: "عام",
+    taxNumber: "",
+    actualBalance: "258.25-",
+    points: "0.00",
+  },
+  {
+    code: "108",
+    name: "محمددد",
+    email: "",
+    phone: "966592128972",
+    pricingGroup: "عام",
+    customerGroup: "عام",
+    taxNumber: "",
+    actualBalance: "0.00",
+    points: "0.38",
   },
 ];
 
-const CustomersPageContent = () => {
-  const [customers, setCustomers] = useState(initialCustomers);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [selectedCustomer, setSelectedCustomer] = useState<(typeof initialCustomers)[number] | null>(null);
+const Page = () => {
   const [query, setQuery] = useState("");
-  const searchParams = useSearchParams();
-  const formRef = useRef<HTMLElement | null>(null);
-  const viewRef = useRef<HTMLElement | null>(null);
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    taxNumber: "",
-    city: "",
-    status: "نشط",
-    invoices: "0",
-    sales: "",
-    paid: "",
-    due: "",
-  });
 
-  const summary = useMemo(() => {
-    const totalCustomers = customers.length;
-    const activeCount = customers.filter((item) => item.status === "نشط").length;
-    return [
-      { label: "إجمالي العملاء", value: `${totalCustomers}`, tone: "text-(--dash-text)" },
-      { label: "العملاء النشطون", value: `${activeCount}`, tone: "text-(--dash-success)" },
-      { label: "إجمالي المبيعات", value: "417,000 ريال", tone: "text-(--dash-text)" },
-      { label: "المستحقات", value: "30,200 ريال", tone: "text-(--dash-warning)" },
-    ];
-  }, [customers]);
-
-  const filteredCustomers = useMemo(() => {
+  const filteredRows = useMemo(() => {
     const needle = query.trim().toLowerCase();
     if (!needle) {
-      return customers;
+      return rows;
     }
-    return customers.filter((item) =>
+    return rows.filter((row) =>
       [
-        item.name,
-        item.email,
-        item.phone,
-        item.taxNumber,
-        item.city,
-        item.status,
-        item.id,
+        row.code,
+        row.name,
+        row.email,
+        row.phone,
+        row.pricingGroup,
+        row.customerGroup,
+        row.taxNumber,
+        row.actualBalance,
+        row.points,
       ]
         .join(" ")
         .toLowerCase()
         .includes(needle)
     );
-  }, [customers, query]);
-
-  const handleFormChange = (field: keyof typeof form, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleAddCustomer = () => {
-    const name = form.name.trim();
-    if (!name) {
-      return;
-    }
-    const nextCustomer = {
-      id: editingId ?? `CUS-${String(customers.length + 1).padStart(3, "0")}`,
-      name,
-      status: form.status,
-      email: form.email.trim() || "info@company.com",
-      phone: form.phone.trim() || "+966 50 000 0000",
-      taxNumber: form.taxNumber.trim(),
-      city: form.city.trim() || "الرياض، المملكة العربية السعودية",
-      invoices: Number.parseInt(form.invoices, 10) || 0,
-      sales: form.sales.trim() || "0 ريال",
-      paid: form.paid.trim() || "0 ريال",
-      due: form.due.trim() || "0 ريال",
-    };
-    setCustomers((prev) => {
-      if (editingId) {
-        return prev.map((item) => (item.id === editingId ? nextCustomer : item));
-      }
-      return [...prev, nextCustomer];
-    });
-    setForm({
-      name: "",
-      email: "",
-      phone: "",
-      taxNumber: "",
-      city: "",
-      status: "نشط",
-      invoices: "0",
-      sales: "",
-      paid: "",
-      due: "",
-    });
-    setEditingId(null);
-    setShowForm(false);
-  };
-
-  const handleEditCustomer = (customerId: string) => {
-    const target = customers.find((item) => item.id === customerId);
-    if (!target) {
-      return;
-    }
-    setForm({
-      name: target.name,
-      email: target.email,
-      phone: target.phone,
-      taxNumber: target.taxNumber ?? "",
-      city: target.city,
-      status: target.status,
-      invoices: String(target.invoices),
-      sales: target.sales,
-      paid: target.paid,
-      due: target.due,
-    });
-    setEditingId(target.id);
-    setShowForm(true);
-  };
-
-  const handleViewCustomer = (customerId: string) => {
-    const target = customers.find((item) => item.id === customerId) ?? null;
-    setSelectedCustomer(target);
-  };
-
-  const handleCloseView = () => {
-    setSelectedCustomer(null);
-  };
-
-  useEffect(() => {
-    if (searchParams.get("new") === "1") {
-      setSelectedCustomer(null);
-      setEditingId(null);
-      setForm({
-        name: "",
-        email: "",
-        phone: "",
-        taxNumber: "",
-        city: "",
-        status: "نشط",
-        invoices: "0",
-        sales: "",
-        paid: "",
-        due: "",
-      });
-      setShowForm(true);
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (showForm && formRef.current) {
-      formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [showForm]);
-
-  useEffect(() => {
-    if (selectedCustomer && viewRef.current) {
-      viewRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [selectedCustomer]);
+  }, [query]);
 
   return (
-    <DashboardShell
-      title="العملاء"
-      subtitle="إدارة قاعدة بيانات العملاء"
-      exportData={{
-        filename: "customers",
-        headers: ["رقم العميل", "الاسم", "الحالة", "البريد الإلكتروني", "رقم الهاتف", "المدينة", "عدد الفواتير", "إجمالي المبيعات", "المدفوع", "المستحق", "الرقم الضريبي"],
-        rows: customers.map((item) => [
-          item.id,
-          item.name,
-          item.status,
-          item.email,
-          item.phone,
-          item.city,
-          item.invoices,
-          item.sales,
-          item.paid,
-          item.due,
-          item.taxNumber,
-        ]),
-      }}
-
-      headerAction={
-        <button
-          type="button"
-          className="flex items-center gap-2 rounded-xl bg-(--dash-primary) px-4 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft)"
-          onClick={() => setShowForm((prev) => !prev)}
-        >
-          <span className="text-lg">+</span>
-          عميل جديد
-        </button>
-      }
-    >
-      {showForm ? (
-        <section
-          ref={formRef}
-          className="mb-6 rounded-3xl border border-(--dash-border) bg-(--dash-panel) p-6 shadow-(--dash-shadow)"
-        >
-          <h2 className="text-lg font-semibold">{editingId ? "تعديل بيانات العميل" : "إضافة عميل جديد"}</h2>
-          <div className="mt-4 grid gap-4 lg:grid-cols-3">
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">اسم العميل</span>
-              <input
-                type="text"
-                value={form.name}
-                onChange={(event) => handleFormChange("name", event.target.value)}
-                placeholder="اسم العميل"
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
-              />
-            </label>
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">البريد الإلكتروني</span>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(event) => handleFormChange("email", event.target.value)}
-                placeholder="name@company.com"
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
-              />
-            </label>
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">رقم الهاتف</span>
-              <input
-                type="tel"
-                value={form.phone}
-                onChange={(event) => handleFormChange("phone", event.target.value)}
-                placeholder="+966 50 000 0000"
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
-              />
-            </label>
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">الرقم الضريبي</span>
-              <input
-                type="text"
-                value={form.taxNumber}
-                onChange={(event) => handleFormChange("taxNumber", event.target.value)}
-                placeholder="مثال: 310123456700003"
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
-              />
-            </label>
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">المدينة</span>
-              <input
-                type="text"
-                value={form.city}
-                onChange={(event) => handleFormChange("city", event.target.value)}
-                placeholder="الرياض"
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
-              />
-            </label>
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">الحالة</span>
-              <select
-                value={form.status}
-                onChange={(event) => handleFormChange("status", event.target.value)}
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
-              >
-                <option value="نشط">نشط</option>
-                <option value="غير نشط">غير نشط</option>
-              </select>
-            </label>
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">عدد الفواتير</span>
-              <input
-                type="number"
-                value={form.invoices}
-                onChange={(event) => handleFormChange("invoices", event.target.value)}
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
-              />
-            </label>
-          </div>
-          <div className="mt-4 grid gap-4 lg:grid-cols-3">
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">إجمالي المبيعات</span>
-              <input
-                type="text"
-                value={form.sales}
-                onChange={(event) => handleFormChange("sales", event.target.value)}
-                placeholder="0 ريال"
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
-              />
-            </label>
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">إجمالي المدفوع</span>
-              <input
-                type="text"
-                value={form.paid}
-                onChange={(event) => handleFormChange("paid", event.target.value)}
-                placeholder="0 ريال"
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
-              />
-            </label>
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">المستحقات</span>
-              <input
-                type="text"
-                value={form.due}
-                onChange={(event) => handleFormChange("due", event.target.value)}
-                placeholder="0 ريال"
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
-              />
-            </label>
-          </div>
-          <div className="mt-4 flex justify-end gap-3">
-            <button
-              type="button"
-              className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-sm text-(--dash-text)"
-              onClick={() => {
-                setShowForm(false);
-                setEditingId(null);
-              }}
-            >
-              إلغاء
-            </button>
-            <button
-              type="button"
-              className="rounded-xl bg-(--dash-primary) px-4 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft)"
-              onClick={handleAddCustomer}
-            >
-              {editingId ? "حفظ التعديلات" : "حفظ العميل"}
-            </button>
-          </div>
-        </section>
-      ) : null}
-
-      {selectedCustomer ? (
-        <section
-          ref={viewRef}
-          className="mb-6 rounded-3xl border border-(--dash-border) bg-(--dash-panel) p-6 shadow-(--dash-shadow)"
-        >
+    <DashboardShell title="العملاء" subtitle="البداية / العملاء" hideHeaderFilters>
+      <section className="space-y-4">
+        <div className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold">{selectedCustomer.name}</h2>
-              <p className="mt-1 text-xs text-(--dash-muted)">رقم العميل: {selectedCustomer.id}</p>
-            </div>
-            <button
-              type="button"
-              onClick={handleCloseView}
-              className="rounded-xl border border-(--dash-border) px-4 py-2 text-sm text-(--dash-text)"
-            >
-              إغلاق
-            </button>
-          </div>
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <div className="rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) p-4 text-sm">
-              <p className="font-semibold text-(--dash-text)">بيانات التواصل</p>
-              <div className="mt-3 space-y-2 text-(--dash-muted)">
-              <p>البريد: {selectedCustomer.email}</p>
-              <p>الهاتف: {selectedCustomer.phone}</p>
-              <p>الرقم الضريبي: {selectedCustomer.taxNumber || "-"}</p>
-              <p>المدينة: {selectedCustomer.city}</p>
-              </div>
-            </div>
-            <div className="rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) p-4 text-sm">
-              <p className="font-semibold text-(--dash-text)">الملخص المالي</p>
-              <div className="mt-3 space-y-2 text-(--dash-muted)">
-                <p>إجمالي الفواتير: {selectedCustomer.invoices}</p>
-                <p>إجمالي المبيعات: {selectedCustomer.sales}</p>
-                <p>إجمالي المدفوع: {selectedCustomer.paid}</p>
-                <p>المستحقات: {selectedCustomer.due}</p>
-              </div>
+            <span className="text-sm font-semibold text-(--dash-text)">العملاء</span>
+            <div className="flex items-center gap-2">
+              <button type="button" className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-xs">
+                <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                  <path fill="currentColor" d="M4 6h16v2H4V6Zm0 5h16v2H4v-2Zm0 5h10v2H4v-2Z" />
+                </svg>
+              </button>
+              <button type="button" className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-xs">
+                <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M12 3a1 1 0 0 1 1 1v8.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4a1 1 0 0 1 1-1Z"
+                  />
+                </svg>
+              </button>
+              <button type="button" className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-xs">
+                <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                  <path fill="currentColor" d="M4 5h16v2H4V5Zm0 6h10v2H4v-2Zm0 6h16v2H4v-2Z" />
+                </svg>
+              </button>
             </div>
           </div>
-        </section>
-      ) : null}
+          <p className="mt-3 text-sm text-(--dash-muted)">الرجاء استخدام الجدول أدناه للتنقل أو تصفية النتائج.</p>
+        </div>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {summary.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-5 shadow-(--dash-shadow)"
-          >
-            <p className="text-sm text-(--dash-muted)">{card.label}</p>
-            <p className={`mt-3 text-xl font-semibold ${card.tone}`}>{card.value}</p>
-          </div>
-        ))}
-      </section>
-
-      <section className="mt-6 rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-4 shadow-(--dash-shadow)">
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            className="flex items-center gap-2 rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm text-(--dash-text)"
-          >
-            <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-              <path
-                fill="currentColor"
-                d="M12 3a1 1 0 0 1 1 1v8.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4a1 1 0 0 1 1-1Zm-7 14a1 1 0 0 1 1 1v2h12v-2a1 1 0 1 1 2 0v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a1 1 0 0 1 1-1Z"
+        <div className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 text-sm text-(--dash-muted)">
+              <span>اظهار</span>
+              <select className="rounded-lg border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-1 text-(--dash-text) focus:outline-none">
+                <option>10</option>
+                <option>20</option>
+                <option>50</option>
+              </select>
+            </div>
+            <div className="ms-auto flex min-w-60 items-center gap-2 rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
+              <input
+                type="text"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="بحث"
+                className="w-full bg-transparent text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
               />
-            </svg>
-            تصدير
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-2 rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm text-(--dash-text)"
-          >
-            <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-              <path
-                fill="currentColor"
-                d="M3 5a1 1 0 0 1 1-1h16a1 1 0 0 1 .8 1.6l-6.8 9.06V20a1 1 0 0 1-1.45.9l-3-1.5a1 1 0 0 1-.55-.9v-4.84L3.2 5.6A1 1 0 0 1 3 5Z"
-              />
-            </svg>
-            فلاتر
-          </button>
-          <div className="flex min-w-55 flex-1 items-center gap-2 rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm text-(--dash-text)">
-            <svg viewBox="0 0 24 24" className="h-4 w-4 text-(--dash-muted-2)" aria-hidden="true">
-              <path
-                fill="currentColor"
-                d="M10 2a8 8 0 1 0 5.29 14l4.7 4.7a1 1 0 0 0 1.42-1.4l-4.7-4.7A8 8 0 0 0 10 2Zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z"
-              />
-            </svg>
-            <input
-              type="text"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="بحث بالاسم، البريد الإلكتروني، أو رقم الهاتف..."
-              className="w-full bg-transparent text-sm text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
-            />
+            </div>
           </div>
         </div>
-      </section>
 
-      <section className="mt-6 grid gap-6 lg:grid-cols-2">
-        {filteredCustomers.map((customer) => (
-          <div
-            key={customer.id}
-            className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-5 shadow-(--dash-shadow)"
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-semibold">{customer.name}</h3>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                      customer.status === "نشط"
-                        ? "bg-(--dash-primary) text-white"
-                        : "bg-(--dash-panel-soft) text-(--dash-muted)"
-                    }`}
-                  >
-                    {customer.status}
-                  </span>
-                </div>
-                <div className="mt-3 space-y-1 text-xs text-(--dash-muted)">
-                  <p>{customer.email}</p>
-                  <p>{customer.phone}</p>
-                  <p>{customer.city}</p>
-                </div>
-              </div>
-              <span className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-2 py-1 text-xs text-(--dash-muted)">
-                {customer.id}
-              </span>
-            </div>
-
-            <div className="my-4 border-t border-(--dash-border)" />
-
-            <div className="grid grid-cols-3 gap-4 text-xs text-(--dash-muted)">
-              <div>
-                <p className="font-semibold text-(--dash-text)">{customer.invoices}</p>
-                <p>إجمالي الفواتير</p>
-              </div>
-              <div>
-                <p className="font-semibold text-(--dash-text)">{customer.sales}</p>
-                <p>إجمالي المبيعات</p>
-              </div>
-              <div>
-                <p className="font-semibold text-(--dash-warning)">{customer.due}</p>
-                <p>المستحقات</p>
-              </div>
-              <div>
-                <p className="font-semibold text-(--dash-success)">{customer.paid}</p>
-                <p>إجمالي المدفوع</p>
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center gap-3">
-              <button
-                type="button"
-                className="flex-1 rounded-xl border border-(--dash-border) px-3 py-2 text-xs text-(--dash-text) hover:bg-(--dash-panel-soft)"
-                onClick={() => handleViewCustomer(customer.id)}
-              >
-                عرض
-              </button>
-              <button
-                type="button"
-                className="flex-1 rounded-xl border border-(--dash-border) px-3 py-2 text-xs text-(--dash-text) hover:bg-(--dash-panel-soft)"
-                onClick={() => handleEditCustomer(customer.id)}
-              >
-                تعديل
-              </button>
-            </div>
+        <div className="overflow-hidden rounded-2xl border border-(--dash-border) bg-(--dash-panel) shadow-(--dash-shadow)">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-(--dash-primary) text-white">
+                <tr>
+                  <th className="px-3 py-3 text-right font-semibold">
+                    <input type="checkbox" className="h-4 w-4 rounded border border-(--dash-border)" />
+                  </th>
+                  <th className="px-3 py-3 text-right font-semibold">كود</th>
+                  <th className="px-3 py-3 text-right font-semibold">اسم</th>
+                  <th className="px-3 py-3 text-right font-semibold">عنوان البريد الإلكتروني</th>
+                  <th className="px-3 py-3 text-right font-semibold">هاتف</th>
+                  <th className="px-3 py-3 text-right font-semibold">مجموعة التسعير</th>
+                  <th className="px-3 py-3 text-right font-semibold">مجموعة العملاء</th>
+                  <th className="px-3 py-3 text-right font-semibold">الرقم الضريبي</th>
+                  <th className="px-3 py-3 text-right font-semibold">الرصيد الفعلي</th>
+                  <th className="px-3 py-3 text-right font-semibold">إجمالي النقاط المكتسبة</th>
+                  <th className="px-3 py-3 text-right font-semibold">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRows.map((row) => (
+                  <tr key={row.code} className="border-t border-(--dash-border) text-(--dash-text)">
+                    <td className="px-3 py-3">
+                      <input type="checkbox" className="h-4 w-4 rounded border border-(--dash-border)" />
+                    </td>
+                    <td className="px-3 py-3 font-semibold">{row.code}</td>
+                    <td className="px-3 py-3">{row.name}</td>
+                    <td className="px-3 py-3">{row.email}</td>
+                    <td className="px-3 py-3">{row.phone}</td>
+                    <td className="px-3 py-3">{row.pricingGroup}</td>
+                    <td className="px-3 py-3">{row.customerGroup}</td>
+                    <td className="px-3 py-3">{row.taxNumber}</td>
+                    <td className="px-3 py-3">{row.actualBalance}</td>
+                    <td className="px-3 py-3">{row.points}</td>
+                    <td className="px-3 py-3">
+                      <div className="flex items-center gap-2">
+                        <button type="button" className="rounded-lg border border-(--dash-border) p-2 text-(--dash-muted)">
+                          <svg viewBox="0 0 24 24" className="h-4 w-4">
+                            <path
+                              fill="currentColor"
+                              d="M4 16.8V20h3.2l9.4-9.4-3.2-3.2L4 16.8zm15.7-9.5c.4-.4.4-1 0-1.4l-1.6-1.6c-.4-.4-1-.4-1.4 0l-1.3 1.3 3.2 3.2z"
+                            />
+                          </svg>
+                        </button>
+                        <button type="button" className="rounded-lg border border-(--dash-border) p-2 text-(--dash-muted)">
+                          <svg viewBox="0 0 24 24" className="h-4 w-4">
+                            <path fill="currentColor" d="M12 5v14m-7-7h14" />
+                          </svg>
+                        </button>
+                        <button type="button" className="rounded-lg border border-(--dash-border) p-2 text-rose-500">
+                          <svg viewBox="0 0 24 24" className="h-4 w-4">
+                            <path
+                              fill="currentColor"
+                              d="M6 7h12v2H6zm2 3h8l-1 10H9L8 10Zm3-6h2l1 2H10z"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="border-t border-(--dash-border) text-(--dash-muted)">
+                <tr>
+                  <td className="px-3 py-3">الإجراءات</td>
+                  <td className="px-3 py-3">[إجمالي النقاط]</td>
+                  <td className="px-3 py-3">[الرصيد الفعلي]</td>
+                  <td className="px-3 py-3">[الرقم الضريبي]</td>
+                  <td className="px-3 py-3">[مجموعة العملاء]</td>
+                  <td className="px-3 py-3">[مجموعة التسعير]</td>
+                  <td className="px-3 py-3">[هاتف]</td>
+                  <td className="px-3 py-3">[عنوان البريد الإلكتروني]</td>
+                  <td className="px-3 py-3">[اسم]</td>
+                  <td className="px-3 py-3">[كود]</td>
+                  <td className="px-3 py-3" />
+                </tr>
+              </tfoot>
+            </table>
           </div>
-        ))}
+          <div className="flex items-center justify-between gap-2 border-t border-(--dash-border) px-4 py-3 text-sm text-(--dash-muted)">
+            <div className="flex items-center gap-2">
+              <button type="button" className="rounded-lg border border-(--dash-border) px-2 py-1">سابق</button>
+              <span className="rounded-lg border border-(--dash-border) px-2 py-1 text-(--dash-text)">1</span>
+              <button type="button" className="rounded-lg border border-(--dash-border) px-2 py-1">التالي</button>
+            </div>
+            <span>عرض 1 إلى {filteredRows.length} من {filteredRows.length} سجلات</span>
+          </div>
+        </div>
       </section>
     </DashboardShell>
   );
 };
 
-const page = () => (
-  <Suspense
-    fallback={
-      <div className="rounded-3xl border border-(--dash-border) bg-(--dash-panel) p-6 text-sm text-(--dash-muted)">
-        جارٍ التحميل...
-      </div>
-    }
-  >
-    <CustomersPageContent />
-  </Suspense>
-);
-
-export default page;
+export default Page;

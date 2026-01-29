@@ -125,67 +125,67 @@ const Page = () => {
             <table className="min-w-full text-sm">
               <thead className="bg-(--dash-primary) text-white">
                 <tr>
-                  <th className="px-3 py-3 text-right font-semibold">الإجراءات</th>
-                  <th className="px-3 py-3 text-right font-semibold">حالة الدفع</th>
-                  <th className="px-3 py-3 text-right font-semibold">الرصيد</th>
-                  <th className="px-3 py-3 text-right font-semibold">مدفوع</th>
-                  <th className="px-3 py-3 text-right font-semibold">المجموع الكلي</th>
-                  <th className="px-3 py-3 text-right font-semibold">حالة عملية الشراء</th>
-                  <th className="px-3 py-3 text-right font-semibold">مورد</th>
-                  <th className="px-3 py-3 text-right font-semibold">الرقم المرجعي</th>
-                  <th className="px-3 py-3 text-right font-semibold">التاريخ</th>
                   <th className="px-3 py-3 text-right font-semibold">
                     <input type="checkbox" className="h-4 w-4 rounded border border-(--dash-border)" />
                   </th>
+                  <th className="px-3 py-3 text-right font-semibold">التاريخ</th>
+                  <th className="px-3 py-3 text-right font-semibold">الرقم المرجعي</th>
+                  <th className="px-3 py-3 text-right font-semibold">مورد</th>
+                  <th className="px-3 py-3 text-right font-semibold">حالة عملية الشراء</th>
+                  <th className="px-3 py-3 text-right font-semibold">المجموع الكلي</th>
+                  <th className="px-3 py-3 text-right font-semibold">مدفوع</th>
+                  <th className="px-3 py-3 text-right font-semibold">الرصيد</th>
+                  <th className="px-3 py-3 text-right font-semibold">حالة الدفع</th>
+                  <th className="px-3 py-3 text-right font-semibold">الإجراءات</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredRows.map((row) => (
                   <tr key={`${row.id}-${row.reference}`} className="border-t border-(--dash-border) text-(--dash-text)">
                     <td className="px-3 py-3">
-                      <button type="button" className="rounded-full bg-(--dash-primary) px-3 py-1 text-xs font-semibold text-white">
-                        الإجراءات
-                      </button>
+                      <input type="checkbox" className="h-4 w-4 rounded border border-(--dash-border)" />
                     </td>
-                    <td className="px-3 py-3">
-                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${paymentStatusStyles[row.paymentStatus]}`}>
-                        {row.paymentStatus}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 font-semibold">{formatNumber(row.balance)}</td>
-                    <td className="px-3 py-3 font-semibold">{formatNumber(row.paid)}</td>
-                    <td className="px-3 py-3 font-semibold">{formatNumber(row.total)}</td>
-                    <td className="px-3 py-3">
-                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${purchaseStatusStyles[row.purchaseStatus]}`}>
-                        {row.purchaseStatus}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3">{row.supplier}</td>
-                    <td className="px-3 py-3 font-semibold">{row.reference}</td>
                     <td className="px-3 py-3 text-(--dash-muted)">
                       <div className="flex flex-col">
                         <span>{row.date}</span>
                         <span className="text-xs text-(--dash-muted-2)">{row.time}</span>
                       </div>
                     </td>
+                    <td className="px-3 py-3 font-semibold">{row.reference}</td>
+                    <td className="px-3 py-3">{row.supplier}</td>
                     <td className="px-3 py-3">
-                      <input type="checkbox" className="h-4 w-4 rounded border border-(--dash-border)" />
+                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${purchaseStatusStyles[row.purchaseStatus]}`}>
+                        {row.purchaseStatus}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 font-semibold">{formatNumber(row.total)}</td>
+                    <td className="px-3 py-3 font-semibold">{formatNumber(row.paid)}</td>
+                    <td className="px-3 py-3 font-semibold">{formatNumber(row.balance)}</td>
+                    <td className="px-3 py-3">
+                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${paymentStatusStyles[row.paymentStatus]}`}>
+                        {row.paymentStatus}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3">
+                      <button type="button" className="rounded-full bg-(--dash-primary) px-3 py-1 text-xs font-semibold text-white">
+                        الإجراءات
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot className="border-t border-(--dash-border) text-(--dash-muted)">
                 <tr>
-                  <td className="px-3 py-3">الإجراءات</td>
-                  <td className="px-3 py-3">[حالة الدفع]</td>
-                  <td className="px-3 py-3">{formatNumber(500.01)}</td>
-                  <td className="px-3 py-3">{formatNumber(517.5)}</td>
-                  <td className="px-3 py-3">{formatNumber(1017.51)}</td>
-                  <td className="px-3 py-3">[حالة الشراء]</td>
-                  <td className="px-3 py-3">[مورد]</td>
-                  <td className="px-3 py-3">[الرقم المرجعي]</td>
-                  <td className="px-3 py-3">[yyyy-mm-dd]</td>
                   <td className="px-3 py-3" />
+                  <td className="px-3 py-3">[yyyy-mm-dd]</td>
+                  <td className="px-3 py-3">[الرقم المرجعي]</td>
+                  <td className="px-3 py-3">[مورد]</td>
+                  <td className="px-3 py-3">[حالة الشراء]</td>
+                  <td className="px-3 py-3">{formatNumber(1017.51)}</td>
+                  <td className="px-3 py-3">{formatNumber(517.5)}</td>
+                  <td className="px-3 py-3">{formatNumber(500.01)}</td>
+                  <td className="px-3 py-3">[حالة الدفع]</td>
+                  <td className="px-3 py-3">الإجراءات</td>
                 </tr>
               </tfoot>
             </table>

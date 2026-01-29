@@ -1,9 +1,18 @@
 ﻿"use client";
 
+import { useRef, useState } from "react";
 import Link from "next/link";
 import DashboardShell from "../../components/DashboardShell";
 
 const Page = () => {
+  const [attachmentName, setAttachmentName] = useState("");
+  const attachmentInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleAttachmentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    setAttachmentName(file ? file.name : "");
+  };
+
   return (
     <DashboardShell title="إضافة عرض سعر" subtitle="البيع / عروض الأسعار / إضافة عرض سعر" hideHeaderFilters>
       <section className="space-y-5">
@@ -58,8 +67,19 @@ const Page = () => {
           <label className="text-sm lg:col-span-3">
             <span className="mb-2 block font-semibold text-(--dash-text)">إرفاق المستندات</span>
             <div className="flex gap-2">
-              <input type="text" className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm" />
-              <button type="button" className="rounded-xl bg-(--dash-primary) px-3 py-2 text-xs font-semibold text-white">
+              <input ref={attachmentInputRef} type="file" className="hidden" onChange={handleAttachmentChange} />
+              <input
+                type="text"
+                value={attachmentName}
+                placeholder="لم يتم اختيار ملف"
+                readOnly
+                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+              />
+              <button
+                type="button"
+                className="rounded-xl bg-(--dash-primary) px-3 py-2 text-xs font-semibold text-white"
+                onClick={() => attachmentInputRef.current?.click()}
+              >
                 استعراض...
               </button>
             </div>

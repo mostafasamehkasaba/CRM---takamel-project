@@ -1,8 +1,24 @@
 ﻿"use client";
 
+import { useRef, useState } from "react";
 import DashboardShell from "../../components/DashboardShell";
 
 const Page = () => {
+  const [itemImageName, setItemImageName] = useState("");
+  const [catalogName, setCatalogName] = useState("");
+  const itemImageInputRef = useRef<HTMLInputElement | null>(null);
+  const catalogInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleItemImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    setItemImageName(file ? file.name : "");
+  };
+
+  const handleCatalogChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    setCatalogName(file ? file.name : "");
+  };
+
   return (
     <DashboardShell title="إضافة الصنف" subtitle="الأصناف / إضافة الصنف" hideHeaderFilters>
       <section className="space-y-5">
@@ -181,15 +197,41 @@ const Page = () => {
                 <label className="text-sm">
                   <span className="mb-2 block font-semibold text-(--dash-text)">صورة الصنف</span>
                   <div className="flex gap-2">
-                    <input type="text" className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm" />
-                    <button type="button" className="rounded-xl bg-(--dash-primary) px-3 py-2 text-xs font-semibold text-white">استعراض...</button>
+                    <input ref={itemImageInputRef} type="file" className="hidden" onChange={handleItemImageChange} />
+                    <input
+                      type="text"
+                      value={itemImageName}
+                      placeholder="لم يتم اختيار ملف"
+                      readOnly
+                      className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+                    />
+                    <button
+                      type="button"
+                      className="rounded-xl bg-(--dash-primary) px-3 py-2 text-xs font-semibold text-white"
+                      onClick={() => itemImageInputRef.current?.click()}
+                    >
+                      استعراض...
+                    </button>
                   </div>
                 </label>
                 <label className="text-sm">
                   <span className="mb-2 block font-semibold text-(--dash-text)">كتالوج صور الصنف</span>
                   <div className="flex gap-2">
-                    <input type="text" className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm" />
-                    <button type="button" className="rounded-xl bg-(--dash-primary) px-3 py-2 text-xs font-semibold text-white">استعراض...</button>
+                    <input ref={catalogInputRef} type="file" className="hidden" onChange={handleCatalogChange} />
+                    <input
+                      type="text"
+                      value={catalogName}
+                      placeholder="لم يتم اختيار ملف"
+                      readOnly
+                      className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+                    />
+                    <button
+                      type="button"
+                      className="rounded-xl bg-(--dash-primary) px-3 py-2 text-xs font-semibold text-white"
+                      onClick={() => catalogInputRef.current?.click()}
+                    >
+                      استعراض...
+                    </button>
                   </div>
                 </label>
                 <div className="flex flex-wrap items-center gap-4 text-sm text-(--dash-muted)">
