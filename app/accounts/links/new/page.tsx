@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import DashboardShell from "../../../components/DashboardShell";
 import { useRouter, useSearchParams } from "next/navigation";
 import { linkOptions } from "../../../data/accounting-links";
@@ -59,7 +59,7 @@ const mergeFormState = (
   return next;
 };
 
-const Page = () => {
+const PageContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -224,5 +224,11 @@ const Page = () => {
     </DashboardShell>
   );
 };
+
+const Page = () => (
+  <Suspense fallback={<div className="dash-card">جاري التحميل...</div>}>
+    <PageContent />
+  </Suspense>
+);
 
 export default Page;
