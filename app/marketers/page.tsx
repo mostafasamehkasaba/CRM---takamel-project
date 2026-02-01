@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import DashboardShell from "../components/DashboardShell";
+import ActionIconButton from "../components/ActionIconButton";
+import { EditIcon, TrashIcon } from "../components/icons/ActionIcons";
 
 type MarketerRow = {
   name: string;
@@ -98,10 +100,17 @@ const Page = () => {
                   <td className="px-3 py-3">{row.method}</td>
                   <td className="px-3 py-3">{row.status}</td>
                   <td className="px-3 py-3">
-                    <div className="flex items-center gap-2 justify-end">
-                      <button className="rounded-lg border border-(--dash-border) p-2 text-xs text-(--dash-muted)">✏️</button>
-                      <button className="rounded-lg border border-(--dash-border) p-2 text-xs text-(--dash-muted)">🗑️</button>
-                    </div>
+                      <div className="flex items-center gap-2 justify-end">
+                        <ActionIconButton
+                          label="تعديل المسوق"
+                          icon={<EditIcon className="h-4 w-4" />}
+                        />
+                        <ActionIconButton
+                          label="حذف المسوق"
+                          icon={<TrashIcon className="h-4 w-4" />}
+                          tone="danger"
+                        />
+                      </div>
                   </td>
                 </tr>
               ))}

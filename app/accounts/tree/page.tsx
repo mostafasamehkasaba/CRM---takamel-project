@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import DashboardShell from "../../components/DashboardShell";
+import ActionIconButton from "../../components/ActionIconButton";
+import { EditIcon, TrashIcon } from "../../components/icons/ActionIcons";
 
 type AccountNode = {
   code: string;
@@ -74,9 +76,9 @@ const Page = () => {
           <p className="mt-3 text-sm text-(--dash-muted)">الرجاء استخدام الجدول أدناه للتنقل أو تصفية النتائج.</p>
         </div>
 
-        <div className="rounded-2xl border border-(--dash-border) bg-white shadow-sm">
+        <div className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) shadow-[0_20px_30px_rgba(0,0,0,0.25)]">
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
+            <table className="min-w-full text-sm text-(--dash-text)">
               <thead className="bg-(--dash-primary) text-white">
                 <tr>
                   <th className="px-3 py-3 text-right font-semibold">كود الحساب</th>
@@ -106,8 +108,15 @@ const Page = () => {
                       <td className="px-3 py-3">{account.credit.toFixed(2)}</td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-2 justify-end">
-                          <button className="rounded-lg border border-(--dash-border) px-3 py-1 text-xs text-(--dash-text)">✏️</button>
-                          <button className="rounded-lg border border-(--dash-border) px-3 py-1 text-xs text-rose-500">🗑️</button>
+                          <ActionIconButton
+                            label="تعديل الحساب"
+                            icon={<EditIcon className="h-4 w-4" />}
+                          />
+                          <ActionIconButton
+                            label="حذف الحساب"
+                            icon={<TrashIcon className="h-4 w-4" />}
+                            tone="danger"
+                          />
                         </div>
                       </td>
                     </tr>

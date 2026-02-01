@@ -1,7 +1,6 @@
 ﻿"use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import DashboardShell from "../../components/DashboardShell";
 import { initialProducts } from "../../data/products";
@@ -24,6 +23,14 @@ const InvoiceNewPageContent = () => {
   );
   const [paymentMethod, setPaymentMethod] = useState("");
   const [taxType, setTaxType] = useState("ضريبة قيمة مضافة");
+  const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
+  const [customerTaxStatus, setCustomerTaxStatus] = useState<"registered" | "unregistered" | null>(
+    null
+  );
+  const [newCustomerName, setNewCustomerName] = useState("");
+  const [modalTaxStatus, setModalTaxStatus] = useState<"registered" | "unregistered">("registered");
+  const [modalCustomerName, setModalCustomerName] = useState("");
+  const [modalTaxNumber, setModalTaxNumber] = useState("");
   const productOptions = useMemo(() => {
     const names = items.map((item) => item.name).filter(Boolean);
     return Array.from(new Set([...initialProducts.map((item) => item.name), ...names]));
@@ -122,6 +129,12 @@ const InvoiceNewPageContent = () => {
     }
   };
 
+  const handleAddCustomerSave = () => {
+    setCustomerTaxStatus(modalTaxStatus);
+    setNewCustomerName(modalCustomerName);
+    setShowAddCustomerModal(false);
+  };
+
   return (
     <DashboardShell
       title="فاتورة جديدة"
@@ -160,6 +173,33 @@ const InvoiceNewPageContent = () => {
     >
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)] lg:items-start">
         <div className="min-w-0 space-y-6">
+          {customerTaxStatus === "registered" ? (
+            <div className="rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft)/80 p-4 text-sm text-(--dash-text)">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-(--dash-primary)">تفاصيل العميل الضريبية</p>
+                  <p className="text-xs text-(--dash-muted)">تم تفعيل الحقول الخاصة بالضريبة بعد إضافة العميل.</p>
+                </div>
+                <span className="rounded-full bg-(--dash-primary-soft) px-3 py-1 text-[11px] font-semibold text-(--dash-primary)">
+                  مسجل بالضريبة
+                </span>
+              </div>
+              <div className="mt-3 grid gap-3 lg:grid-cols-3">
+                <div className="text-sm text-(--dash-text)">
+                  <p className="text-xs text-(--dash-muted)">اسم العميل</p>
+                  <p>{newCustomerName || "عميل جديد"}</p>
+                </div>
+                <div className="text-sm text-(--dash-text)">
+                  <p className="text-xs text-(--dash-muted)">رقم التسجيل</p>
+                  <p>{modalTaxNumber || "لم يتم توفيره بعد"}</p>
+                </div>
+                <div className="text-sm text-(--dash-text)">
+                  <p className="text-xs text-(--dash-muted)">التاريخ</p>
+                  <p>{new Date().toLocaleDateString("ar-EG")}</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
           <div className="rounded-3xl border border-(--dash-border) bg-(--dash-panel) p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -224,12 +264,13 @@ const InvoiceNewPageContent = () => {
                 <div className="flex items-center justify-between gap-2">
                   <span>العميل *</span>
                   {isTax ? (
-                    <Link
-                      href="/customers?new=1"
+                    <button
+                      type="button"
+                      onClick={() => setShowAddCustomerModal(true)}
                       className="rounded-full border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-1 text-xs text-(--dash-text) hover:bg-(--dash-panel)"
                     >
                       عميل جديد
-                    </Link>
+                    </button>
                   ) : null}
                 </div>
                 {isSimple ? (
@@ -547,6 +588,88 @@ const InvoiceNewPageContent = () => {
           </div>
         </aside>
       </section>
+
+      {showAddCustomerModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-2xl rounded-[32px] border border-(--dash-border) bg-(--dash-panel) p-6 shadow-lg">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-(--dash-text)">إضافة عميل</h2>
+              <button
+                type="button"
+                onClick={() => setShowAddCustomerModal(false)}
+                className="text-(--dash-muted) transition hover:text-(--dash-text)"
+              >
+                ×
+              </button>
+            </div>
+            <p className="mt-3 text-sm text-(--dash-muted)">
+              قم بتعبئة بيانات العميل الجديد. بعد حفظ العميل، تظهر البيانات الضريبية في قسم الفاتورة.
+            </p>
+            <div className="mt-4 space-y-4">
+              <div className="flex items-center gap-6 text-sm text-(--dash-muted)">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="modalTaxStatus"
+                    value="unregistered"
+                    checked={modalTaxStatus === "unregistered"}
+                    onChange={() => setModalTaxStatus("unregistered")}
+                  />
+                  غير مسجل بالضريبة
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="modalTaxStatus"
+                    value="registered"
+                    checked={modalTaxStatus === "registered"}
+                    onChange={() => setModalTaxStatus("registered")}
+                  />
+                  مسجل بالضريبة
+                </label>
+              </div>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <label className="text-sm text-(--dash-text)">
+                  <span className="mb-2 block text-xs text-(--dash-muted)">اسم العميل *</span>
+                  <input
+                    type="text"
+                    value={modalCustomerName}
+                    onChange={(event) => setModalCustomerName(event.target.value)}
+                    className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm focus:outline-none"
+                  />
+                </label>
+                {modalTaxStatus === "registered" ? (
+                  <label className="text-sm text-(--dash-text)">
+                    <span className="mb-2 block text-xs text-(--dash-muted)">رقم التسجيل الضريبي</span>
+                    <input
+                      type="text"
+                      value={modalTaxNumber}
+                      onChange={(event) => setModalTaxNumber(event.target.value)}
+                      className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm focus:outline-none"
+                    />
+                  </label>
+                ) : null}
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowAddCustomerModal(false)}
+                className="rounded-2xl border border-(--dash-border) px-4 py-2 text-sm text-(--dash-text)"
+              >
+                إلغاء
+              </button>
+              <button
+                type="button"
+                onClick={handleAddCustomerSave}
+                className="rounded-2xl bg-(--dash-primary) px-4 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft)"
+              >
+                حفظ العميل
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {toast ? (
         <div className="fixed bottom-6 left-6 z-50">

@@ -57,11 +57,11 @@ const Page = () => {
       hideHeaderFilters
     >
       <div className="dash-card space-y-4">
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="grid gap-5 md:grid-cols-3">
           <label className="dash-label">
             الفرع
             <select
-              className="dash-select mt-2"
+              className="dash-select mt-2 w-full !py-3 !text-base"
               value={branchFilter}
               onChange={(event) => setBranchFilter(event.target.value)}
             >
@@ -77,7 +77,7 @@ const Page = () => {
             من تاريخ
             <input
               type="date"
-              className="dash-input mt-2"
+              className="dash-input mt-2 w-full !py-3 !text-base"
               value={fromDate}
               onChange={(event) => setFromDate(event.target.value)}
             />
@@ -86,7 +86,7 @@ const Page = () => {
             إلى تاريخ
             <input
               type="date"
-              className="dash-input mt-2"
+              className="dash-input mt-2 w-full !py-3 !text-base"
               value={toDate}
               onChange={(event) => setToDate(event.target.value)}
             />
@@ -95,7 +95,7 @@ const Page = () => {
       </div>
 
       <div className="dash-card">
-        <div className="dash-table overflow-auto">
+        <div className="dash-table overflow-auto" dir="rtl">
           <table className="w-full min-w-[1200px] text-[13px] table-fixed">
             <colgroup>
               <col key="0" className="w-[11%]" />
@@ -108,17 +108,17 @@ const Page = () => {
               <col key="7" className="w-[11%]" />
               <col key="8" className="w-[11%]" />
             </colgroup>
-            <thead>
+            <thead className="bg-(--dash-primary) text-white">
               <tr>
-                <th className="px-3 py-2 text-left">رقم القيد</th>
-                <th className="px-3 py-2 text-left">التاريخ</th>
-                <th className="px-3 py-2 text-left">بناء على</th>
-                <th className="px-3 py-2 text-left">رقم المستند</th>
-                <th className="px-3 py-2 text-left">الملاحظات</th>
-                <th className="px-3 py-2 text-left">القسم</th>
-                <th className="px-3 py-2 text-left">الفرع</th>
-                <th className="px-3 py-2 text-left">إجمالى المدين</th>
-                <th className="px-3 py-2 text-left">إجمالى الدائن</th>
+                <th className="px-3 py-2 text-right">رقم القيد</th>
+                <th className="px-3 py-2 text-right">التاريخ</th>
+                <th className="px-3 py-2 text-right">بناء على</th>
+                <th className="px-3 py-2 text-right">رقم المستند</th>
+                <th className="px-3 py-2 text-right">الملاحظات</th>
+                <th className="px-3 py-2 text-right">القسم</th>
+                <th className="px-3 py-2 text-right">الفرع</th>
+                <th className="px-3 py-2 text-right">إجمالى المدين</th>
+                <th className="px-3 py-2 text-right">إجمالى الدائن</th>
               </tr>
             </thead>
             <tbody>

@@ -483,11 +483,11 @@ const legacySidebarNavigation: Array<SidebarLink | SidebarGroup> = [
 */
 const sidebarNavigation: Array<SidebarItem> = [
   { label: "الرئيسية", href: "/dashboard" },
+  { label: "المنتجات", href: "/products" },
   {
     label: "الأصناف",
     iconKey: "/products",
     children: [
-      { label: "المنتجات", href: "/products" },
       { label: "نوع الصنف", href: "/item-types" },
       { label: "اسم الصنف", href: "/item-names" },
       { label: "كود الصنف", href: "/item-codes" },
@@ -605,7 +605,7 @@ const sidebarNavigation: Array<SidebarItem> = [
       { label: "الروابط المحاسبية", href: "/accounts/links" },
       { label: "إضافة روابط محاسبية", href: "/accounts/links/new" },
       { label: "القيود المحاسبية", href: "/accounts/entries" },
-      { label: "إضافة سند قيد نقدي", href: "/accounts/entries/new-cash" },
+      { label: "إضافة سند قيد يدوي", href: "/accounts/entries/new-cash" },
       { label: "القيد الافتتاحي", href: "/accounts/opening-entry" },
     ],
   },
@@ -998,21 +998,21 @@ const DashboardShell = ({
         {showQuickActions ? (
           <div className="absolute right-0 top-12 z-30 w-56 rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-2 text-sm shadow-(--dash-shadow)">
         <Link
-              href="/invoices/new"
-              onClick={() => {
-                setShowQuickActions(false);
-                showToast("تم فتح نموذج فاتورة جديدة", "success");
-              }}
-              className="flex items-center gap-2 rounded-xl px-3 py-2 text-(--dash-text) hover:bg-(--dash-panel-soft)"
-            >
-              <svg viewBox="0 0 24 24" className="h-4 w-4 text-(--dash-muted-2)" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5Z"
-                />
-              </svg>
-              فاتورة جديدة
-            </Link>
+          href="/sales/new/tax-invoice"
+          onClick={() => {
+            setShowQuickActions(false);
+            showToast("تم فتح صفحة الفاتورة الضريبية لعملية البيع الجديدة", "success");
+          }}
+          className="flex items-center gap-2 rounded-xl px-3 py-2 text-(--dash-text) hover:bg-(--dash-panel-soft)"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4 text-(--dash-muted-2)" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5Z"
+            />
+          </svg>
+          فاتورة بسيطة
+        </Link>
             <Link
               href="/payments"
               onClick={() => setShowQuickActions(false)}
@@ -1035,6 +1035,22 @@ const DashboardShell = ({
                 <path fill="currentColor" d="M3 7 12 2l9 5-9 5-9-5Zm2 6 7 4 7-4v7l-7 4-7-4v-7Z" />
               </svg>
               منتج جديد
+            </Link>
+            <Link
+              href="/sales/new/simplified-tax-invoice"
+              onClick={() => {
+                setShowQuickActions(false);
+                showToast("تم فتح نموذج الفاتورة الضريبية المبسطة لعملية البيع الجديدة", "success");
+              }}
+              className="flex items-center gap-2 rounded-xl px-3 py-2 text-(--dash-text) hover:bg-(--dash-panel-soft)"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4 text-(--dash-muted-2)" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M12 3a1 1 0 1 1 1 1v8.6l2.3-2.3a1 1 0 1 1 1.4 1.4l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L11 12.6V4a1 1 0 0 1 1-1Z"
+                />
+              </svg>
+              فاتورة ضريبية
             </Link>
             <Link
               href="/customers"

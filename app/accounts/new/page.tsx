@@ -14,7 +14,7 @@ const Page = () => (
         الرجاء إدخال المعلومات أدناه. تسميات الحقول التي تحمل علامة * هي حقول إجبارية.
       </div>
 
-      <div className="rounded-2xl border border-(--dash-border) bg-white p-6 shadow-(--dash-shadow)">
+      <div className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-6 shadow-[0_20px_30px_rgba(0,0,0,0.25)] text-(--dash-text)">
         <div className="grid gap-4 lg:grid-cols-2">
           <label className="text-sm">
             <span className="mb-2 block font-semibold text-(--dash-text)">كود الحساب *</span>

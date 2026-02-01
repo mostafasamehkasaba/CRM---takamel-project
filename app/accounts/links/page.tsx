@@ -1,81 +1,431 @@
-"use client";
+﻿"use client";
 
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import DashboardShell from "../../components/DashboardShell";
-import { linkOptions } from "../../data/accounting-links";
+import ActionIconButton from "../../components/ActionIconButton";
+import { EditIcon, TrashIcon } from "../../components/icons/ActionIcons";
 
-const accountingFields = [
-  { key: "branch", label: "الفرع", placeholder: "مثال: مغسلة سيارات" },
-  { key: "cashAccount", label: "حساب الصندوق" },
-  { key: "salesAccount", label: "حساب المبيعات" },
-  { key: "salesReturnAccount", label: "حساب مردود المبيعات" },
-  { key: "purchasesAccount", label: "حساب المشتريات" },
-  { key: "purchasesReturnAccount", label: "حساب مردود المشتريات" },
-  { key: "inventoryAccount", label: "حساب المخزون" },
-  { key: "salesDiscount", label: "حساب خصم المبيعات" },
-  { key: "purchasesDiscount", label: "حساب خصم المشتريات" },
-  { key: "salesTax", label: "حساب ضريبة المبيعات" },
-  { key: "purchasesTax", label: "حساب ضريبة المشتريات" },
-  { key: "costOfGoodsSold", label: "حساب تكلفة الأصناف المباعة" },
-  { key: "pointsOfSale", label: "حساب نقاط البيع" },
-  { key: "damageAccount", label: "حساب التالف" },
-  { key: "goldClosure", label: "حساب إقفال الذهب" },
+type LinkRow = {
+  branch: string;
+  cashAccount: string;
+  salesAccount: string;
+  purchasesAccount: string;
+  salesReturnAccount: string;
+  purchasesReturnAccount: string;
+  inventoryAccount: string;
+  salesDiscountAccount: string;
+  salesTaxAccount: string;
+  purchasesDiscountAccount: string;
+  purchasesTaxAccount: string;
+};
+
+const initialRows: LinkRow[] = [
+  {
+    branch: "مغسلة سيارات",
+    cashAccount: "صندوق رئيسي",
+    salesAccount: "إجمالي المبيعات الفرع الرئيسي",
+    purchasesAccount: "إجمالي مشتريات الفرع الرئيسي",
+    salesReturnAccount: "مردودات مبيعات الفرع الرئيسي",
+    purchasesReturnAccount: "مردودات مشتريات الفرع الرئيسي",
+    inventoryAccount: "المخزون الرئيسي",
+    salesDiscountAccount: "خصم مسموح الفرع الرئيسي",
+    salesTaxAccount: "ضريبة القيمة المضافة على المبيعات",
+    purchasesDiscountAccount: "خصم مكتسب الفرع الرئيسي",
+    purchasesTaxAccount: "ضريبة القيمة المضافة على المشتريات",
+  },
+  {
+    branch: "مغسلة ملابس",
+    cashAccount: "صندوق رئيسي",
+    salesAccount: "إجمالي المبيعات الفرع الرئيسي",
+    purchasesAccount: "إجمالي مشتريات الفرع الرئيسي",
+    salesReturnAccount: "مردودات مبيعات الفرع الرئيسي",
+    purchasesReturnAccount: "مردودات مشتريات الفرع الرئيسي",
+    inventoryAccount: "المخزون الرئيسي",
+    salesDiscountAccount: "خصم مسموح الفرع الرئيسي",
+    salesTaxAccount: "ضريبة القيمة المضافة على المبيعات",
+    purchasesDiscountAccount: "خصم مكتسب الفرع الرئيسي",
+    purchasesTaxAccount: "ضريبة القيمة المضافة على المشتريات",
+  },
+  {
+    branch: "نشاط الصالون",
+    cashAccount: "صندوق رئيسي",
+    salesAccount: "إجمالي المبيعات الفرع الرئيسي",
+    purchasesAccount: "إجمالي مشتريات الفرع الرئيسي",
+    salesReturnAccount: "مردودات مبيعات الفرع الرئيسي",
+    purchasesReturnAccount: "مردودات مشتريات الفرع الرئيسي",
+    inventoryAccount: "المخزون الرئيسي",
+    salesDiscountAccount: "خصم مسموح الفرع الرئيسي",
+    salesTaxAccount: "ضريبة القيمة المضافة على المبيعات",
+    purchasesDiscountAccount: "خصم مكتسب الفرع الرئيسي",
+    purchasesTaxAccount: "ضريبة القيمة المضافة على المشتريات",
+  },
+  {
+    branch: "نشاط الكوافير / التجميل",
+    cashAccount: "صندوق رئيسي",
+    salesAccount: "إجمالي المبيعات الفرع الرئيسي",
+    purchasesAccount: "إجمالي مشتريات الفرع الرئيسي",
+    salesReturnAccount: "مردودات مبيعات الفرع الرئيسي",
+    purchasesReturnAccount: "مردودات مشتريات الفرع الرئيسي",
+    inventoryAccount: "المخزون الرئيسي",
+    salesDiscountAccount: "خصم مسموح الفرع الرئيسي",
+    salesTaxAccount: "ضريبة القيمة المضافة على المبيعات",
+    purchasesDiscountAccount: "خصم مكتسب الفرع الرئيسي",
+    purchasesTaxAccount: "ضريبة القيمة المضافة على المشتريات",
+  },
+  {
+    branch: "نشاط المطاعم",
+    cashAccount: "صندوق رئيسي",
+    salesAccount: "إجمالي المبيعات الفرع الرئيسي",
+    purchasesAccount: "إجمالي مشتريات الفرع الرئيسي",
+    salesReturnAccount: "مردودات مبيعات الفرع الرئيسي",
+    purchasesReturnAccount: "مردودات مشتريات الفرع الرئيسي",
+    inventoryAccount: "المخزون الرئيسي",
+    salesDiscountAccount: "خصم مسموح الفرع الرئيسي",
+    salesTaxAccount: "ضريبة القيمة المضافة على المبيعات",
+    purchasesDiscountAccount: "خصم مكتسب الفرع الرئيسي",
+    purchasesTaxAccount: "ضريبة القيمة المضافة على المشتريات",
+  },
+  {
+    branch: "نشاط سوبرماركت",
+    cashAccount: "صندوق رئيسي",
+    salesAccount: "إجمالي المبيعات الفرع الرئيسي",
+    purchasesAccount: "إجمالي مشتريات الفرع الرئيسي",
+    salesReturnAccount: "مردودات مبيعات الفرع الرئيسي",
+    purchasesReturnAccount: "مردودات مشتريات الفرع الرئيسي",
+    inventoryAccount: "المخزون الرئيسي",
+    salesDiscountAccount: "خصم مسموح الفرع الرئيسي",
+    salesTaxAccount: "ضريبة القيمة المضافة على المبيعات",
+    purchasesDiscountAccount: "خصم مكتسب الفرع الرئيسي",
+    purchasesTaxAccount: "ضريبة القيمة المضافة على المشتريات",
+  },
+  {
+    branch: "نشاط صيدلية",
+    cashAccount: "صندوق رئيسي",
+    salesAccount: "إجمالي المبيعات الفرع الرئيسي",
+    purchasesAccount: "إجمالي مشتريات الفرع الرئيسي",
+    salesReturnAccount: "مردودات مبيعات الفرع الرئيسي",
+    purchasesReturnAccount: "مردودات مشتريات الفرع الرئيسي",
+    inventoryAccount: "المخزون الرئيسي",
+    salesDiscountAccount: "خصم مسموح الفرع الرئيسي",
+    salesTaxAccount: "ضريبة القيمة المضافة على المبيعات",
+    purchasesDiscountAccount: "خصم مكتسب الفرع الرئيسي",
+    purchasesTaxAccount: "ضريبة القيمة المضافة على المشتريات",
+  },
+  {
+    branch: "نشاط مكتبة",
+    cashAccount: "صندوق رئيسي",
+    salesAccount: "إجمالي المبيعات الفرع الرئيسي",
+    purchasesAccount: "إجمالي مشتريات الفرع الرئيسي",
+    salesReturnAccount: "مردودات مبيعات الفرع الرئيسي",
+    purchasesReturnAccount: "مردودات مشتريات الفرع الرئيسي",
+    inventoryAccount: "المخزون الرئيسي",
+    salesDiscountAccount: "خصم مسموح الفرع الرئيسي",
+    salesTaxAccount: "ضريبة القيمة المضافة على المبيعات",
+    purchasesDiscountAccount: "خصم مكتسب الفرع الرئيسي",
+    purchasesTaxAccount: "ضريبة القيمة المضافة على المشتريات",
+  },
+  {
+    branch: "نشاط ملحمة",
+    cashAccount: "صندوق رئيسي",
+    salesAccount: "إجمالي المبيعات الفرع الرئيسي",
+    purchasesAccount: "إجمالي مشتريات الفرع الرئيسي",
+    salesReturnAccount: "مردودات مبيعات الفرع الرئيسي",
+    purchasesReturnAccount: "مردودات مشتريات الفرع الرئيسي",
+    inventoryAccount: "المخزون الرئيسي",
+    salesDiscountAccount: "خصم مسموح الفرع الرئيسي",
+    salesTaxAccount: "ضريبة القيمة المضافة على المبيعات",
+    purchasesDiscountAccount: "خصم مكتسب الفرع الرئيسي",
+    purchasesTaxAccount: "ضريبة القيمة المضافة على المشتريات",
+  },
+  {
+    branch: "نشاط عيادة",
+    cashAccount: "صندوق رئيسي",
+    salesAccount: "إجمالي المبيعات الفرع الرئيسي",
+    purchasesAccount: "إجمالي مشتريات الفرع الرئيسي",
+    salesReturnAccount: "مردودات مبيعات الفرع الرئيسي",
+    purchasesReturnAccount: "مردودات مشتريات الفرع الرئيسي",
+    inventoryAccount: "المخزون الرئيسي",
+    salesDiscountAccount: "خصم مسموح الفرع الرئيسي",
+    salesTaxAccount: "ضريبة القيمة المضافة على المبيعات",
+    purchasesDiscountAccount: "خصم مكتسب الفرع الرئيسي",
+    purchasesTaxAccount: "ضريبة القيمة المضافة على المشتريات",
+  },
 ];
 
-const Page = () => (
-  <DashboardShell title="الروابط المحاسبية" hideHeaderFilters>
-    <div className="space-y-6 px-4">
-      <section className="rounded-[32px] border border-[#dce6e0] bg-white px-6 py-8 shadow-[0_20px_30px_rgba(14,70,0,0.08)]">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#d4e0d6] pb-4">
-          <div>
-            <p className="text-xs font-semibold text-[#0f4512]">البداية / الروابط المحاسبية / إضافة روابط محاسبية</p>
-            <h1 className="text-3xl font-black text-[#023311]">إضافة روابط محاسبية</h1>
+const Page = () => {
+  const router = useRouter();
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rows, setRows] = useState<LinkRow[]>(initialRows);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("accountingLinksRows");
+      if (!raw) {
+        window.localStorage.setItem(
+          "accountingLinksRows",
+          JSON.stringify(initialRows),
+        );
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const hasNewShape = parsed.every(
+          (row) =>
+            row &&
+            typeof row === "object" &&
+            "cashAccount" in row &&
+            "salesAccount" in row &&
+            "purchasesAccount" in row,
+        );
+        if (hasNewShape) {
+          setRows(parsed);
+        } else {
+          window.localStorage.setItem(
+            "accountingLinksRows",
+            JSON.stringify(initialRows),
+          );
+          setRows(initialRows);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const filteredRows = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return rows;
+    return rows.filter((row) =>
+      Object.values(row)
+        .join(" ")
+        .toLowerCase()
+        .includes(query),
+    );
+  }, [rows, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
+
+  const { visibleRows, startIndex, endIndex } = useMemo(() => {
+    const start = (page - 1) * rowsPerPage;
+    const end = Math.min(start + rowsPerPage, filteredRows.length);
+    return {
+      visibleRows: filteredRows.slice(start, end),
+      startIndex: start,
+      endIndex: end,
+    };
+  }, [page, rowsPerPage, filteredRows]);
+
+  useEffect(() => {
+    setPage((prev) => Math.min(prev, totalPages));
+  }, [totalPages]);
+
+  return (
+    <DashboardShell
+      title="الروابط المحاسبية"
+      subtitle="الرجاء استخدام الجدول أدناه للانتقال أو تصفية النتائج."
+      hideHeaderFilters
+    >
+      <section className="space-y-4" dir="rtl">
+        <div className="dash-card">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-sm font-semibold text-(--dash-text)">
+              الروابط المحاسبية
+            </span>
+            <button
+              type="button"
+              onClick={() => router.push("/accounts/links/new")}
+              className="rounded-xl bg-(--dash-primary) px-4 py-2 text-xs font-semibold text-white shadow-(--dash-primary-soft)"
+            >
+              + إضافة رابط محاسبي
+            </button>
           </div>
-          <button className="rounded-full bg-[#0b4c19] px-6 py-2 text-sm font-semibold text-white shadow-[0_5px_15px_rgba(5,51,17,0.4)]">
-            + إضافة روابط محاسبية
-          </button>
+          <p className="mt-3 text-sm text-(--dash-muted)">
+            الرجاء استخدام الجدول أدناه للانتقال أو تصفية النتائج.
+          </p>
         </div>
 
-        <p className="mt-4 text-sm text-[#1c421b]">
-          يرجى إدخال الحسابات المطلوبة من كل فرع، الحقول المحددة بعلامة * إجبارية لاستمرارية الربط.
-        </p>
-
-        <div className="mt-6 flex flex-wrap items-center gap-3 rounded-[24px] border border-[#0b4c19] bg-[#e4f0e7] px-4 py-3 shadow-inner">
-          <input
-            type="search"
-            placeholder="بحث"
-            className="dash-input flex-1 min-w-[200px] rounded-full border-[#b2d3bf] bg-white px-4 py-2 text-sm"
-          />
-          <div className="text-sm font-semibold text-[#0b4c19]">عرض: 10</div>
-        </div>
-
-        <div className="mt-6 grid gap-4 xl:grid-cols-2">
-          {accountingFields.map((field) => (
-            <label key={field.key} className="flex flex-col gap-2 rounded-[25px] border border-[#d9e6d8] bg-[#f7f9f5] px-4 py-3 shadow-inner">
-              <span className="flex items-center justify-between text-sm font-semibold text-[#0d360e]">
-                {field.label}
-                <span className="text-xs text-[#0f5b21]">*</span>
-              </span>
-              <select className="dash-select !rounded-full !border-[#c3d3c2] !bg-white !py-2 !px-4 !text-sm">
-                <option value="">{field.placeholder ? field.placeholder : "اختر حساباً"}</option>
-                {linkOptions.map((option) => (
+        <div className="dash-card">
+          <div className="grid gap-3 md:grid-cols-4">
+            <div className="md:col-span-3">
+              <div className="flex items-center gap-2 rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="بحث"
+                  className="w-full bg-transparent text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-(--dash-muted)">
+              <span>إظهار</span>
+              <select
+                value={rowsPerPage}
+                onChange={(event) => {
+                  setRowsPerPage(Number(event.target.value));
+                  setPage(1);
+                }}
+                className="dash-select"
+              >
+                {[10, 25, 50].map((option) => (
                   <option key={option} value={option}>
                     {option}
                   </option>
                 ))}
               </select>
-            </label>
-          ))}
+            </div>
+          </div>
         </div>
 
-        <div className="mt-6 flex justify-between">
-          <div className="text-xs text-[#64744b]">الحقول التي تحمل علامة * إجبارية</div>
-          <button className="dash-btn dash-btn-primary bg-[#0b4c19] px-6 py-2 text-sm font-semibold text-white">
-            حفظ الروابط
-          </button>
+        <div className="dash-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-[1400px] text-sm text-(--dash-text)">
+              <thead className="bg-(--dash-primary) text-white">
+                <tr>
+                  <th className="px-3 py-3 text-right font-semibold">
+                    الفرع
+                  </th>
+                  <th className="px-3 py-3 text-right font-semibold">
+                    حساب الصندوق
+                  </th>
+                  <th className="px-3 py-3 text-right font-semibold">
+                    حساب المبيعات
+                  </th>
+                  <th className="px-3 py-3 text-right font-semibold">
+                    حساب المشتريات
+                  </th>
+                  <th className="px-3 py-3 text-right font-semibold">
+                    حساب مردود المبيعات
+                  </th>
+                  <th className="px-3 py-3 text-right font-semibold">
+                    حساب مردود المشتريات
+                  </th>
+                  <th className="px-3 py-3 text-right font-semibold">
+                    حساب المخزون
+                  </th>
+                  <th className="px-3 py-3 text-right font-semibold">
+                    حساب خصم المبيعات
+                  </th>
+                  <th className="px-3 py-3 text-right font-semibold">
+                    حساب ضريبة المبيعات
+                  </th>
+                  <th className="px-3 py-3 text-right font-semibold">
+                    حساب خصم المشتريات
+                  </th>
+                  <th className="px-3 py-3 text-right font-semibold">
+                    حساب ضريبة المشتريات
+                  </th>
+                  <th className="px-3 py-3 text-center font-semibold">
+                    الإجراءات
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="text-(--dash-text)">
+                {visibleRows.map((row, rowOffset) => (
+                  <tr
+                    key={`${row.branch}-${rowOffset}`}
+                    className={`border-t border-(--dash-border) text-(--dash-text) ${
+                      rowOffset % 2 === 0
+                        ? "bg-(--dash-panel)"
+                        : "bg-(--dash-panel-soft)"
+                    }`}
+                  >
+                    <td className="px-3 py-3 font-semibold text-right text-(--dash-text)">
+                      {row.branch}
+                    </td>
+                    <td className="px-3 py-3 text-right text-(--dash-text)">
+                      {row.cashAccount}
+                    </td>
+                    <td className="px-3 py-3 text-right text-(--dash-text)">
+                      {row.salesAccount}
+                    </td>
+                    <td className="px-3 py-3 text-right text-(--dash-text)">
+                      {row.purchasesAccount}
+                    </td>
+                    <td className="px-3 py-3 text-right text-(--dash-text)">
+                      {row.salesReturnAccount}
+                    </td>
+                    <td className="px-3 py-3 text-right text-(--dash-text)">
+                      {row.purchasesReturnAccount}
+                    </td>
+                    <td className="px-3 py-3 text-right text-(--dash-text)">
+                      {row.inventoryAccount}
+                    </td>
+                    <td className="px-3 py-3 text-right text-(--dash-text)">
+                      {row.salesDiscountAccount}
+                    </td>
+                    <td className="px-3 py-3 text-right text-(--dash-text)">
+                      {row.salesTaxAccount}
+                    </td>
+                    <td className="px-3 py-3 text-right text-(--dash-text)">
+                      {row.purchasesDiscountAccount}
+                    </td>
+                    <td className="px-3 py-3 text-right text-(--dash-text)">
+                      {row.purchasesTaxAccount}
+                    </td>
+                    <td className="px-3 py-3 text-center text-(--dash-text)">
+                      <div className="flex items-center justify-center gap-2">
+                        <ActionIconButton
+                          label="تعديل الرابط"
+                          icon={<EditIcon className="h-4 w-4" />}
+                          onClick={() => {
+                            const globalIndex = startIndex + rowOffset;
+                            const payload = { ...row };
+                            router.push(
+                              `/accounts/links/new?mode=edit&index=${globalIndex}&data=${encodeURIComponent(
+                                JSON.stringify(payload),
+                              )}`,
+                            );
+                          }}
+                        />
+                        <ActionIconButton
+                          label="حذف الرابط"
+                          tone="danger"
+                          icon={<TrashIcon className="h-4 w-4" />}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex items-center justify-between gap-2 border-t border-(--dash-border) px-4 py-3 text-sm text-(--dash-muted)">
+            <div>
+              عرض {filteredRows.length === 0 ? 0 : startIndex + 1} إلى{" "}
+              {endIndex} من {filteredRows.length} سجلات
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="rounded-lg border border-(--dash-border) px-2 py-1"
+                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                disabled={page === 1}
+              >
+                السابق
+              </button>
+              <span className="rounded-lg border border-(--dash-border) px-2 py-1 text-(--dash-text)">
+                {page}
+              </span>
+              <button
+                type="button"
+                className="rounded-lg border border-(--dash-border) px-2 py-1"
+                onClick={() =>
+                  setPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={page === totalPages}
+              >
+                التالي
+              </button>
+            </div>
+          </div>
         </div>
       </section>
-    </div>
-  </DashboardShell>
-);
+    </DashboardShell>
+  );
+};
 
 export default Page;

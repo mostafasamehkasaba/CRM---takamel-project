@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import DashboardShell from "../components/DashboardShell";
+import ActionIconButton from "../components/ActionIconButton";
+import { EditIcon, TrashIcon, ViewIcon } from "../components/icons/ActionIcons";
 
 type GiftCard = {
   id: string;
@@ -57,9 +59,12 @@ const Page = () => {
         <div className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="text-sm font-semibold text-(--dash-text)">بطاقات هدية</span>
-            <button type="button" className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-xs">
-              🗑️
-            </button>
+            <ActionIconButton
+              label="مسح"
+              tone="danger"
+              icon={<TrashIcon className="h-4 w-4" />}
+              className="rounded-xl px-3 py-2 text-xs"
+            />
           </div>
           <p className="mt-3 text-sm text-(--dash-muted)">الرجاء استخدام الجدول أدناه للتنقل أو تصفية النتائج.</p>
         </div>
@@ -91,41 +96,51 @@ const Page = () => {
             <table className="min-w-full text-sm">
               <thead className="bg-(--dash-primary) text-white">
                 <tr>
-                  <th className="px-3 py-3 text-right font-semibold">الإجراءات</th>
-                  <th className="px-3 py-3 text-right font-semibold">إنتهاء الصلاحية</th>
-                  <th className="px-3 py-3 text-right font-semibold">عميل</th>
-                  <th className="px-3 py-3 text-right font-semibold">ملاحظات</th>
-                  <th className="px-3 py-3 text-right font-semibold">مدخل البيانات</th>
-                  <th className="px-3 py-3 text-right font-semibold">الرصيد</th>
-                  <th className="px-3 py-3 text-right font-semibold">قيمة</th>
-                  <th className="px-3 py-3 text-right font-semibold">رقم البطاقة</th>
                   <th className="px-3 py-3 text-right font-semibold">
                     <input type="checkbox" className="h-4 w-4 rounded border border-(--dash-border)" />
                   </th>
+                  <th className="px-3 py-3 text-right font-semibold">رقم البطاقة</th>
+                  <th className="px-3 py-3 text-right font-semibold">قيمة</th>
+                  <th className="px-3 py-3 text-right font-semibold">الرصيد</th>
+                  <th className="px-3 py-3 text-right font-semibold">مدخل البيانات</th>
+                  <th className="px-3 py-3 text-right font-semibold">ملاحظات</th>
+                  <th className="px-3 py-3 text-right font-semibold">عميل</th>
+                  <th className="px-3 py-3 text-right font-semibold">إنتهاء الصلاحية</th>
+                  <th className="px-3 py-3 text-right font-semibold">الإجراءات</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredRows.map((row) => (
                   <tr key={row.id} className="border-t border-(--dash-border) text-(--dash-text)">
                     <td className="px-3 py-3">
-                      <div className="flex items-center gap-2 text-(--dash-muted)">
-                        <button type="button" className="hover:text-(--dash-primary)">✎</button>
-                        <button type="button" className="hover:text-(--dash-primary)">🗑️</button>
-                        <button type="button" className="hover:text-(--dash-primary)">👁️</button>
-                      </div>
-                    </td>
-                    <td className="px-3 py-3">{row.expiry}</td>
-                    <td className="px-3 py-3">{row.client}</td>
-                    <td className="px-3 py-3">{row.notes}</td>
-                    <td className="px-3 py-3">{row.createdBy}</td>
-                    <td className="px-3 py-3">{row.balance.toFixed(2)}</td>
-                    <td className="px-3 py-3">{row.value.toFixed(2)}</td>
-                    <td className="px-3 py-3 font-semibold">{row.cardNumber}</td>
-                    <td className="px-3 py-3">
                       <input type="checkbox" className="h-4 w-4 rounded border border-(--dash-border)" />
                     </td>
-                  </tr>
-                ))}
+                    <td className="px-3 py-3 font-semibold">{row.cardNumber}</td>
+                    <td className="px-3 py-3">{row.value.toFixed(2)}</td>
+                    <td className="px-3 py-3">{row.balance.toFixed(2)}</td>
+                    <td className="px-3 py-3">{row.createdBy}</td>
+                    <td className="px-3 py-3">{row.notes}</td>
+                    <td className="px-3 py-3">{row.client}</td>
+                    <td className="px-3 py-3">{row.expiry}</td>
+                    <td className="px-3 py-3">
+                      <div className="flex items-center gap-2 justify-end">
+                        <ActionIconButton
+                          label="تعديل البطاقة"
+                          icon={<EditIcon className="h-4 w-4" />}
+                        />
+                        <ActionIconButton
+                          label="حذف البطاقة"
+                          icon={<TrashIcon className="h-4 w-4" />}
+                          tone="danger"
+                        />
+                        <ActionIconButton
+                          label="عرض البطاقة"
+                          icon={<ViewIcon className="h-4 w-4" />}
+                        />
+                      </div>
+                    </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>

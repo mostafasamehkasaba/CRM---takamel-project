@@ -415,7 +415,7 @@ const Page = () => {
   }, []);
 
   return (
-    <DashboardShell title="فواتير ضريبية" subtitle="المبيعات (جميع الفروع)" hideHeaderFilters>
+    <DashboardShell title="فاتورة بسيطة" subtitle="المبيعات (جميع الفروع)" hideHeaderFilters>
       <section className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-4 shadow-(--dash-shadow)">
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
           <span className="font-semibold text-(--dash-text)">المبيعات (جميع الفروع)</span>

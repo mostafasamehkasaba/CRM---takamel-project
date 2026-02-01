@@ -1,6 +1,8 @@
-"use client";
+﻿"use client";
 
+import { useEffect, useMemo, useState } from "react";
 import DashboardShell from "../../../components/DashboardShell";
+import { useRouter, useSearchParams } from "next/navigation";
 import { linkOptions } from "../../../data/accounting-links";
 
 const accountingFields = [
@@ -21,64 +23,206 @@ const accountingFields = [
   { key: "goldClosure", label: "حساب إقفال الذهب" },
 ];
 
-const Page = () => (
-  <DashboardShell title="إضافة روابط محاسبية" hideHeaderFilters>
-    <div className="space-y-6 px-4">
-      <section className="rounded-[32px] border border-[#d6dfd7] bg-white px-6 py-8 shadow-[0_30px_40px_rgba(15,50,15,0.15)]">
-        <div className="flex flex-col gap-3 pb-4">
-          <div className="text-xs font-semibold text-[#0d3911]">البداية / الروابط المحاسبية / إضافة روابط محاسبية</div>
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-black text-[#0d4516]">إضافة روابط محاسبية</h1>
-            <button className="flex items-center justify-center rounded-full border border-[#0b4c19] bg-[#0b4c19] px-5 py-2 text-sm font-semibold text-white shadow-[0_5px_15px_rgba(5,51,17,0.4)]">
-              <span className="text-lg">+</span>
-              إضافة روابط محاسبية
+const branchOptions = [
+  "مغسلة سيارات",
+  "مغسلة ملابس",
+  "نشاط الصالون",
+  "نشاط الكوافير / التجميل",
+  "نشاط المطاعم",
+  "نشاط سوبرماركت",
+  "نشاط صيدلية",
+  "نشاط مكتبة",
+  "نشاط ملحمة",
+  "نشاط عيادة",
+];
+
+type FormKey = (typeof accountingFields)[number]["key"];
+type FormState = Record<FormKey, string>;
+
+const emptyFormState = accountingFields.reduce((acc, field) => {
+  acc[field.key as FormKey] = "";
+  return acc;
+}, {} as FormState);
+
+const mergeFormState = (
+  base: FormState,
+  patch: Partial<FormState> | null,
+): FormState => {
+  if (!patch) return base;
+  const next: FormState = { ...base };
+  for (const field of accountingFields) {
+    const value = patch[field.key as FormKey];
+    if (typeof value === "string") {
+      next[field.key as FormKey] = value;
+    }
+  }
+  return next;
+};
+
+const Page = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const editIndex = useMemo(() => {
+    const raw = searchParams.get("index");
+    if (!raw) return null;
+    const num = Number(raw);
+    return Number.isFinite(num) ? num : null;
+  }, [searchParams]);
+
+  const editData = useMemo<Partial<FormState> | null>(() => {
+    const raw = searchParams.get("data");
+    if (!raw) return null;
+    try {
+      const decoded = decodeURIComponent(raw);
+      const parsed = JSON.parse(decoded);
+      if (!parsed || typeof parsed !== "object") return null;
+      const safe: Partial<FormState> = {};
+      for (const field of accountingFields) {
+        const value = (parsed as Record<string, unknown>)[field.key];
+        if (typeof value === "string") {
+          safe[field.key as FormKey] = value;
+        }
+      }
+      return safe;
+    } catch {
+      return null;
+    }
+  }, [searchParams]);
+
+  const isEditMode = searchParams.get("mode") === "edit" && editIndex !== null;
+
+  const [form, setForm] = useState<FormState>(() =>
+    mergeFormState(emptyFormState, editData),
+  );
+
+  useEffect(() => {
+    if (!editData) return;
+    setForm((prev) => mergeFormState(prev, editData));
+  }, [editData]);
+
+  const title = isEditMode ? "تعديل رابط محاسبي" : "إضافة روابط محاسبية";
+  const saveLabel = isEditMode ? "حفظ التعديلات" : "حفظ الروابط";
+
+  const handleSave = () => {
+    const row = {
+      branch: form.branch,
+      cashAccount: form.cashAccount,
+      salesAccount: form.salesAccount,
+      purchasesAccount: form.purchasesAccount,
+      salesReturnAccount: form.salesReturnAccount,
+      purchasesReturnAccount: form.purchasesReturnAccount,
+      inventoryAccount: form.inventoryAccount,
+      salesDiscountAccount: form.salesDiscount,
+      salesTaxAccount: form.salesTax,
+      purchasesDiscountAccount: form.purchasesDiscount,
+      purchasesTaxAccount: form.purchasesTax,
+    };
+
+    try {
+      const raw = window.localStorage.getItem("accountingLinksRows");
+      const parsed = raw ? JSON.parse(raw) : [];
+      const rows = Array.isArray(parsed) ? parsed : [];
+
+      if (isEditMode && typeof editIndex === "number" && editIndex >= 0 && editIndex < rows.length) {
+        rows[editIndex] = row;
+      } else {
+        rows.push(row);
+      }
+
+      window.localStorage.setItem("accountingLinksRows", JSON.stringify(rows));
+    } catch {
+      // Ignore persistence errors in the demo.
+    }
+
+    router.push("/accounts/links");
+  };
+
+  return (
+    <DashboardShell title={title} hideHeaderFilters>
+      <div className="space-y-6 px-4">
+        <section className="rounded-[32px] border border-(--dash-primary) bg-(--dash-panel) px-6 py-8 shadow-(--dash-shadow)" dir="rtl">
+          <div className="flex flex-col gap-3 pb-4">
+            <div className="text-xs font-semibold uppercase tracking-wide text-(--dash-muted)">
+              البداية / الروابط المحاسبية / {title}
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h1 className="text-3xl font-black text-(--dash-text)">{title}</h1>
+              <button
+                type="button"
+                className="flex items-center justify-center rounded-full border border-(--dash-primary) bg-(--dash-primary) px-5 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft) transition hover:bg-(--dash-primary-strong)"
+              >
+                {isEditMode ? null : <span className="text-lg">+</span>}
+                {title}
+              </button>
+            </div>
+            <p className="text-sm text-(--dash-muted)">
+              يرجى إدخال المعلومات أدناه بدقة. الحقول التي تحمل علامة * إجبارية لربط الحسابات بشكل صحيح.
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {accountingFields.map((field) => (
+              <label
+                key={field.key}
+                className="flex flex-col gap-2 rounded-[18px] border border-(--dash-primary) bg-(--dash-panel-soft) px-4 py-3 shadow-inner"
+              >
+                <span className="flex items-center justify-between text-sm font-semibold text-(--dash-text)">
+                  {field.label}
+                  <span className="text-xs text-(--dash-primary)">*</span>
+                </span>
+
+                {field.key === "branch" ? (
+                  <select
+                    value={form.branch}
+                    onChange={(e) => setForm((prev) => ({ ...prev, branch: e.target.value }))}
+                    className={`dash-select !rounded-full !bg-white !py-2 !px-4 !text-sm !border-[#0b3d91] dark:!border-[#0b3d91] dark:!bg-[rgba(255,255,255,0.12)] ${
+                      form.branch ? "!text-(--dash-text)" : "!text-(--dash-muted)"
+                    }`}
+                  >
+                    <option value="" className="text-(--dash-muted)">
+                      {field.placeholder ?? "اختر الفرع"}
+                    </option>
+                    {branchOptions.map((option) => (
+                      <option key={option} value={option} className="text-black">
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <select
+                    value={form[field.key as FormKey]}
+                    onChange={(e) => setForm((prev) => ({ ...prev, [field.key as FormKey]: e.target.value }))}
+                    className={`dash-select !rounded-full !bg-white !py-2 !px-4 !text-sm !border-[#0b3d91] dark:!border-[#0b3d91] dark:!bg-[rgba(255,255,255,0.12)] ${
+                      form[field.key as FormKey] ? "!text-(--dash-text)" : "!text-(--dash-muted)"
+                    }`}
+                  >
+                    <option value="" className="text-(--dash-muted)">{field.placeholder ?? "اختر حساباً"}</option>
+                    {linkOptions.map((option) => (
+                      <option key={option} value={option} className="text-black">
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </label>
+            ))}
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-xs text-(--dash-muted)">
+            <span>الحقول التي تحمل علامة * إجبارية</span>
+            <button
+              type="button"
+              onClick={handleSave}
+              className="rounded-full bg-(--dash-primary) px-6 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft) transition hover:bg-(--dash-primary-strong)"
+            >
+              {saveLabel}
             </button>
           </div>
-          <p className="text-sm text-[#1c421b]">
-            يرجى إدخال المعلومات أدناه بدقة. الحقول التي تحمل علامة * إجبارية لربط الحسابات بالشكل الصحيح.
-          </p>
-        </div>
-
-        <div className="mt-6 flex flex-wrap items-center gap-3 rounded-[25px] border border-[#0b4c19] bg-[#e4f0e7] px-4 py-3 shadow-inner">
-          <input
-            type="search"
-            placeholder="بحث"
-            className="dash-input flex-1 min-w-[220px] rounded-full border-[#b2d3bf] bg-white px-4 py-2 text-sm"
-          />
-          <div className="text-sm font-semibold text-[#0b4c19]">عرض: 10</div>
-        </div>
-
-        <div className="mt-6 grid gap-4 xl:grid-cols-2">
-          {accountingFields.map((field) => (
-            <label
-              key={field.key}
-              className="flex flex-col gap-2 rounded-[25px] border border-[#d9e6d8] bg-[#f7f9f5] px-4 py-3 shadow-inner"
-            >
-              <span className="flex items-center justify-between text-sm font-semibold text-[#0d360e]">
-                {field.label}
-                <span className="text-xs text-[#0f5b21]">*</span>
-              </span>
-              <select className="dash-select !rounded-full !border-[#c3d3c2] !bg-white !py-2 !px-4 !text-sm">
-                <option value="">{field.placeholder ?? "اختر حساباً"}</option>
-                {linkOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ))}
-        </div>
-
-        <div className="mt-6 flex items-center justify-between text-xs text-[#64734a]">
-          <span>الحقول التي تحمل علامة * إجبارية</span>
-          <button className="rounded-full bg-[#0b4c19] px-6 py-2 text-sm font-semibold text-white">
-            حفظ الروابط
-          </button>
-        </div>
-      </section>
-    </div>
-  </DashboardShell>
-);
+        </section>
+      </div>
+    </DashboardShell>
+  );
+};
 
 export default Page;

@@ -1,8 +1,11 @@
-﻿"use client";
+"use client";
 
+import { useState } from "react";
 import DashboardShell from "../../components/DashboardShell";
 
 const Page = () => {
+  const [taxType, setTaxType] = useState<"nonTax" | "tax">("nonTax");
+
   return (
     <DashboardShell title="إضافة عميل" subtitle="البداية / العملاء / إضافة عميل" hideHeaderFilters>
       <section className="space-y-5">
@@ -19,11 +22,23 @@ const Page = () => {
             <span className="font-semibold text-(--dash-text)">نوع العميل</span>
             <div className="flex items-center gap-6">
               <label className="flex items-center gap-2">
-                <input type="radio" name="taxType" defaultChecked className="h-4 w-4" />
+                <input
+                  type="radio"
+                  name="taxType"
+                  checked={taxType === "nonTax"}
+                  onChange={() => setTaxType("nonTax")}
+                  className="h-4 w-4"
+                />
                 <span className="text-(--dash-text)">غير مسجل بالضريبة</span>
               </label>
               <label className="flex items-center gap-2">
-                <input type="radio" name="taxType" className="h-4 w-4" />
+                <input
+                  type="radio"
+                  name="taxType"
+                  checked={taxType === "tax"}
+                  onChange={() => setTaxType("tax")}
+                  className="h-4 w-4"
+                />
                 <span className="text-(--dash-text)">مسجل بالضريبة</span>
               </label>
             </div>
@@ -87,6 +102,45 @@ const Page = () => {
               </div>
             </label>
           </div>
+
+          {taxType === "tax" ? (
+            <div className="mt-6 rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-5">
+              <h3 className="text-sm font-semibold text-(--dash-text)">العنوان الوطني</h3>
+              <p className="mt-1 text-xs text-(--dash-muted)">
+                أدخل بيانات العنوان الوطني لأن العميل مسجل بالضريبة.
+              </p>
+              <div className="mt-4 grid gap-4 lg:grid-cols-3">
+                <label className="text-sm">
+                  <span className="mb-2 block font-semibold text-(--dash-text)">بلد *</span>
+                  <input type="text" className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm" />
+                </label>
+                <label className="text-sm">
+                  <span className="mb-2 block font-semibold text-(--dash-text)">المدينة *</span>
+                  <input type="text" className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm" />
+                </label>
+                <label className="text-sm">
+                  <span className="mb-2 block font-semibold text-(--dash-text)">الحي *</span>
+                  <input type="text" className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm" />
+                </label>
+                <label className="text-sm">
+                  <span className="mb-2 block font-semibold text-(--dash-text)">اسم الشارع *</span>
+                  <input type="text" className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm" />
+                </label>
+                <label className="text-sm">
+                  <span className="mb-2 block font-semibold text-(--dash-text)">الرمز البريدي *</span>
+                  <input type="text" className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm" />
+                </label>
+                <label className="text-sm">
+                  <span className="mb-2 block font-semibold text-(--dash-text)">رقم المبنى *</span>
+                  <input type="text" className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm" />
+                </label>
+                <label className="text-sm">
+                  <span className="mb-2 block font-semibold text-(--dash-text)">الرقم الفرعي</span>
+                  <input type="text" className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm" />
+                </label>
+              </div>
+            </div>
+          ) : null}
 
           <div className="mt-6 flex justify-start">
             <button type="button" className="rounded-xl bg-(--dash-primary) px-4 py-2 text-xs font-semibold text-white">
