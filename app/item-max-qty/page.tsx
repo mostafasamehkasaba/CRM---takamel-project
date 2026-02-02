@@ -210,7 +210,7 @@ const page = () => {
             className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-sm text-(--dash-text)"
             onClick={() => {
               setEditingId(null);
-              setForm({ name: "", currentQty: "", maxQty: "" });
+              setForm({ name: "", currentQty: "", minQty: "", maxQty: "" });
             }}
           >
             إلغاء
