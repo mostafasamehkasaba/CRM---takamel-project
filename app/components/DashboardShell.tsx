@@ -1,7 +1,49 @@
 ﻿"use client";
 
 import type { ReactElement, ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Activity,
+  ArrowLeftRight,
+  Banknote,
+  Barcode,
+  BarChart3,
+  BookOpen,
+  Boxes,
+  Building2,
+  ClipboardList,
+  Coins,
+  CreditCard,
+  FileCheck2,
+  FilePlus,
+  FileText,
+  FileUp,
+  Gauge,
+  Gift,
+  LayoutDashboard,
+  LayoutGrid,
+  Layers,
+  Link2,
+  MapPin,
+  Monitor,
+  Package,
+  Percent,
+  Plus,
+  Receipt,
+  Ruler,
+  ShoppingBag,
+  ShoppingCart,
+  Smartphone,
+  Store,
+  Settings,
+  Table2,
+  Tag,
+  Truck,
+  User,
+  UserPlus,
+  Users,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as XLSX from "xlsx";
@@ -13,7 +55,7 @@ const sidebarItems = [
   { label: "الدفعات", href: "/payments" },
   { label: "العملاء", href: "/customers" },
   { label: "الموردين", href: "/suppliers" },
-  { label: "المنتجات", href: "/products" },
+  { label: "التصنيفات الرئيسية", href: "/products" },
   { label: "المخزون", href: "/inventory", badge: "3" },
   {
     label: "المشتريات",
@@ -32,6 +74,7 @@ const sidebarItems = [
   { label: "المستخدمون", href: "/users" },
   { label: "سجل الأنشطة", href: "/activity-log" },
   { label: "خطط الاشتراك", href: "/subscription-plans" },
+  { label: "الفروع", href: "/branches" },
   { label: "الإعدادات", href: "/settings" },
 ];
 
@@ -39,14 +82,7 @@ type SidebarLink = { label: string; href: string; badge?: string };
 type SidebarGroup = { label: string; children: Array<SidebarLink | SidebarGroup>; iconKey?: string };
 type SidebarItem = SidebarLink | SidebarGroup;
 
-const iconPlus = (
-  <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-    <path
-      fill="currentColor"
-      d="M12 5a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6a1 1 0 0 1 1-1Z"
-    />
-  </svg>
-);
+const iconPlus = <Plus className="h-5 w-5" aria-hidden="true" />;
 
 const sidebarIconMap: Record<string, ReactNode> = {
   "/dashboard": (
@@ -78,14 +114,6 @@ const sidebarIconMap: Record<string, ReactNode> = {
       <path
         fill="currentColor"
         d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5Z"
-      />
-    </svg>
-  ),
-  "/reservations": (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v3H3V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1Zm14 9v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9h18Zm-4 3h-4v4h4v-4Z"
       />
     </svg>
   ),
@@ -179,6 +207,54 @@ const sidebarIconMap: Record<string, ReactNode> = {
   "/products": (
     <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
       <path fill="currentColor" d="M3 7 12 2l9 5-9 5-9-5Zm2 6 7 4 7-4v7l-7 4-7-4v-7Z" />
+    </svg>
+  ),
+  "/branches": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm2 4h5v4H6V8Zm7 0h5v4h-5V8ZM6 14h5v4H6v-4Zm7 0h5v4h-5v-4Z"
+      />
+    </svg>
+  ),
+  "/tables": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M4 6h16a2 2 0 0 1 2 2v2H2V8a2 2 0 0 1 2-2Zm-2 6h20v6a2 2 0 0 1-2 2h-2v-4h-4v4h-4v-4H6v4H4a2 2 0 0 1-2-2v-6Z"
+      />
+    </svg>
+  ),
+  "/agents-employees": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm6 8H6a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4Z"
+      />
+    </svg>
+  ),
+  "/promotions": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M3 7a3 3 0 0 1 3-3h7a3 3 0 0 1 3 3v.6l5 2.9v5l-5 2.9V19a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7Zm4 2h6v2H7V9Zm0 4h5v2H7v-2Z"
+      />
+    </svg>
+  ),
+  "/regions": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 2 3 5v6c0 5 4 9 9 11 5-2 9-6 9-11V5l-9-3Zm0 5a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"
+      />
+    </svg>
+  ),
+  "/delivery-companies": (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M3 7h11v6h2V9h3l2 3v3h-2a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H3V7Zm5 10a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm10 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"
+      />
     </svg>
   ),
   "/item-types": (
@@ -286,15 +362,6 @@ const sidebarIconMap: Record<string, ReactNode> = {
     </svg>
   ),
   "/devices/new": iconPlus,
-  "/marketers": (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm6 8H6a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4Z"
-      />
-    </svg>
-  ),
-  "/marketers/new": iconPlus,
   "/profile": (
     <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
       <path
@@ -426,7 +493,104 @@ const sidebarIconMap: Record<string, ReactNode> = {
   ),
 };
 
-const getSidebarIcon = (key: string) => sidebarIconMap[key] ?? sidebarIconMap["/dashboard"];
+const lucideIconMap: Record<string, ReactNode> = {
+  "/dashboard": <LayoutDashboard className="h-5 w-5" aria-hidden="true" />,
+  "/invoices": <FileText className="h-5 w-5" aria-hidden="true" />,
+  "/invoices/tax": <FileText className="h-5 w-5" aria-hidden="true" />,
+  "/invoices/tax-simplified": <FileText className="h-5 w-5" aria-hidden="true" />,
+  "/quotes": <FileText className="h-5 w-5" aria-hidden="true" />,
+  "/quotes/new": iconPlus,
+  "/invoices/new": iconPlus,
+  "/sales/new": <ShoppingCart className="h-5 w-5" aria-hidden="true" />,
+  "/sales/new/tax-invoice": iconPlus,
+  "/sales/new/simplified-tax-invoice": iconPlus,
+  "/sales/new/import-csv": <FileUp className="h-5 w-5" aria-hidden="true" />,
+  "/gift-cards": <Gift className="h-5 w-5" aria-hidden="true" />,
+  "/payments": <CreditCard className="h-5 w-5" aria-hidden="true" />,
+  "/payments/new": iconPlus,
+  "/payments/expense": <Receipt className="h-5 w-5" aria-hidden="true" />,
+  "/payments/expense/new": iconPlus,
+  "/payments/deposit": <Wallet className="h-5 w-5" aria-hidden="true" />,
+  "/payments/deposit/new": iconPlus,
+  "/payments/withdraw": <Wallet className="h-5 w-5" aria-hidden="true" />,
+  "/payments/withdraw/new": iconPlus,
+  "/customers": <Users className="h-5 w-5" aria-hidden="true" />,
+  "/customers/new": <UserPlus className="h-5 w-5" aria-hidden="true" />,
+  "/suppliers": <Building2 className="h-5 w-5" aria-hidden="true" />,
+  "/suppliers/new": iconPlus,
+  "/products": <Boxes className="h-5 w-5" aria-hidden="true" />,
+  "/item-types": <Layers className="h-5 w-5" aria-hidden="true" />,
+  "/item-names": <Tag className="h-5 w-5" aria-hidden="true" />,
+  "/item-codes": <Barcode className="h-5 w-5" aria-hidden="true" />,
+  "/item-brands": <Tag className="h-5 w-5" aria-hidden="true" />,
+  "/item-costs": <Coins className="h-5 w-5" aria-hidden="true" />,
+  "/item-max-qty": <Gauge className="h-5 w-5" aria-hidden="true" />,
+  "/item-units": <Ruler className="h-5 w-5" aria-hidden="true" />,
+  "/item-display": <Monitor className="h-5 w-5" aria-hidden="true" />,
+  "/inventory": <Package className="h-5 w-5" aria-hidden="true" />,
+  "/purchases": <ShoppingBag className="h-5 w-5" aria-hidden="true" />,
+  "/purchases/new": iconPlus,
+  "/purchases/import-csv": <FileUp className="h-5 w-5" aria-hidden="true" />,
+  "/expenses": <Receipt className="h-5 w-5" aria-hidden="true" />,
+  "/expenses/new": iconPlus,
+  "/wallets": <Wallet className="h-5 w-5" aria-hidden="true" />,
+  "/reports": <BarChart3 className="h-5 w-5" aria-hidden="true" />,
+  "/users": <Users className="h-5 w-5" aria-hidden="true" />,
+  "/users/new": <UserPlus className="h-5 w-5" aria-hidden="true" />,
+  "/devices/reports": <Smartphone className="h-5 w-5" aria-hidden="true" />,
+  "/devices/new": iconPlus,
+  "/profile": <User className="h-5 w-5" aria-hidden="true" />,
+  "/profile/activity": <Activity className="h-5 w-5" aria-hidden="true" />,
+  "/profile/notifications": <Activity className="h-5 w-5" aria-hidden="true" />,
+  "/activity-log": <Activity className="h-5 w-5" aria-hidden="true" />,
+  "/subscription-plans": <Percent className="h-5 w-5" aria-hidden="true" />,
+  "/settings": <Settings className="h-5 w-5" aria-hidden="true" />,
+  "/cash": <Banknote className="h-5 w-5" aria-hidden="true" />,
+  "/banks": <Building2 className="h-5 w-5" aria-hidden="true" />,
+  "/banks/new": iconPlus,
+  "/banks/external-transfers": <ArrowLeftRight className="h-5 w-5" aria-hidden="true" />,
+  "/banks/external-transfers/new": iconPlus,
+  "/banks/internal-transfers": <ArrowLeftRight className="h-5 w-5" aria-hidden="true" />,
+  "/financial-transfers": <ArrowLeftRight className="h-5 w-5" aria-hidden="true" />,
+  "/accounts/tree": <BookOpen className="h-5 w-5" aria-hidden="true" />,
+  "/accounts/new": iconPlus,
+  "/accounts/links": <Link2 className="h-5 w-5" aria-hidden="true" />,
+  "/accounts/links/new": iconPlus,
+  "/accounts/entries": <ClipboardList className="h-5 w-5" aria-hidden="true" />,
+  "/accounts/entries/new-cash": iconPlus,
+  "/accounts/opening-entry": <FileCheck2 className="h-5 w-5" aria-hidden="true" />,
+  "/movement-log": <Activity className="h-5 w-5" aria-hidden="true" />,
+  "wallets-group": <Wallet className="h-5 w-5" aria-hidden="true" />,
+  "/branches": <Store className="h-5 w-5" aria-hidden="true" />,
+  "/tables": <Table2 className="h-5 w-5" aria-hidden="true" />,
+  "/agents-employees": <Users className="h-5 w-5" aria-hidden="true" />,
+  "/promotions": <Percent className="h-5 w-5" aria-hidden="true" />,
+  "/regions": <MapPin className="h-5 w-5" aria-hidden="true" />,
+  "/delivery-companies": <Truck className="h-5 w-5" aria-hidden="true" />,
+  "/reports-group": <BarChart3 className="h-5 w-5" aria-hidden="true" />,
+  "/products-group": <Boxes className="h-5 w-5" aria-hidden="true" />,
+  "/sales-group": <ShoppingCart className="h-5 w-5" aria-hidden="true" />,
+};
+
+const getSidebarIcon = (key: string) => lucideIconMap[key] ?? lucideIconMap["/dashboard"];
+
+const collectSidebarLinks = (items: SidebarItem[]): SidebarLink[] => {
+  const links: SidebarLink[] = [];
+  items.forEach((item) => {
+    if ("href" in item) {
+      links.push({ label: item.label, href: item.href, badge: item.badge });
+      return;
+    }
+    item.children.forEach((child) => {
+      if ("href" in child) {
+        links.push({ label: child.label, href: child.href, badge: child.badge });
+        return;
+      }
+      links.push(...collectSidebarLinks([child]));
+    });
+  });
+  return links;
+};
 
 /* 
 const legacySidebarNavigation: Array<SidebarLink | SidebarGroup> = [
@@ -449,7 +613,7 @@ const legacySidebarNavigation: Array<SidebarLink | SidebarGroup> = [
       { label: "إضافة مورد", href: "/suppliers/new" },
     ],
   },
-  { label: "المنتجات", href: "/products" },
+  { label: "التصنيفات الرئيسية", href: "/products" },
   { label: "المخزون", href: "/inventory", badge: "3" },
   {
     label: "المشتريات",
@@ -477,25 +641,26 @@ const legacySidebarNavigation: Array<SidebarLink | SidebarGroup> = [
   { label: "المستخدمون", href: "/users" },
   { label: "سجل الأنشطة", href: "/activity-log" },
   { label: "خطط الاشتراك", href: "/subscription-plans" },
+  { label: "الفروع", href: "/branches" },
   { label: "الإعدادات", href: "/settings" },
 ];
 
 */
 const sidebarNavigation: Array<SidebarItem> = [
   { label: "الرئيسية", href: "/dashboard" },
-  { label: "المنتجات", href: "/products" },
+  { label: "التصنيفات الرئيسية", href: "/products" },
   {
     label: "الأصناف",
     iconKey: "/products",
     children: [
-      { label: "نوع الصنف", href: "/item-types" },
-      { label: "اسم الصنف", href: "/item-names" },
+      { label: "عرض الصنف", href: "/item-display" },
       { label: "كود الصنف", href: "/item-codes" },
+      { label: "اسم الصنف", href: "/item-names" },
       { label: "الماركة", href: "/item-brands" },
       { label: "تكلفة الصنف", href: "/item-costs" },
-      { label: "أقصى كمية للصنف", href: "/item-max-qty" },
       { label: "وحدة الصنف", href: "/item-units" },
-      { label: "عرض الصنف", href: "/item-display" },
+      { label: "أقصى كمية للصنف", href: "/item-max-qty" },
+      { label: "نوع الصنف", href: "/item-types" },
     ],
   },
   {
@@ -505,7 +670,6 @@ const sidebarNavigation: Array<SidebarItem> = [
       { label: "جميع المبيعات", href: "/invoices", badge: "5" },
       { label: "فواتير ضريبية", href: "/invoices/tax" },
       { label: "فواتير ضريبية مبسطة", href: "/invoices/tax-simplified" },
-      { label: "الحجوزات", href: "/reservations" },
       {
         label: "عملية بيع جديدة",
         iconKey: "/sales/new",
@@ -564,14 +728,6 @@ const sidebarNavigation: Array<SidebarItem> = [
     ],
   },
   {
-    label: "المسوقين",
-    iconKey: "/marketers",
-    children: [
-      { label: "المسوقين", href: "/marketers" },
-      { label: "إضافة مسوق", href: "/marketers/new" },
-    ],
-  },
-  {
     label: "البنوك",
     iconKey: "/banks",
     children: [
@@ -609,21 +765,27 @@ const sidebarNavigation: Array<SidebarItem> = [
       { label: "القيد الافتتاحي", href: "/accounts/opening-entry" },
     ],
   },
-  { label: "إعدادات", href: "/settings" },
-  { label: "التقارير", href: "/reports" },
-  {
-    label: "المزيد",
-    iconKey: "/reports",
-    children: [
-      { label: "إضافة فاتورة", href: "/invoices/new" },
-      { label: "المخزون", href: "/inventory", badge: "3" },
-      { label: "سجل النشاط", href: "/activity-log" },
-      { label: "خطط الاشتراك", href: "/subscription-plans" },
-      { label: "الملف الشخصي", href: "/profile" },
-      { label: "سجل النشاط الشخصي", href: "/profile/activity" },
-      { label: "إعدادات الإشعارات", href: "/profile/notifications" },
-    ],
-  },
+      { label: "التقارير", href: "/reports" },
+    { label: "الفروع", href: "/branches" },
+    { label: "الطاولات", href: "/tables" },
+    { label: "المندوبين والموظفين", href: "/agents-employees" },
+    { label: "العروض الترويجية", href: "/promotions" },
+    { label: "المناطق", href: "/regions" },
+    { label: "شركات التوصيل", href: "/delivery-companies" },
+    {
+      label: "المزيد",
+      iconKey: "/reports",
+      children: [
+        { label: "إضافة فاتورة", href: "/invoices/new" },
+        { label: "المخزون", href: "/inventory", badge: "3" },
+        { label: "سجل النشاط", href: "/activity-log" },
+        { label: "خطط الاشتراك", href: "/subscription-plans" },
+        { label: "الإعدادات", href: "/settings" },
+        { label: "الملف الشخصي", href: "/profile" },
+        { label: "سجل النشاط الشخصي", href: "/profile/activity" },
+        { label: "إعدادات الإشعارات", href: "/profile/notifications" },
+      ],
+    },
 ];
 
 type DashboardShellProps = {
@@ -683,14 +845,30 @@ const DashboardShell = ({
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState(false);
-  const [toast, setToast] = useState<{ message: string; tone: "success" | "info" | "warning" } | null>(null);
-  const filterRef = useRef<HTMLDetailsElement | null>(null);
-  const exportRef = useRef<HTMLDetailsElement | null>(null);
-  const notificationsRef = useRef<HTMLDetailsElement | null>(null);
-  const quickActionsRef = useRef<HTMLDivElement | null>(null);
-  const profileMenuRef = useRef<HTMLDivElement | null>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState(false);
+    const [toast, setToast] = useState<{ message: string; tone: "success" | "info" | "warning" } | null>(null);
+    const [globalSearch, setGlobalSearch] = useState("");
+    const [showSearchResults, setShowSearchResults] = useState(false);
+    const filterRef = useRef<HTMLDetailsElement | null>(null);
+    const exportRef = useRef<HTMLDetailsElement | null>(null);
+    const notificationsRef = useRef<HTMLDetailsElement | null>(null);
+    const quickActionsRef = useRef<HTMLDivElement | null>(null);
+    const profileMenuRef = useRef<HTMLDivElement | null>(null);
+    const searchRef = useRef<HTMLDivElement | null>(null);
+
+    const isExternalSearch = Boolean(onSearchChange);
+    const currentSearchValue = isExternalSearch ? searchValue ?? "" : globalSearch;
+    const searchableLinks = useMemo(() => collectSidebarLinks(sidebarNavigation), []);
+    const searchResults = useMemo(() => {
+      const needle = currentSearchValue.trim().toLowerCase();
+      if (!needle || isExternalSearch) {
+        return [];
+      }
+      return searchableLinks
+        .filter((item: SidebarLink) => `${item.label} ${item.href}`.toLowerCase().includes(needle))
+        .slice(0, 8);
+    }, [currentSearchValue, searchableLinks, isExternalSearch]);
 
   const showToast = (message: string, tone: "success" | "info" | "warning" = "info") => {
     setToast({ message, tone });
@@ -729,19 +907,32 @@ const DashboardShell = ({
     }
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!showQuickActions || !quickActionsRef.current) {
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (!showQuickActions || !quickActionsRef.current) {
+          return;
+        }
+        if (!quickActionsRef.current.contains(event.target as Node)) {
+          setShowQuickActions(false);
+        }
+      };
+
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [showQuickActions]);
+
+    useEffect(() => {
+      if (!showSearchResults) {
         return;
       }
-      if (!quickActionsRef.current.contains(event.target as Node)) {
-        setShowQuickActions(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showQuickActions]);
+      const handleClickOutside = (event: MouseEvent) => {
+        if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+          setShowSearchResults(false);
+        }
+      };
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [showSearchResults]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -767,141 +958,132 @@ const DashboardShell = ({
     items.some((child) => (isSidebarGroup(child) ? hasActiveChild(child.children) : child.href === pathname));
 
   const renderSidebarItems = (items: SidebarItem[], depth = 0): ReactElement[] =>
-    items.map((item) => {
-      if (isSidebarGroup(item)) {
-        const isActive = hasActiveChild(item.children);
-        const isNested = depth > 0;
-        return (
-          <details
-            key={item.label}
-            open={isActive}
-            className={`group rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 ${
-              isNested ? "text-xs" : "text-sm"
-            }`}
-          >
-            <summary
-              className={`flex cursor-pointer list-none items-center justify-between rounded-lg px-2 py-2 transition ${
-                isActive ? "text-(--dash-text)" : "text-(--dash-muted)"
+      items.map((item) => {
+        if (isSidebarGroup(item)) {
+          const isActive = hasActiveChild(item.children);
+          const isNested = depth > 0;
+          const hideLabels = isDesktopSidebarCollapsed && !isNested;
+          return (
+            <details
+              key={item.label}
+              open={isActive}
+              className={`group rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 ${
+                isNested ? "text-xs" : "text-sm"
               }`}
             >
-              <span className="flex items-center gap-2">
-                <span
-                  className={`flex items-center justify-center rounded-lg ${
-                    isNested ? "h-7 w-7" : "h-8 w-8"
-                  } ${
-                    isActive
-                      ? "bg-(--dash-primary) text-white"
-                      : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
-                  }`}
-                >
-                  {getSidebarIcon(item.iconKey ?? "wallets-group")}
-                </span>
-                <span className={isNested ? "text-xs font-medium" : "font-medium"}>{item.label}</span>
-              </span>
-              <svg
-                viewBox="0 0 24 24"
-                className={`${isNested ? "h-3 w-3" : "h-4 w-4"} text-(--dash-muted-2) transition group-open:rotate-180`}
-                aria-hidden="true"
+              <summary
+                className={`flex cursor-pointer list-none items-center rounded-lg px-2 py-2 transition ${
+                  hideLabels ? "justify-center" : "justify-between"
+                } ${isActive ? "text-(--dash-text)" : "text-(--dash-muted)"}`}
               >
-                <path fill="currentColor" d="M7 10l5 5 5-5H7Z" />
-              </svg>
-            </summary>
-            <div className={`mt-2 space-y-2 pb-2 ${isNested ? "ps-3" : ""}`}>
-              {renderSidebarItems(item.children, depth + 1)}
-            </div>
-          </details>
+                <span className="flex items-center gap-2">
+                  <span
+                    className={`flex items-center justify-center rounded-lg ${
+                      isNested ? "h-7 w-7" : "h-8 w-8"
+                    } ${
+                      isActive
+                        ? "bg-(--dash-primary) text-white"
+                        : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
+                    }`}
+                  >
+                    {getSidebarIcon(item.iconKey ?? "wallets-group")}
+                  </span>
+                  <span className={hideLabels ? "sr-only" : isNested ? "text-xs font-medium" : "font-medium"}>{item.label}</span>
+                </span>
+                {hideLabels ? null : (
+                  <svg
+                    viewBox="0 0 24 24"
+                    className={`${isNested ? "h-3 w-3" : "h-4 w-4"} text-(--dash-muted-2) transition group-open:rotate-180`}
+                    aria-hidden="true"
+                  >
+                    <path fill="currentColor" d="M7 10l5 5 5-5H7Z" />
+                  </svg>
+                )}
+              </summary>
+              <div className={`mt-2 space-y-2 pb-2 ${isNested ? "ps-3" : ""}`}>
+                {renderSidebarItems(item.children, depth + 1)}
+              </div>
+            </details>
         );
       }
 
-      const isActive = pathname === item.href;
-      const isNested = depth > 0;
-      return (
-        <Link
-          key={item.label}
-          href={item.href}
-          className={`${
-            isNested
-              ? "flex items-center justify-between rounded-lg px-3 py-2 text-xs transition"
-              : "flex w-full items-center justify-between rounded-xl px-4 py-3 transition"
-          } ${
-            isActive
-              ? "bg-(--dash-primary) text-white shadow-(--dash-primary-soft)"
-              : isNested
-              ? "text-(--dash-muted) hover:bg-(--dash-panel-glass)"
-              : "text-(--dash-muted) hover:bg-(--dash-panel-soft)"
-          }`}
-        >
-          <span className="flex items-center gap-2">
-            <span
-              className={`flex items-center justify-center rounded-lg ${isNested ? "h-7 w-7" : "h-8 w-8"} ${
-                isActive ? "bg-white/15 text-white" : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
-              }`}
-            >
-              {getSidebarIcon(item.href)}
+        const isActive = pathname === item.href;
+        const isNested = depth > 0;
+        const hideLabels = isDesktopSidebarCollapsed && !isNested;
+        return (
+          <Link
+            key={item.label}
+            href={item.href}
+            className={`${
+              isNested
+                ? "flex items-center justify-between rounded-lg px-3 py-2 text-xs transition"
+                : `flex w-full items-center rounded-xl px-4 py-3 transition ${
+                    hideLabels ? "justify-center px-2" : "justify-between"
+                  }`
+            } ${
+              isActive
+                ? "bg-(--dash-primary) text-white shadow-(--dash-primary-soft)"
+                : isNested
+                ? "text-(--dash-muted) hover:bg-(--dash-panel-glass)"
+                : "text-(--dash-muted) hover:bg-(--dash-panel-soft)"
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <span
+                className={`flex items-center justify-center rounded-lg ${isNested ? "h-7 w-7" : "h-8 w-8"} ${
+                  isActive ? "bg-white/15 text-white" : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
+                }`}
+              >
+                {getSidebarIcon(item.href)}
+              </span>
+              <span className={hideLabels ? "sr-only" : isNested ? "text-xs" : "font-medium"}>{item.label}</span>
             </span>
-            <span className={isNested ? "text-xs" : "font-medium"}>{item.label}</span>
-          </span>
-          {item.badge ? (
-            <span className="rounded-full bg-(--dash-danger) px-2 py-0.5 text-xs font-semibold text-white">
-              {item.badge}
-            </span>
-          ) : null}
-        </Link>
-      );
-    });
+            {!hideLabels && item.badge ? (
+              <span className="rounded-full bg-(--dash-danger) px-2 py-0.5 text-xs font-semibold text-white">
+                {item.badge}
+              </span>
+            ) : null}
+          </Link>
+        );
+      });
 
   const sidebarContent = (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) p-4">
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--dash-panel-glass) text-(--dash-primary)">
-            <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-              <path
-                fill="currentColor"
-                d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z"
-              />
-            </svg>
-          </span>
-          <div className="text-sm">
-            <p className="font-semibold">تكامل البيانات</p>
-            <p className="text-xs text-(--dash-muted)">نظام إدارة الأعمال</p>
+      <div className="flex h-full flex-col">
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) p-4">
+          <div className={`flex w-full items-center ${isDesktopSidebarCollapsed ? "justify-center" : "gap-3"}`}>
+            <Link
+              href="/dashboard"
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--dash-panel-glass) text-(--dash-primary)"
+              aria-label="الانتقال إلى الرئيسية"
+            >
+              <LayoutGrid className="h-5 w-5" aria-hidden="true" />
+            </Link>
+            <div className={`text-sm ${isDesktopSidebarCollapsed ? "sr-only" : ""}`}>
+              <p className="font-semibold">تكامل البيانات</p>
+              <p className="text-xs text-(--dash-muted)">نظام إدارة الأعمال</p>
+            </div>
           </div>
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen(false)}
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-(--dash-border) bg-(--dash-panel-glass) text-(--dash-muted) lg:hidden"
+            aria-label="إغلاق الشريط الجانبي"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+              <path fill="currentColor" d="M6 6l12 12M18 6l-12 12" />
+            </svg>
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsSidebarOpen(false)}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-(--dash-border) bg-(--dash-panel-glass) text-(--dash-muted) lg:hidden"
-          aria-label="إغلاق الشريط الجانبي"
-        >
-          <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-            <path fill="currentColor" d="M6 6l12 12M18 6l-12 12" />
-          </svg>
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsDesktopSidebarCollapsed(true)}
-          className="hidden h-9 w-9 items-center justify-center rounded-xl border border-(--dash-border) bg-(--dash-panel-glass) text-(--dash-muted) lg:flex"
-          aria-label="إخفاء الشريط الجانبي"
-        >
-          <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-            <path fill="currentColor" d="M9 6l6 6-6 6" />
-          </svg>
-        </button>
-      </div>
 
-      <nav className="dash-scroll mt-8 flex-1 space-y-3 overflow-y-auto pr-1 text-sm">
+      <nav
+        className={`dash-scroll mt-8 flex-1 space-y-3 overflow-y-auto pr-1 text-sm ${
+          isDesktopSidebarCollapsed ? "items-center" : ""
+        }`}
+      >
         {renderSidebarItems(sidebarNavigation)}
       </nav>
 
-      <button
-        type="button"
-        className="mt-8 flex w-full items-center justify-between rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-muted)"
-      >
-        <span>مركز المساعدة</span>
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-(--dash-panel-glass) text-(--dash-text)">
-          ?
-        </span>
-      </button>
+      
     </div>
   );
 
@@ -928,19 +1110,22 @@ const DashboardShell = ({
       </aside>
 
       <aside
-        className={`fixed right-0 top-0 z-20 hidden h-full w-72 border-l border-(--dash-border) bg-(--dash-panel) p-6 backdrop-blur transition-transform lg:block ${
-          isDesktopSidebarCollapsed ? "lg:translate-x-full" : "lg:translate-x-0"
+        className={`fixed right-0 top-0 z-20 hidden h-full border-l border-(--dash-border) bg-(--dash-panel) backdrop-blur transition-all lg:block ${
+          isDesktopSidebarCollapsed ? "lg:w-20 p-3" : "lg:w-72 p-6"
         }`}
       >
         {sidebarContent}
       </aside>
 
       <main
-        className={`relative z-10 px-4 pb-16 pt-10 sm:px-6 lg:pl-12 ${isDesktopSidebarCollapsed ? "lg:pr-6" : "lg:pr-76"}`}
+        className={`relative z-10 px-4 pb-16 pt-10 sm:px-6 lg:pl-12 ${isDesktopSidebarCollapsed ? "lg:pr-24" : "lg:pr-76"}`}
       >
         <header className="flex flex-col gap-4">
   <div className="flex flex-wrap items-center justify-between gap-3">
-    <div className="flex w-full max-w-xl flex-1 items-center gap-3 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2">
+    <div
+      ref={searchRef}
+      className="relative flex w-full max-w-xl flex-1 items-center gap-3 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2"
+    >
       <button
         type="button"
         onClick={() => setIsSidebarOpen(true)}
@@ -973,13 +1158,45 @@ const DashboardShell = ({
       </svg>
       <input
         type="text"
-        value={onSearchChange ? searchValue ?? "" : undefined}
-        defaultValue={onSearchChange ? undefined : searchValue}
-        onChange={onSearchChange ? (event) => onSearchChange(event.target.value) : undefined}
-        readOnly={!onSearchChange}
+        value={currentSearchValue}
+        onChange={(event) => {
+          const nextValue = event.target.value;
+          if (isExternalSearch && onSearchChange) {
+            onSearchChange(nextValue);
+            return;
+          }
+          setGlobalSearch(nextValue);
+          setShowSearchResults(true);
+        }}
+        onFocus={() => {
+          if (!isExternalSearch) {
+            setShowSearchResults(true);
+          }
+        }}
         placeholder={searchPlaceholder ?? "بحث سريع عن العملاء، المنتجات، الفواتير..."}
         className="w-full bg-transparent text-sm text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
       />
+      {!isExternalSearch && showSearchResults && currentSearchValue.trim() ? (
+        <div className="absolute right-0 top-full z-30 mt-2 w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-2 text-sm shadow-(--dash-shadow)">
+          {searchResults.length ? (
+            searchResults.map((item: SidebarLink) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => {
+                  setShowSearchResults(false);
+                  setGlobalSearch("");
+                }}
+                className="flex items-center rounded-xl px-3 py-2 text-(--dash-text) hover:bg-(--dash-panel-soft)"
+              >
+                <span>{item.label}</span>
+              </Link>
+            ))
+          ) : (
+            <div className="px-3 py-2 text-xs text-(--dash-muted)">لا توجد نتائج مطابقة.</div>
+          )}
+        </div>
+      ) : null}
     </div>
 
     <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">

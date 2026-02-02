@@ -425,38 +425,22 @@ const Page = () => {
           <table className="min-w-full text-sm">
             <thead className="bg-(--dash-primary) text-white">
               <tr>
-                <th className="px-3 py-3 text-right font-semibold">
-                  <input type="checkbox" className="h-4 w-4 rounded border border-(--dash-border)" />
-                </th>
                 <th className="px-3 py-3 text-right font-semibold">رقم الفاتورة</th>
                 <th className="px-3 py-3 text-right font-semibold">التاريخ</th>
                 <th className="px-3 py-3 text-right font-semibold">الرقم المرجعي</th>
                 <th className="px-3 py-3 text-right font-semibold">كاشير</th>
                 <th className="px-3 py-3 text-right font-semibold">عميل</th>
                 <th className="px-3 py-3 text-right font-semibold">حالة فاتورة المبيعات</th>
-                <th className="px-3 py-3 text-right font-semibold">المجموع الكلي</th>
-                <th className="px-3 py-3 text-right font-semibold">مدفوع</th>
-                <th className="px-3 py-3 text-right font-semibold">المبلغ المتبقي</th>
                 <th className="px-3 py-3 text-right font-semibold">بدون ضريبة</th>
                 <th className="px-3 py-3 text-right font-semibold">ضريبة</th>
-                <th className="px-3 py-3 text-right font-semibold">حالة الدفع</th>
-                <th className="px-3 py-3 text-right font-semibold">نوع الدفع</th>
-                <th className="px-3 py-3 text-right font-semibold">الإجراءات</th>
+                <th className="px-3 py-3 text-right font-semibold">مدفوع</th>
+                <th className="px-3 py-3 text-right font-semibold">المبلغ المتبقي</th>
+                <th className="px-3 py-3 text-right font-semibold">المجموع الكلي</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((row) => (
                 <tr key={row.id} className="border-t border-(--dash-border) text-(--dash-text)">
-                  <td className="px-3 py-3">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(selectedRows[row.id])}
-                      onChange={(event) =>
-                        setSelectedRows((prev) => ({ ...prev, [row.id]: event.target.checked }))
-                      }
-                      className="h-4 w-4 rounded border border-(--dash-border)"
-                    />
-                  </td>
                   <td className="px-3 py-3 font-semibold">{row.id}</td>
                   <td className="px-3 py-3 text-(--dash-muted)">
                     <div className="flex flex-col">
@@ -472,61 +456,24 @@ const Page = () => {
                       {row.invoiceStatus}
                     </span>
                   </td>
-                  <td className="px-3 py-3 font-semibold">{formatNumber(row.total)}</td>
-                  <td className="px-3 py-3 font-semibold">{formatNumber(row.paid)}</td>
-                  <td className="px-3 py-3 font-semibold">{formatNumber(row.remaining)}</td>
                   <td className="px-3 py-3">{formatNumber(row.subtotal)}</td>
                   <td className="px-3 py-3">{formatNumber(row.tax)}</td>
-                  <td className="px-3 py-3">
-                    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold ${statusStyles[row.paymentStatus]}`}>
-                      {row.paymentStatus}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3">{row.paymentType}</td>
-                  <td className="relative px-3 py-3">
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        menuButtonRef.current = event.currentTarget;
-                        setOpenMenuId((prev) => (prev === row.id ? null : row.id));
-                      }}
-                      className="rounded-full bg-(--dash-primary) px-3 py-1 text-xs font-semibold text-white"
-                    >
-                      الإجراءات
-                    </button>
-                    {openMenuId === row.id ? (
-                      <div
-                        ref={menuRef}
-                        className="absolute end-3 top-12 z-20 w-56 rounded-xl border border-(--dash-border) bg-(--dash-panel) p-2 text-xs shadow-(--dash-shadow)"
-                      >
-                        {actionItems.map((item) => (
-                          <button
-                            key={item.label}
-                            type="button"
-                            onClick={() => setOpenMenuId(null)}
-                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-(--dash-text) hover:bg-(--dash-panel-soft)"
-                          >
-                            <span className="text-(--dash-muted-2)">{item.icon}</span>
-                            <span className="flex-1 text-right">{item.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </td>
+                  <td className="px-3 py-3 font-semibold">{formatNumber(row.paid)}</td>
+                  <td className="px-3 py-3 font-semibold">{formatNumber(row.remaining)}</td>
+                  <td className="px-3 py-3 font-semibold">{formatNumber(row.total)}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot className="border-t border-(--dash-border) text-(--dash-text)">
               <tr>
-                <td className="px-3 py-3 font-semibold" colSpan={7}>
+                <td className="px-3 py-3 font-semibold" colSpan={6}>
                   الإجمالي
                 </td>
-                <td className="px-3 py-3 font-semibold">{formatNumber(totals.total)}</td>
-                <td className="px-3 py-3 font-semibold">{formatNumber(totals.paid)}</td>
-                <td className="px-3 py-3 font-semibold">{formatNumber(totals.remaining)}</td>
                 <td className="px-3 py-3 font-semibold">{formatNumber(totals.subtotal)}</td>
                 <td className="px-3 py-3 font-semibold">{formatNumber(totals.tax)}</td>
-                <td className="px-3 py-3" colSpan={3} />
+                <td className="px-3 py-3 font-semibold">{formatNumber(totals.paid)}</td>
+                <td className="px-3 py-3 font-semibold">{formatNumber(totals.remaining)}</td>
+                <td className="px-3 py-3 font-semibold">{formatNumber(totals.total)}</td>
               </tr>
             </tfoot>
           </table>

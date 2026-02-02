@@ -456,8 +456,8 @@ const Page = () => {
       </section>
 
       <section className="mt-6 overflow-hidden rounded-2xl border border-(--dash-border) bg-(--dash-panel) shadow-(--dash-shadow)">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
+        <div className="w-full">
+          <table className="w-full table-fixed break-words text-xs">
             <thead className="bg-(--dash-primary) text-white">
               <tr>
                 <th className="px-3 py-3 text-right font-semibold">

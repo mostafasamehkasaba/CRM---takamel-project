@@ -7,6 +7,7 @@ type ItemMaxQty = {
   id: string;
   name: string;
   currentQty: number;
+  minQty: number;
   maxQty: number;
 };
 
@@ -15,12 +16,14 @@ const initialItems: ItemMaxQty[] = [
     id: "MAX-001",
     name: "حاسوب محمول",
     currentQty: 48,
+    minQty: 10,
     maxQty: 50,
   },
   {
     id: "MAX-002",
     name: "ملحقات",
     currentQty: 120,
+    minQty: 25,
     maxQty: 150,
   },
 ];
@@ -29,7 +32,7 @@ const page = () => {
   const [items, setItems] = useState<ItemMaxQty[]>(initialItems);
   const [query, setQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", currentQty: "", maxQty: "" });
+  const [form, setForm] = useState({ name: "", currentQty: "", minQty: "", maxQty: "" });
 
   useEffect(() => {
     const stored = window.localStorage.getItem("item-max-qty-data");
@@ -68,6 +71,7 @@ const page = () => {
     setForm({
       name: item.name,
       currentQty: String(item.currentQty),
+      minQty: String(item.minQty ?? 0),
       maxQty: String(item.maxQty),
     });
   };
@@ -81,6 +85,7 @@ const page = () => {
       id: editingId ?? `MAX-${String(items.length + 1).padStart(3, "0")}`,
       name,
       currentQty: Number.parseInt(form.currentQty, 10) || 0,
+      minQty: Number.parseInt(form.minQty, 10) || 0,
       maxQty: Number.parseInt(form.maxQty, 10) || 0,
     };
     setItems((prev) => {
@@ -90,7 +95,7 @@ const page = () => {
       return [nextItem, ...prev];
     });
     setEditingId(null);
-    setForm({ name: "", currentQty: "", maxQty: "" });
+    setForm({ name: "", currentQty: "", minQty: "", maxQty: "" });
   };
 
   return (
@@ -124,6 +129,7 @@ const page = () => {
               <tr>
                 <th className="px-4 py-3 text-right font-semibold">الصنف</th>
                 <th className="px-4 py-3 text-right font-semibold">الكمية الحالية</th>
+                <th className="px-4 py-3 text-right font-semibold">الحد الأدنى</th>
                 <th className="px-4 py-3 text-right font-semibold">الحد الأعلى</th>
                 <th className="px-4 py-3 text-right font-semibold">الإجراء</th>
               </tr>
@@ -136,6 +142,7 @@ const page = () => {
                 >
                   <td className="px-4 py-3 font-semibold">{item.name}</td>
                   <td className="px-4 py-3 text-(--dash-muted)">{item.currentQty}</td>
+                  <td className="px-4 py-3 text-(--dash-muted)">{item.minQty ?? 0}</td>
                   <td className="px-4 py-3 text-(--dash-muted)">{item.maxQty}</td>
                   <td className="px-4 py-3">
                     <button
@@ -155,7 +162,7 @@ const page = () => {
 
       <section className="mt-6 rounded-3xl border border-(--dash-border) bg-(--dash-panel) p-6 shadow-(--dash-shadow)">
         <h2 className="text-lg font-semibold">تعديل الحد الأعلى</h2>
-        <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <div className="mt-4 grid gap-4 lg:grid-cols-4">
           <label className="text-sm text-(--dash-muted)">
             <span className="mb-2 block font-semibold text-(--dash-text)">الصنف</span>
             <input
@@ -185,8 +192,18 @@ const page = () => {
               placeholder="الحد الأعلى"
               className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
             />
+            </label>
+          <label className="text-sm text-(--dash-muted)">
+            <span className="mb-2 block font-semibold text-(--dash-text)">الحد الأدنى</span>
+            <input
+              type="number"
+              value={form.minQty}
+              onChange={(event) => handleFormChange("minQty", event.target.value)}
+              placeholder="الحد الأدنى"
+              className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
+            />
           </label>
-        </div>
+          </div>
         <div className="mt-4 flex justify-end gap-3">
           <button
             type="button"
