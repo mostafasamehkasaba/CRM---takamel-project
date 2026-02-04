@@ -795,6 +795,7 @@ type DashboardShellProps = {
   headerAction?: ReactNode;
   headerActionAlign?: "left" | "right";
   hideHeaderFilters?: boolean;
+  layout?: "default" | "compact" | "fullscreen";
   searchValue?: string;
   searchPlaceholder?: string;
   onSearchChange?: (value: string) => void;
@@ -836,11 +837,24 @@ const DashboardShell = ({
   headerAction,
   headerActionAlign = "right",
   hideHeaderFilters,
+  layout = "default",
   searchValue,
   searchPlaceholder,
   onSearchChange,
 }: DashboardShellProps) => {
   const pathname = usePathname();
+  const isCompact = layout === "compact";
+  const isFullscreen = layout === "fullscreen";
+  const mainPadding = isFullscreen ? "pb-4 pt-4" : isCompact ? "pb-8 pt-6" : "pb-16 pt-10";
+  const headerGap = isFullscreen ? "gap-2" : isCompact ? "gap-3" : "gap-4";
+  const controlPadding = isFullscreen ? "px-3 py-1" : isCompact ? "px-3 py-1.5" : "px-4 py-2";
+  const quickActionPadding = isFullscreen ? "px-4 py-1" : isCompact ? "px-4 py-1.5" : "px-5 py-2";
+  const iconButtonSize = isFullscreen ? "h-8 w-8" : isCompact ? "h-9 w-9" : "h-10 w-10";
+  const titleSize = isFullscreen ? "text-xl" : isCompact ? "text-2xl" : "text-3xl";
+  const sectionMargin = isFullscreen ? "mt-2" : isCompact ? "mt-2" : "mt-10";
+  const contentMargin = isFullscreen ? "mt-2" : isCompact ? "mt-2" : "mt-6";
+  const subtitleMargin = isFullscreen || isCompact ? "mt-1" : "mt-2";
+  const subtitleSize = isFullscreen || isCompact ? "text-xs" : "text-sm";
   const [selectedFilter, setSelectedFilter] = useState("هذا الشهر");
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -1118,18 +1132,19 @@ const DashboardShell = ({
       </aside>
 
       <main
-        className={`relative z-10 px-4 pb-16 pt-10 sm:px-6 lg:pl-12 ${isDesktopSidebarCollapsed ? "lg:pr-24" : "lg:pr-76"}`}
+        className={`relative z-10 px-4 ${mainPadding} sm:px-6 lg:pl-12 ${isDesktopSidebarCollapsed ? "lg:pr-24" : "lg:pr-76"}`}
       >
-        <header className="flex flex-col gap-4">
+        <header className={`flex flex-col ${headerGap}`}>
+  {isFullscreen ? null : (
   <div className="flex flex-wrap items-center justify-between gap-3">
     <div
       ref={searchRef}
-      className="relative flex w-full max-w-xl flex-1 items-center gap-3 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2"
+      className={`relative flex w-full max-w-xl flex-1 items-center gap-3 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) ${controlPadding}`}
     >
       <button
         type="button"
         onClick={() => setIsSidebarOpen(true)}
-        className="flex h-10 w-10 items-center justify-center rounded-xl border border-(--dash-border) bg-(--dash-panel-glass) text-(--dash-muted) lg:hidden"
+        className={`flex ${iconButtonSize} items-center justify-center rounded-xl border border-(--dash-border) bg-(--dash-panel-glass) text-(--dash-muted) lg:hidden`}
         aria-label="فتح الشريط الجانبي"
       >
         <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
@@ -1139,7 +1154,7 @@ const DashboardShell = ({
       <button
         type="button"
         onClick={() => setIsDesktopSidebarCollapsed((prev) => !prev)}
-        className="hidden h-10 w-10 items-center justify-center rounded-xl border border-(--dash-border) bg-(--dash-panel-glass) text-(--dash-muted) lg:flex"
+        className={`hidden ${iconButtonSize} items-center justify-center rounded-xl border border-(--dash-border) bg-(--dash-panel-glass) text-(--dash-muted) lg:flex`}
         aria-label={isDesktopSidebarCollapsed ? "إظهار الشريط الجانبي" : "إخفاء الشريط الجانبي"}
       >
         <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
@@ -1207,7 +1222,7 @@ const DashboardShell = ({
             setShowQuickActions((prev) => !prev);
             showToast("تم فتح الإجراءات السريعة.", "info");
           }}
-          className="flex items-center gap-2 rounded-2xl bg-(--dash-primary) px-5 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft)"
+          className={`flex items-center gap-2 rounded-2xl bg-(--dash-primary) ${quickActionPadding} text-sm font-semibold text-white shadow-(--dash-primary-soft)`}
         >
           <span className="text-lg">+</span>
           إجراء جديد
@@ -1270,7 +1285,7 @@ const DashboardShell = ({
               فاتورة ضريبية
             </Link>
             <Link
-              href="/customers"
+              href="/customers/new"
               onClick={() => setShowQuickActions(false)}
               className="flex items-center gap-2 rounded-xl px-3 py-2 text-(--dash-text) hover:bg-(--dash-panel-soft)"
             >
@@ -1305,7 +1320,7 @@ const DashboardShell = ({
         <button
           type="button"
           onClick={() => setShowProfileMenu((prev) => !prev)}
-          className="flex items-center gap-3 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-right"
+          className={`flex items-center gap-3 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) ${controlPadding} text-right`}
         >
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--dash-primary) text-white">
             <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
@@ -1361,13 +1376,14 @@ const DashboardShell = ({
       </div>
     </div>
   </div>
+  )}
 </header>
 
-        <section className="mt-10">
+        <section className={sectionMargin}>
           <div className="flex flex-wrap items-end gap-4">
             <div>
-              <h1 className="text-3xl font-semibold">{title}</h1>
-              {subtitle ? <p className="mt-2 text-sm text-(--dash-muted)">{subtitle}</p> : null}
+              <h1 className={`${titleSize} font-semibold`}>{title}</h1>
+              {subtitle ? <p className={`${subtitleMargin} ${subtitleSize} text-(--dash-muted)`}>{subtitle}</p> : null}
             </div>
             {hideHeaderFilters ? null : (
             <div className="ms-auto flex flex-wrap items-center gap-3">
@@ -1435,7 +1451,7 @@ const DashboardShell = ({
           </div>
         </section>
 
-        <div className="mt-6">{children}</div>
+        <div className={contentMargin}>{children}</div>
       </main>
 
       {toast ? (

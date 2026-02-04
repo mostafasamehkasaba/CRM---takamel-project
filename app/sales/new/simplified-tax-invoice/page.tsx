@@ -4,32 +4,33 @@ import DashboardShell from "../../../components/DashboardShell";
 
 const Page = () => {
   return (
-    <DashboardShell title="إضافة فاتورة ضريبية مبسطة" subtitle="البيع / المبيعات / إضافة عملية بيع" hideHeaderFilters>
-      <section className="space-y-3">
-        <div className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <button type="button" className="rounded-xl bg-(--dash-primary) px-4 py-2 text-sm font-semibold text-white">
-              صالون رسمي
-            </button>
-            <button type="button" className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-sm">
-              عام
-            </button>
-            <button type="button" className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-sm">
-              كوفي / الديوانية
-            </button>
-          </div>
-        </div>
-
-        <div className="grid gap-3 lg:grid-cols-[1.6fr_1fr]">
-          <div className="flex flex-col rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-3">
-            <div className="flex items-center gap-2 text-sm text-(--dash-muted)">
+    <DashboardShell
+      title="إضافة فاتورة ضريبية مبسطة"
+      hideHeaderFilters
+      layout="compact"
+    >
+      <section className="space-y-2">
+        <div className="grid gap-2 lg:grid-cols-[1.6fr_1fr]">
+          <div className="flex flex-col rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-(--dash-muted)">
               <span>منطقة الأصناف</span>
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <button type="button" className="rounded-xl bg-(--dash-primary) px-3 py-1 text-sm font-semibold text-white">
+                  صالون رسمي
+                </button>
+                <button type="button" className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-1 text-sm">
+                  عام
+                </button>
+                <button type="button" className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-1 text-sm">
+                  كوفي / الديوانية
+                </button>
+              </div>
             </div>
-            <div className="mt-2 h-[420px] rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft)" />
+            <div className="mt-2 h-[clamp(220px,32vh,340px)] rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft)" />
           </div>
 
-          <div className="flex flex-col gap-3">
-            <div className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-3">
+          <div className="flex flex-col gap-2">
+            <div className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-2">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <button type="button" className="rounded-lg border border-(--dash-border) bg-(--dash-panel-soft) px-2 py-1 text-xs">
@@ -43,10 +44,10 @@ const Page = () => {
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button type="button" className="rounded-xl bg-indigo-500 px-3 py-2 text-xs font-semibold text-white">
+                  <button type="button" className="rounded-xl bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white">
                     آخر فاتورة (F4)
                   </button>
-                  <select className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-xs">
+                  <select className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-1.5 text-xs">
                     <option>محلي</option>
                   </select>
                 </div>
@@ -54,13 +55,13 @@ const Page = () => {
               <div className="mt-2 space-y-2">
                 <div>
                   <label className="mb-2 block text-xs text-(--dash-muted)">عميل (افتراضي)</label>
-                  <select className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
+                  <select className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-1.5 text-sm">
                     <option>شخص عام (عميل افتراضي)</option>
                   </select>
                 </div>
                 <div>
                   <label className="mb-2 block text-xs text-(--dash-muted)">الفرع</label>
-                  <select className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
+                  <select className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-1.5 text-sm">
                     <option>مؤسسة سيارات</option>
                   </select>
                 </div>
@@ -69,7 +70,7 @@ const Page = () => {
                   <input
                     type="text"
                     placeholder="قراءة الباركود / ابحث عن طريق الاسم أو الباركود"
-                    className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+                    className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-1.5 text-sm"
                   />
                 </div>
               </div>
@@ -82,10 +83,10 @@ const Page = () => {
                 <span className="text-center">الكمية</span>
                 <span className="text-center">اجمالي الصنف</span>
               </div>
-              <div className="h-56" />
+              <div className="h-[clamp(140px,22vh,220px)]" />
             </div>
 
-            <div className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-3">
+            <div className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-(--dash-muted)">الأصناف</span>
                 <span className="font-semibold">0</span>
@@ -110,13 +111,13 @@ const Page = () => {
                 <span className="text-xl font-semibold">0.00</span>
               </div>
               <div className="grid grid-cols-3">
-                <button type="button" className="bg-green-500 px-3 py-3 text-xs font-semibold text-white">
+                <button type="button" className="bg-green-500 px-3 py-2 text-xs font-semibold text-white">
                   دفع (F9)
                 </button>
-                <button type="button" className="bg-emerald-700 px-3 py-3 text-xs font-semibold text-white">
+                <button type="button" className="bg-emerald-700 px-3 py-2 text-xs font-semibold text-white">
                   أكواد الخصم
                 </button>
-                <button type="button" className="bg-red-500 px-3 py-3 text-xs font-semibold text-white">
+                <button type="button" className="bg-red-500 px-3 py-2 text-xs font-semibold text-white">
                   إلغاء (F11)
                 </button>
               </div>
