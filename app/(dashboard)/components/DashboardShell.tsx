@@ -796,6 +796,9 @@ type DashboardShellProps = {
   headerAction?: ReactNode;
   headerActionAlign?: "left" | "right";
   hideHeaderFilters?: boolean;
+  hidePageHeader?: boolean;
+  hideTopSearch?: boolean;
+  topSearchLabel?: string;
   layout?: "default" | "compact" | "fullscreen";
   searchValue?: string;
   searchPlaceholder?: string;
@@ -838,6 +841,9 @@ const DashboardShell = ({
   headerAction,
   headerActionAlign = "right",
   hideHeaderFilters,
+  hidePageHeader,
+  hideTopSearch,
+  topSearchLabel,
   layout = "default",
   searchValue,
   searchPlaceholder,
@@ -1137,11 +1143,18 @@ const DashboardShell = ({
       >
         <header className={`flex flex-col ${headerGap}`}>
   {isFullscreen ? null : (
-  <div className="flex flex-wrap items-center justify-between gap-3">
-    <div
-      ref={searchRef}
-      className={`relative flex w-full max-w-xl flex-1 items-center gap-3 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) ${controlPadding}`}
-    >
+  <div className={`flex flex-wrap items-center ${hideTopSearch ? "gap-2 justify-between" : "gap-3 justify-between"}`}>
+    {hideTopSearch ? (
+      topSearchLabel ? (
+        <div className="shrink-0 text-right text-lg font-semibold text-(--dash-text)">
+          {topSearchLabel}
+        </div>
+      ) : null
+    ) : (
+      <div
+        ref={searchRef}
+        className={`relative flex w-full max-w-xl flex-1 items-center gap-3 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) ${controlPadding}`}
+      >
       <button
         type="button"
         onClick={() => setIsSidebarOpen(true)}
@@ -1214,6 +1227,7 @@ const DashboardShell = ({
         </div>
       ) : null}
     </div>
+    )}
 
     <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
       <div className="relative" ref={quickActionsRef}>
@@ -1380,77 +1394,79 @@ const DashboardShell = ({
   )}
 </header>
 
-        <section className={sectionMargin}>
-          <div className="flex flex-wrap items-end gap-4">
-            <div>
-              <h1 className={`${titleSize} font-semibold`}>{title}</h1>
-              {subtitle ? <p className={`${subtitleMargin} ${subtitleSize} text-(--dash-muted)`}>{subtitle}</p> : null}
-            </div>
-            {hideHeaderFilters ? null : (
-            <div className="ms-auto flex flex-wrap items-center gap-3">
-              <details ref={filterRef} className="relative">
-                <summary className="flex cursor-pointer list-none items-center gap-2 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-sm text-(--dash-text)">
-                  {selectedFilter}
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 text-(--dash-muted-2)" aria-hidden="true">
-                    <path fill="currentColor" d="M7 10l5 5 5-5H7Z" />
-                  </svg>
-                </summary>
-                <div className="absolute right-0 top-12 z-20 w-44 rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-2 text-sm shadow-(--dash-shadow)">
-                  {timeFilters.map((item) => (
+        {hidePageHeader ? null : (
+          <section className={sectionMargin}>
+            <div className="flex flex-wrap items-end gap-4">
+              <div>
+                <h1 className={`${titleSize} font-semibold`}>{title}</h1>
+                {subtitle ? <p className={`${subtitleMargin} ${subtitleSize} text-(--dash-muted)`}>{subtitle}</p> : null}
+              </div>
+              {hideHeaderFilters ? null : (
+              <div className="ms-auto flex flex-wrap items-center gap-3">
+                <details ref={filterRef} className="relative">
+                  <summary className="flex cursor-pointer list-none items-center gap-2 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-sm text-(--dash-text)">
+                    {selectedFilter}
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-(--dash-muted-2)" aria-hidden="true">
+                      <path fill="currentColor" d="M7 10l5 5 5-5H7Z" />
+                    </svg>
+                  </summary>
+                  <div className="absolute right-0 top-12 z-20 w-44 rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-2 text-sm shadow-(--dash-shadow)">
+                    {timeFilters.map((item) => (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => handleFilterSelect(item)}
+                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-(--dash-text) hover:bg-(--dash-panel-soft)"
+                      >
+                        <span>{item}</span>
+                        {selectedFilter === item ? <span className="text-(--dash-primary)">✓</span> : null}
+                      </button>
+                    ))}
+                  </div>
+                </details>
+                <details ref={exportRef} className="relative">
+                  <summary className="flex cursor-pointer list-none items-center gap-2 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-sm text-(--dash-text)">
+                    تصدير التقرير
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-(--dash-muted-2)" aria-hidden="true">
+                      <path
+                        fill="currentColor"
+                        d="M7 2h7l5 5v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm7 1.5V7h3.5L14 3.5Z"
+                      />
+                    </svg>
+                  </summary>
+                  <div className="absolute right-0 top-12 z-20 w-44 rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-2 text-sm shadow-(--dash-shadow)">
                     <button
-                      key={item}
                       type="button"
-                      onClick={() => handleFilterSelect(item)}
+                      onClick={handleExportExcel}
                       className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-(--dash-text) hover:bg-(--dash-panel-soft)"
                     >
-                      <span>{item}</span>
-                      {selectedFilter === item ? <span className="text-(--dash-primary)">✓</span> : null}
+                      <span>تصدير Excel</span>
+                      <span className="text-(--dash-muted-2)">.xlsx</span>
                     </button>
-                  ))}
-                </div>
-              </details>
-              <details ref={exportRef} className="relative">
-                <summary className="flex cursor-pointer list-none items-center gap-2 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-sm text-(--dash-text)">
-                  تصدير التقرير
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 text-(--dash-muted-2)" aria-hidden="true">
-                    <path
-                      fill="currentColor"
-                      d="M7 2h7l5 5v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm7 1.5V7h3.5L14 3.5Z"
-                    />
-                  </svg>
-                </summary>
-                <div className="absolute right-0 top-12 z-20 w-44 rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-2 text-sm shadow-(--dash-shadow)">
-                  <button
-                    type="button"
-                    onClick={handleExportExcel}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-(--dash-text) hover:bg-(--dash-panel-soft)"
-                  >
-                    <span>تصدير Excel</span>
-                    <span className="text-(--dash-muted-2)">.xlsx</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleExportPdf}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-(--dash-text) hover:bg-(--dash-panel-soft)"
-                  >
-                    <span>تصدير PDF</span>
-                    <span className="text-(--dash-muted-2)">PDF</span>
-                  </button>
-                </div>
-              </details>
-            </div>            )}
+                    <button
+                      type="button"
+                      onClick={handleExportPdf}
+                      className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-(--dash-text) hover:bg-(--dash-panel-soft)"
+                    >
+                      <span>تصدير PDF</span>
+                      <span className="text-(--dash-muted-2)">PDF</span>
+                    </button>
+                  </div>
+                </details>
+              </div>            )}
 
-            {headerAction ? (
-              <div
-                className={`flex items-center gap-2 ${
-                  headerActionAlign === "left" ? "ms-auto" : ""
-                }`}
-              >
-                {headerAction}
-              </div>
-            ) : null}
-          </div>
-        </section>
+              {headerAction ? (
+                <div
+                  className={`flex items-center gap-2 ${
+                    headerActionAlign === "left" ? "ms-auto" : ""
+                  }`}
+                >
+                  {headerAction}
+                </div>
+              ) : null}
+            </div>
+          </section>
+        )}
 
         <div className={contentMargin}>{children}</div>
       </main>

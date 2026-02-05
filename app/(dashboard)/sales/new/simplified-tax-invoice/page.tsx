@@ -7,6 +7,9 @@ const Page = () => {
     <DashboardShell
       title="إضافة فاتورة ضريبية مبسطة"
       hideHeaderFilters
+      hideTopSearch
+      topSearchLabel="إضافة فاتورة ضريبية مبسطة"
+      hidePageHeader
       layout="compact"
     >
       <section className="space-y-2">
