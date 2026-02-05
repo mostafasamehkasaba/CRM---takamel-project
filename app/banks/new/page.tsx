@@ -1,6 +1,8 @@
-"use client";
+﻿"use client";
 
 import DashboardShell from "../../components/DashboardShell";
+
+const accountTypes = ["حساب جاري", "حساب توفير"];
 
 const Page = () => (
   <DashboardShell title="إضافة بنك" subtitle="البداية / البنوك / إضافة بنك" hideHeaderFilters>
@@ -17,6 +19,38 @@ const Page = () => (
           <label className="text-sm">
             <span className="mb-2 block font-semibold text-(--dash-text)">اسم البنك *</span>
             <input className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm" />
+          </label>
+          <label className="text-sm">
+            <span className="mb-2 block font-semibold text-(--dash-text)">اسم الحساب</span>
+            <input
+              className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+              placeholder="مثال: البنك الأهلي - حساب جاري"
+            />
+          </label>
+          <label className="text-sm">
+            <span className="mb-2 block font-semibold text-(--dash-text)">رقم الحساب (IBAN)</span>
+            <input
+              className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+              placeholder="SA..."
+            />
+          </label>
+          <label className="text-sm">
+            <span className="mb-2 block font-semibold text-(--dash-text)">الفرع</span>
+            <input
+              className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+              placeholder="مثال: الرياض - المركز"
+            />
+          </label>
+          <label className="text-sm">
+            <span className="mb-2 block font-semibold text-(--dash-text)">نوع الحساب</span>
+            <select className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
+              <option value="">اختر نوع الحساب</option>
+              {accountTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="text-sm">
             <span className="mb-2 block font-semibold text-(--dash-text)">الرصيد الافتتاحي</span>
@@ -45,3 +79,6 @@ const Page = () => (
 );
 
 export default Page;
+
+
+

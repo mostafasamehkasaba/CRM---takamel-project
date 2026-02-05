@@ -1,10 +1,6 @@
 ﻿"use client";
 
-"use client";
-
 import DashboardShell from "../../../components/DashboardShell";
-
-const banks = ["بنك الراجحي", "بنك الأهلي", "بنك البلاد", "بنك ساب"];
 
 const Page = () => (
   <DashboardShell title="إضافة تحويل بنكي خارجي" subtitle="البداية / تحويلات بنكية خارجية / إضافة تحويل بنكي خارجي" hideHeaderFilters>
@@ -16,14 +12,18 @@ const Page = () => (
       <p className="text-xs text-(--dash-muted)">يرجى إدخال المعلومات التالية. الحقول التي تحمل علامة * إجبارية.</p>
       <div className="grid gap-4 lg:grid-cols-2">
         <label className="text-sm">
-          <span className="mb-2 block font-semibold text-(--dash-text)">البنك *</span>
-          <select className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
-            {banks.map((bank) => (
-              <option key={bank} value={bank}>
-                {bank}
-              </option>
-            ))}
-          </select>
+          <span className="mb-2 block font-semibold text-(--dash-text)">كود البنك *</span>
+          <input
+            className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+            placeholder="مثال: 102"
+          />
+        </label>
+        <label className="text-sm">
+          <span className="mb-2 block font-semibold text-(--dash-text)">اسم البنك *</span>
+          <input
+            className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+            placeholder="مثال: بنك الراجحي"
+          />
         </label>
         <label className="text-sm">
           <span className="mb-2 block font-semibold text-(--dash-text)">المدفوع *</span>
@@ -44,3 +44,4 @@ const Page = () => (
 );
 
 export default Page;
+
