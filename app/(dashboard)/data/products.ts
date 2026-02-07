@@ -1,4 +1,4 @@
-export type ProductStatus = "متوفر" | "منخفض" | "نافد";
+﻿export type ProductStatus = "متوفر" | "منخفض" | "نافد";
 
 export type Product = {
   id: string;

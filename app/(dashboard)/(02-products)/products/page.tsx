@@ -1,443 +1,495 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
-import { initialProducts, type Product, type ProductStatus } from "@/app/(dashboard)/data/products";
+import ActionIconButton from "@/app/(dashboard)/components/ActionIconButton";
+import { EditIcon, TrashIcon } from "@/app/(dashboard)/components/icons/ActionIcons";
+import { createCategory, deleteCategory, listCategories, updateCategory } from "@/app/services/categories";
+import { extractList } from "@/app/services/http";
 
-const formatCurrency = (value: number) => `${value.toLocaleString()} ريال`;
-
-const statusStyles: Record<ProductStatus, string> = {
-  متوفر: "bg-(--dash-success) text-white",
-  منخفض: "bg-(--dash-warning) text-white",
-  نافد: "bg-(--dash-danger) text-white",
+type CategoryRow = {
+  id: string | number;
+  code: string;
+  name: string;
+  slug: string;
+  parentId?: string | number | null;
+  parentName: string;
+  image?: string | null;
 };
 
-const page = () => {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [showForm, setShowForm] = useState(false);
-  const [formMode, setFormMode] = useState<"new" | "edit" | "view">("new");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ProductStatus | "all">("all");
-  const formRef = useRef<HTMLElement | null>(null);
-  const [form, setForm] = useState({
-    name: "",
-    category: "",
-    sku: "",
-    supplier: "",
-    status: "متوفر" as ProductStatus,
-    stock: "0",
-    price: "",
-    image: "",
-    expiryDate: "",
+const fallbackRows: CategoryRow[] = [
+  {
+    id: "c012",
+    code: "C012",
+    name: "العصيرات",
+    slug: "c012",
+    parentId: "main-1",
+    parentName: "مطعم",
+    image: null,
+  },
+  {
+    id: "011",
+    code: "011",
+    name: "المقبلات SALATA",
+    slug: "011",
+    parentId: "main-1",
+    parentName: "مطعم",
+    image: null,
+  },
+  {
+    id: "009",
+    code: "009",
+    name: "mashawy",
+    slug: "009",
+    parentId: "main-1",
+    parentName: "مطعم",
+    image: null,
+  },
+  {
+    id: "007",
+    code: "007",
+    name: "بيتزا",
+    slug: "007",
+    parentId: "main-1",
+    parentName: "مطعم",
+    image: null,
+  },
+  {
+    id: "c02252",
+    code: "c02252",
+    name: "مشروبات باردة",
+    slug: "c02252",
+    parentId: "main-2",
+    parentName: "كوفي / الديوانية",
+    image: null,
+  },
+  {
+    id: "c0025",
+    code: "c0025",
+    name: "مشروبات ساخنة",
+    slug: "c0025",
+    parentId: "main-2",
+    parentName: "كوفي / الديوانية",
+    image: null,
+  },
+  {
+    id: "1235485",
+    code: "1235485",
+    name: "بلايستيقا",
+    slug: "1235485",
+    parentId: "main-3",
+    parentName: "غسيل",
+    image: null,
+  },
+  {
+    id: "syyy555",
+    code: "SYYY555",
+    name: "hhhhh",
+    slug: "syyy555",
+    parentId: "main-4",
+    parentName: "عام",
+    image: null,
+  },
+  {
+    id: "c0110",
+    code: "C0110",
+    name: "الوجبات المقلية / الوجبات",
+    slug: "c0110",
+    parentId: "main-1",
+    parentName: "مطعم",
+    image: null,
+  },
+  {
+    id: "c0080",
+    code: "C0080",
+    name: "برجر دجاج / birjar dajaj",
+    slug: "c0080",
+    parentId: "main-1",
+    parentName: "مطعم",
+    image: null,
+  },
+];
+
+const pageSizeOptions = [10, 25, 50];
+const branchOptions = [
+  "مغسلة سيارات",
+  "نشاط المطاعم",
+  "نشاط الصالون",
+  "نشاط الكوفي / الديوانية",
+  "نشاط سوبرماركت",
+  "مغسلة ملابس",
+];
+const defaultBranchAvailability = branchOptions.reduce<Record<string, "yes" | "no">>((acc, branch) => {
+  acc[branch] = "yes";
+  return acc;
+}, {});
+
+const PrintIcon = ({ className = "h-4 w-4" }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    className={className}
+  >
+    <path d="M7 8V4h10v4" />
+    <rect x="4" y="8" width="16" height="8" rx="2" />
+    <path d="M7 16v4h10v-4" />
+    <path d="M17 12h.01" />
+  </svg>
+);
+
+const resolveAssetUrl = (value?: string | null) => {
+  if (!value) {
+    return null;
+  }
+  if (value.startsWith("http") || value.startsWith("blob:") || value.startsWith("data:")) {
+    return value;
+  }
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+  const root = base.replace(/\/api\/?$/, "");
+  const trimmed = value.replace(/^\/+/, "");
+  if (!root) {
+    return value;
+  }
+  return `${root}/${trimmed}`;
+};
+
+const mapCategoryRows = (payload: unknown): CategoryRow[] => {
+  const entries = extractList<any>(payload as any);
+  const normalized = entries.map((entry: any, index: number) => {
+    const id = entry.id ?? entry.uuid ?? entry.code ?? entry._id ?? `${index + 1}`;
+    const code =
+      entry.code ??
+      entry.category_code ??
+      entry.categoryCode ??
+      entry.short_code ??
+      entry.shortCode ??
+      entry.id ??
+      entry.uuid ??
+      `${id}`;
+    const name = entry.name ?? entry.title ?? entry.label ?? "غير محدد";
+    const slug = entry.slug ?? entry.short_name ?? entry.shortName ?? entry.code ?? `${name}`;
+    const parentId =
+      entry.parent_id ??
+      entry.parentId ??
+      entry.parent?.id ??
+      entry.main_category_id ??
+      entry.mainCategoryId ??
+      entry.category_id ??
+      entry.categoryId ??
+      null;
+    const fallbackParentName =
+      entry.parent?.name ??
+      entry.main_category?.name ??
+      entry.mainCategory?.name ??
+      entry.category?.name ??
+      entry.categoryName ??
+      "عام";
+    const image =
+      entry.image ??
+      entry.image_url ??
+      entry.imageUrl ??
+      entry.image_path ??
+      entry.imagePath ??
+      entry.icon ??
+      entry.icon_url ??
+      entry.iconUrl ??
+      entry.photo ??
+      entry.photo_url ??
+      entry.photoUrl ??
+      null;
+    return {
+      id,
+      code: String(code),
+      name: String(name),
+      slug: String(slug),
+      parentId,
+      parentName: String(fallbackParentName ?? "عام"),
+      image: resolveAssetUrl(image),
+    };
   });
-  const [imageObjectUrl, setImageObjectUrl] = useState<string | null>(null);
-  const isReadOnly = formMode === "view";
-  const isEditing = formMode === "edit";
+  const byId = new Map(normalized.map((row) => [String(row.id), row]));
+  return normalized.map((row) => ({
+    ...row,
+    parentName: row.parentId ? byId.get(String(row.parentId))?.name ?? row.parentName : row.parentName,
+  }));
+};
 
-  const summaryCards = useMemo(() => {
-    const total = products.length;
-    const available = products.filter((item) => item.status === "متوفر").length;
-    const lowStock = products.filter((item) => item.status === "منخفض").length;
-    const outOfStock = products.filter((item) => item.status === "نافد").length;
-    return [
-      { label: "إجمالي المنتجات", value: `${total}`, tone: "text-(--dash-text)" },
-      { label: "المنتجات المتوفرة", value: `${available}`, tone: "text-(--dash-success)" },
-      { label: "منخفض المخزون", value: `${lowStock}`, tone: "text-(--dash-warning)" },
-      { label: "نافد المخزون", value: `${outOfStock}`, tone: "text-(--dash-danger)" },
-    ];
-  }, [products]);
+const Page = () => {
+  const [rows, setRows] = useState<CategoryRow[]>(fallbackRows);
+  const [query, setQuery] = useState("");
+  const [pageSize, setPageSize] = useState(pageSizeOptions[0]);
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formMode, setFormMode] = useState<"new" | "edit">("new");
+  const [editingRow, setEditingRow] = useState<CategoryRow | null>(null);
+  const [form, setForm] = useState({
+    code: "",
+    name: "",
+    slug: "",
+    description: "",
+    mainCategoryId: "",
+  });
+  const [showInPos, setShowInPos] = useState(false);
+  const [branchAvailability, setBranchAvailability] =
+    useState<Record<string, "yes" | "no">>(defaultBranchAvailability);
+  const [imageName, setImageName] = useState("");
+  const [bannerName, setBannerName] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const bannerInputRef = useRef<HTMLInputElement | null>(null);
 
-  const filteredProducts = useMemo(() => {
+  const loadCategories = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      const response = await listCategories({ pagination: "on", limit_per_page: 200 });
+      const mapped = mapCategoryRows(response);
+      setRows(mapped.length ? mapped : fallbackRows);
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("تعذر تحميل التصنيفات من الخادم، يتم عرض بيانات تجريبية.");
+      setRows(fallbackRows);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, pageSize]);
+
+  const filteredRows = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return products.filter((item) => {
-      const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-      if (!matchesStatus) {
-        return false;
-      }
-      if (!needle) {
-        return true;
-      }
-      return [item.name, item.category, item.sku, item.supplier, item.id]
+    if (!needle) {
+      return rows;
+    }
+    return rows.filter((row) =>
+      [row.code, row.name, row.slug, row.parentName]
         .join(" ")
         .toLowerCase()
-        .includes(needle);
-    });
-  }, [products, query, statusFilter]);
+        .includes(needle)
+    );
+  }, [query, rows]);
 
-  const handleFormChange = (field: keyof typeof form, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+  const mainCategoryOptions = useMemo(() => {
+    const topLevel = rows.filter((row) => !row.parentId);
+    if (topLevel.length) {
+      return topLevel.map((row) => ({ id: row.id, name: row.name }));
+    }
+    const fallback = Array.from(
+      new Set(
+        rows
+          .map((row) => row.parentName)
+          .filter((name) => name && name !== "عام")
+      )
+    );
+    return fallback.map((name, index) => ({ id: `main-${index + 1}`, name }));
+  }, [rows]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+
+  useEffect(() => {
+    if (page !== safePage) {
+      setPage(safePage);
+    }
+  }, [page, safePage]);
+
+  const pagedRows = filteredRows.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const rangeStart = filteredRows.length === 0 ? 0 : (safePage - 1) * pageSize + 1;
+  const rangeEnd = Math.min(safePage * pageSize, filteredRows.length);
+
+  const resetForm = () => {
+    setForm({ code: "", name: "", slug: "", description: "", mainCategoryId: "" });
+    setShowInPos(false);
+    setBranchAvailability({ ...defaultBranchAvailability });
+    setImageName("");
+    setBannerName("");
+    setImageFile(null);
+    setBannerFile(null);
+    setFormError(null);
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
+    if (bannerInputRef.current) {
+      bannerInputRef.current.value = "";
+    }
   };
 
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
-    if (!file) {
-      if (imageObjectUrl) {
-        URL.revokeObjectURL(imageObjectUrl);
-      }
-      setImageObjectUrl(null);
-      setForm((prev) => ({ ...prev, image: "" }));
-      return;
-    }
-    const nextUrl = URL.createObjectURL(file);
-    if (imageObjectUrl) {
-      URL.revokeObjectURL(imageObjectUrl);
-    }
-    setImageObjectUrl(nextUrl);
-    setForm((prev) => ({ ...prev, image: nextUrl }));
-  };
-
-  const isStoredImage = (value: string) =>
-    value.startsWith("/") || value.startsWith("blob:") || value.startsWith("data:");
-
-  const handleAddProduct = () => {
-    const name = form.name.trim();
-    const price = Number.parseFloat(form.price);
-    if (!name || Number.isNaN(price)) {
-      return;
-    }
-    const nextProduct: Product = {
-      id: editingId ?? `PROD-${String(products.length + 1).padStart(3, "0")}`,
-      name,
-      category: form.category.trim() || "الإلكترونيات",
-      sku: form.sku.trim() || `SKU-${products.length + 1}`,
-      supplier: form.supplier.trim() || "شركة التوريدات التقنية",
-      status: form.status,
-      stock: Number.parseInt(form.stock, 10) || 0,
-      price,
-      imageTone: form.image.trim() || "from-slate-200 via-slate-50 to-slate-200",
-      expiryDate: form.expiryDate.trim() || undefined,
-    };
-    setProducts((prev) => {
-      if (editingId) {
-        return prev.map((item) => (item.id === editingId ? nextProduct : item));
-      }
-      return [nextProduct, ...prev];
-    });
-    setForm({
-      name: "",
-      category: "",
-      sku: "",
-      supplier: "",
-      status: "متوفر",
-      stock: "0",
-      price: "",
-      image: "",
-      expiryDate: "",
-    });
-    setImageObjectUrl(null);
-    setEditingId(null);
+  const handleOpenForm = () => {
+    resetForm();
     setFormMode("new");
+    setEditingRow(null);
+    setShowForm(true);
+  };
+
+  const handleCloseForm = () => {
     setShowForm(false);
+    setFormError(null);
   };
 
-  const handleEditProduct = (productId: string) => {
-    const target = products.find((item) => item.id === productId);
-    if (!target) {
+  const handleSaveCategory = async () => {
+    const code = form.code.trim();
+    const name = form.name.trim();
+    const slug = form.slug.trim();
+    if (!code || !name || !slug) {
+      setFormError("يرجى تعبئة الحقول الإلزامية (كود فئة، اسم التصنيف، Slug).");
       return;
     }
-    setForm({
-      name: target.name,
-      category: target.category,
-      sku: target.sku,
-      supplier: target.supplier,
-      status: target.status,
-      stock: String(target.stock),
-      price: String(target.price),
-      image: isStoredImage(target.imageTone) ? target.imageTone : "",
-      expiryDate: target.expiryDate ?? "",
-    });
-    setEditingId(target.id);
-    setFormMode("edit");
-    setShowForm(true);
-  };
-
-  const handleViewProduct = (productId: string) => {
-    const target = products.find((item) => item.id === productId);
-    if (!target) {
-      return;
-    }
-    setForm({
-      name: target.name,
-      category: target.category,
-      sku: target.sku,
-      supplier: target.supplier,
-      status: target.status,
-      stock: String(target.stock),
-      price: String(target.price),
-      image: isStoredImage(target.imageTone) ? target.imageTone : "",
-      expiryDate: target.expiryDate ?? "",
-    });
-    setEditingId(null);
-    setFormMode("view");
-    setShowForm(true);
-  };
-
-  const handleStartNewProduct = () => {
-    if (imageObjectUrl) {
-      URL.revokeObjectURL(imageObjectUrl);
-      setImageObjectUrl(null);
-    }
-    setForm({
-      name: "",
-      category: "",
-      sku: "",
-      supplier: "",
-      status: "متوفر",
-      stock: "0",
-      price: "",
-      image: "",
-      expiryDate: "",
-    });
-    setEditingId(null);
-    setFormMode("new");
-    setShowForm(true);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (imageObjectUrl) {
-        URL.revokeObjectURL(imageObjectUrl);
-      }
+    const selectedMain = mainCategoryOptions.find((option) => String(option.id) === String(form.mainCategoryId));
+    const parentId = selectedMain && rows.some((row) => String(row.id) === String(selectedMain.id)) ? selectedMain.id : undefined;
+    const payload = {
+      name,
+      code,
+      slug,
+      description: form.description.trim() || undefined,
+      parent_id: parentId,
+      show_in_pos: showInPos ? 1 : 0,
+      image: imageFile ?? undefined,
+      banner: bannerFile ?? undefined,
     };
-  }, [imageObjectUrl]);
-
-  useEffect(() => {
-    if (showForm && formRef.current) {
-      formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    setIsSaving(true);
+    setFormError(null);
+    try {
+      if (formMode === "edit" && editingRow) {
+        await updateCategory(editingRow.id, payload);
+      } else {
+        await createCategory(payload);
+      }
+      await loadCategories();
+      setPage(1);
+      setShowForm(false);
+      resetForm();
+    } catch (error) {
+      console.error(error);
+      setFormError(
+        error instanceof Error && error.message
+          ? error.message
+          : "تعذر حفظ التصنيف. تأكد من البيانات وحاول مرة أخرى."
+      );
+    } finally {
+      setIsSaving(false);
     }
-  }, [showForm]);
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, kind: "image" | "banner") => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      if (kind === "image") {
+        setImageName("");
+        setImageFile(null);
+      } else {
+        setBannerName("");
+        setBannerFile(null);
+      }
+      return;
+    }
+    if (kind === "image") {
+      setImageName(file.name);
+      setImageFile(file);
+    } else {
+      setBannerName(file.name);
+      setBannerFile(file);
+    }
+  };
+
+  const handleOpenEdit = (row: CategoryRow) => {
+    const resolvedMainId = row.parentId
+      ? String(row.parentId)
+      : mainCategoryOptions.find((option) => option.name === row.parentName)?.id ?? "";
+    setFormMode("edit");
+    setEditingRow(row);
+    setFormError(null);
+    setForm({
+      code: row.code ?? "",
+      name: row.name ?? "",
+      slug: row.slug ?? "",
+      description: "",
+      mainCategoryId: resolvedMainId ? String(resolvedMainId) : "",
+    });
+    setShowInPos(false);
+    setBranchAvailability({ ...defaultBranchAvailability });
+    setImageName("");
+    setBannerName("");
+    setImageFile(null);
+    setBannerFile(null);
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
+    if (bannerInputRef.current) {
+      bannerInputRef.current.value = "";
+    }
+    setShowForm(true);
+  };
+
+  const handleDeleteRow = async (row: CategoryRow) => {
+    if (!confirm("هل تريد حذف التصنيف؟")) {
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await deleteCategory(row.id);
+      await loadCategories();
+    } catch (error) {
+      console.error(error);
+      setErrorMessage(
+        error instanceof Error && error.message ? error.message : "تعذر حذف التصنيف من الخادم."
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <DashboardShell
-      title="المنتجات"
-      subtitle="إدارة بيانات المنتجات والمخزون"
-      exportData={{
-        filename: "products",
-        headers: ["رقم المنتج", "الاسم", "التصنيف", "رمز المنتج", "المورد", "الحالة", "المخزون", "السعر", "تاريخ الصلاحية"],
-        rows: products.map((item) => [
-          item.id,
-          item.name,
-          item.category,
-          item.sku,
-          item.supplier,
-          item.status,
-          item.stock,
-          item.price,
-          item.expiryDate ?? "-",
-        ]),
-      }}
-
-      headerAction={
-        <button
-          type="button"
-          className="flex items-center gap-2 rounded-xl bg-(--dash-primary) px-4 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft)"
-          onClick={handleStartNewProduct}
-        >
-          <span className="text-lg">+</span>
-          منتج جديد
-        </button>
-      }
+      title="التصنيفات الرئيسية"
+      subtitle="البداية / إعدادات النظام / التصنيفات الرئيسية"
+      hideHeaderFilters
     >
-      {showForm ? (
-        <section
-          ref={formRef}
-          className="mb-6 rounded-3xl border border-(--dash-border) bg-(--dash-panel) p-6 shadow-(--dash-shadow)"
-        >
-          <h2 className="text-lg font-semibold">
-            {formMode === "view" ? "عرض المنتج" : formMode === "edit" ? "تعديل المنتج" : "إضافة منتج جديد"}
-          </h2>
-          <div className="mt-4 grid gap-4 lg:grid-cols-3">
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">اسم المنتج</span>
-              <input
-                type="text"
-                value={form.name}
-                onChange={isReadOnly ? undefined : (event) => handleFormChange("name", event.target.value)}
-                placeholder="اسم المنتج"
-                readOnly={isReadOnly}
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
-              />
-            </label>
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">التصنيف</span>
-              <select
-                value={form.category}
-                onChange={isReadOnly ? undefined : (event) => handleFormChange("category", event.target.value)}
-                disabled={isReadOnly}
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
-              >
-                <option value="">اختر الفئة</option>
-                <option value="إلكترونيات">إلكترونيات</option>
-                <option value="أغذية">أغذية</option>
-                <option value="ملابس">ملابس</option>
-                <option value="أدوات منزلية">أدوات منزلية</option>
-              </select>
-            </label>
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">رمز المنتج</span>
-              <input
-                type="text"
-                value={form.sku}
-                onChange={isReadOnly ? undefined : (event) => handleFormChange("sku", event.target.value)}
-                placeholder="SKU-000"
-                readOnly={isReadOnly}
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
-              />
-            </label>
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">المورد</span>
-              <input
-                type="text"
-                value={form.supplier}
-                onChange={isReadOnly ? undefined : (event) => handleFormChange("supplier", event.target.value)}
-                placeholder="شركة التوريدات التقنية"
-                readOnly={isReadOnly}
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
-              />
-            </label>
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">الحالة</span>
-              <select
-                value={form.status}
-                onChange={isReadOnly ? undefined : (event) => handleFormChange("status", event.target.value)}
-                disabled={isReadOnly}
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
-              >
-                <option value="متوفر">متوفر</option>
-                <option value="منخفض">منخفض</option>
-                <option value="نافد">نافد</option>
-              </select>
-            </label>
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">المخزون</span>
-              <input
-                type="number"
-                value={form.stock}
-                onChange={isReadOnly ? undefined : (event) => handleFormChange("stock", event.target.value)}
-                readOnly={isReadOnly}
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
-              />
-            </label>
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">تاريخ الصلاحية</span>
-              <input
-                type="date"
-                value={form.expiryDate}
-                onChange={isReadOnly ? undefined : (event) => handleFormChange("expiryDate", event.target.value)}
-                readOnly={isReadOnly}
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) focus:outline-none"
-              />
-            </label>
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">السعر</span>
-              <input
-                type="number"
-                value={form.price}
-                onChange={isReadOnly ? undefined : (event) => handleFormChange("price", event.target.value)}
-                placeholder="0"
-                readOnly={isReadOnly}
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
-              />
-            </label>
-            <label className="text-sm text-(--dash-muted) lg:col-span-3">
-              <span className="mb-2 block font-semibold text-(--dash-text)">صورة المنتج</span>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={isReadOnly ? undefined : handleImageChange}
-                disabled={isReadOnly}
-                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
-              />
-              {form.image ? (
-                <div className="mt-3 flex items-center gap-3">
-                  <img src={form.image} alt="معاينة صورة المنتج" className="h-16 w-16 rounded-xl object-cover" />
-                  <p className="text-xs text-(--dash-muted)">تم اختيار صورة للمنتج</p>
-                </div>
-              ) : null}
-            </label>
+      <section className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-4">
+          <div>
+            <h2 className="text-sm font-semibold text-(--dash-text)">التصنيفات الرئيسية</h2>
+            <p className="mt-1 text-xs text-(--dash-muted)">الرجاء استخدام الجدول أدناه للتنقل أو تصفية النتائج</p>
           </div>
-          <div className="mt-4 flex justify-end gap-3">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-(--dash-text)">
             <button
               type="button"
-              className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-sm text-(--dash-text)"
-              onClick={() => {
-                setShowForm(false);
-                setEditingId(null);
-                setFormMode("new");
-              }}
+              onClick={handleOpenForm}
+              className="rounded-xl bg-(--dash-primary) px-3 py-2 text-xs font-semibold text-white"
             >
-              {isReadOnly ? "إغلاق" : "إلغاء"}
+              إضافة فئة
             </button>
-            {isReadOnly ? null : (
-              <button
-                type="button"
-                className="rounded-xl bg-(--dash-primary) px-4 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft)"
-                onClick={handleAddProduct}
-              >
-                {isEditing ? "حفظ التعديلات" : "إضافة المنتج"}
-              </button>
-            )}
-          </div>
-        </section>
-      ) : null}
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {summaryCards.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-5 shadow-(--dash-shadow)"
-          >
-            <p className="text-sm text-(--dash-muted)">{card.label}</p>
-            <p className={`mt-3 text-xl font-semibold ${card.tone}`}>{card.value}</p>
-          </div>
-        ))}
-      </section>
-
-      <section className="mt-6 rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-4 shadow-(--dash-shadow)">
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            className="flex items-center gap-2 rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm text-(--dash-text)"
-          >
-            <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-              <path
-                fill="currentColor"
-                d="M12 3a1 1 0 0 1 1 1v8.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4a1 1 0 0 1 1-1Zm-7 14a1 1 0 0 1 1 1v2h12v-2a1 1 0 1 1 2 0v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a1 1 0 0 1 1-1Z"
-              />
-            </svg>
-            تصدير
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-2 rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm text-(--dash-text)"
-          >
-            <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-              <path
-                fill="currentColor"
-                d="M3 5a1 1 0 0 1 1-1h16a1 1 0 0 1 .8 1.6l-6.8 9.06V20a1 1 0 0 1-1.45.9l-3-1.5a1 1 0 0 1-.55-.9v-4.84L3.2 5.6A1 1 0 0 1 3 5Z"
-              />
-            </svg>
-            فلترة
-          </button>
-          <div className="relative">
+            <span className="text-(--dash-muted)">إظهار</span>
             <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as ProductStatus | "all")}
-              className="appearance-none rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-2 text-sm text-(--dash-text) focus:outline-none"
+              value={pageSize}
+              onChange={(event) => setPageSize(Number(event.target.value))}
+              className="rounded-lg border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-1 text-xs text-(--dash-text)"
             >
-              <option value="all">كل الحالات</option>
-              <option value="متوفر">متوفر</option>
-              <option value="منخفض">منخفض</option>
-              <option value="نافد">نافد</option>
+              {pageSizeOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
             </select>
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-(--dash-muted-2)">
-              <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-                <path fill="currentColor" d="M7 10l5 5 5-5H7Z" />
-              </svg>
-            </span>
           </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-55 flex-1 items-center gap-2 rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm text-(--dash-text)">
             <svg viewBox="0 0 24 24" className="h-4 w-4 text-(--dash-muted-2)" aria-hidden="true">
               <path
@@ -449,87 +501,310 @@ const page = () => {
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="بحث بالاسم أو رمز المنتج..."
+              placeholder="بحث بالاسم أو الكود أو التصنيف..."
               className="w-full bg-transparent text-sm text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
             />
           </div>
         </div>
+
+        {errorMessage ? (
+          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs text-rose-600">
+            {errorMessage}
+          </div>
+        ) : null}
+
+        <div className="overflow-x-auto rounded-2xl border border-(--dash-border) bg-(--dash-panel) shadow-(--dash-shadow)">
+          <table className="min-w-full text-xs">
+            <thead className="bg-(--dash-primary) text-white">
+              <tr>
+                <th className="px-3 py-3 text-right font-semibold">صورة</th>
+                <th className="px-3 py-3 text-right font-semibold">كود فئة</th>
+                <th className="px-3 py-3 text-right font-semibold">اسم التصنيف</th>
+                <th className="px-3 py-3 text-right font-semibold">Slug</th>
+                <th className="px-3 py-3 text-right font-semibold">التصنيف الرئيسي</th>
+                <th className="px-3 py-3 text-right font-semibold">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="px-3 py-6 text-center text-(--dash-muted)">
+                    جاري تحميل البيانات...
+                  </td>
+                </tr>
+              ) : pagedRows.length ? (
+                pagedRows.map((row) => (
+                  <tr key={row.id} className="border-t border-(--dash-border)">
+                    <td className="px-3 py-2">
+                      {row.image ? (
+                        <img src={row.image} alt={row.name} className="h-8 w-8 rounded border border-(--dash-border) object-cover" />
+                      ) : (
+                        <div className="h-8 w-8 rounded border border-(--dash-border) bg-(--dash-panel-soft)" />
+                      )}
+                    </td>
+                    <td className="px-3 py-2 font-semibold text-(--dash-text)">{row.code}</td>
+                    <td className="px-3 py-2 text-(--dash-text)">{row.name}</td>
+                    <td className="px-3 py-2 text-(--dash-text)">{row.slug}</td>
+                    <td className="px-3 py-2 text-(--dash-text)">{row.parentName}</td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <ActionIconButton
+                          label="حذف"
+                          icon={<TrashIcon className="h-4 w-4" />}
+                          tone="danger"
+                          onClick={() => handleDeleteRow(row)}
+                          disabled={isSaving}
+                        />
+                        <ActionIconButton
+                          label="تعديل"
+                          icon={<EditIcon className="h-4 w-4" />}
+                          onClick={() => handleOpenEdit(row)}
+                          disabled={isSaving}
+                        />
+                        <ActionIconButton label="طباعة" icon={<PrintIcon className="h-4 w-4" />} />
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="px-3 py-6 text-center text-(--dash-muted)">
+                    لا توجد بيانات لعرضها.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              disabled={safePage === 1}
+              className="rounded-lg border border-(--dash-border) px-3 py-1 text-xs text-(--dash-text) disabled:opacity-50"
+            >
+              سابق
+            </button>
+            {Array.from({ length: totalPages }).map((_, index) => {
+              const pageNumber = index + 1;
+              return (
+                <button
+                  key={pageNumber}
+                  type="button"
+                  onClick={() => setPage(pageNumber)}
+                  className={`rounded-lg border px-3 py-1 text-xs ${
+                    pageNumber === safePage
+                      ? "border-(--dash-primary) bg-(--dash-primary) text-white"
+                      : "border-(--dash-border) text-(--dash-text)"
+                  }`}
+                >
+                  {pageNumber}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={safePage === totalPages}
+              className="rounded-lg border border-(--dash-border) px-3 py-1 text-xs text-(--dash-text) disabled:opacity-50"
+            >
+              التالي
+            </button>
+          </div>
+          <span className="text-xs text-(--dash-muted)">
+            عرض من {rangeStart} إلى {rangeEnd} من {filteredRows.length} سجلات
+          </span>
+        </div>
       </section>
 
-      <section className="mt-6 grid gap-6 lg:grid-cols-4">
-        {filteredProducts.map((product) => (
-          <div
-            key={product.id}
-            className="overflow-hidden rounded-2xl border border-(--dash-border) bg-(--dash-panel) shadow-(--dash-shadow)"
-          >
-            <div className="relative h-44 overflow-hidden">
-              {product.imageTone.startsWith("/") ? (
-                <Image
-                  src={product.imageTone}
-                  alt={product.name}
-                  fill
-                  sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 25vw, 100vw"
-                  className="object-cover"
-                />
-              ) : isStoredImage(product.imageTone) ? (
-                <img src={product.imageTone} alt={product.name} className="h-full w-full object-cover" />
-              ) : (
-                <div className={`absolute inset-0 bg-gradient-to-br ${product.imageTone}`} />
-              )}
-              <span className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[product.status]}`}>
-                {product.status}
-              </span>
+      {showForm ? (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4">
+          <div className="mt-6 w-full max-w-3xl rounded-2xl border border-(--dash-border) bg-(--dash-panel) shadow-(--dash-shadow)">
+            <div className="flex items-center justify-between border-b border-(--dash-border) px-5 py-4">
+              <h3 className="text-sm font-semibold text-(--dash-text)">
+                {formMode === "edit" ? "تعديل فئة" : "إضافة فئة"}
+              </h3>
+              <button
+                type="button"
+                onClick={handleCloseForm}
+                className="rounded-lg border border-(--dash-border) px-2 py-1 text-xs text-(--dash-text)"
+              >
+                ×
+              </button>
             </div>
-            <div className="p-4">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h3 className="text-sm font-semibold">{product.name}</h3>
-                  <p className="mt-1 text-xs text-(--dash-muted)">{product.category}</p>
+            <div className="dash-scroll max-h-[70vh] space-y-4 overflow-y-auto px-5 py-4">
+              <p className="text-xs text-(--dash-muted)">
+                يرجى إدخال المعلومات أدناه، تسميات الحقول التي تحمل علامة * هي حقول إجبارية.
+              </p>
+              {formError ? (
+                <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-600">
+                  {formError}
                 </div>
-                <span className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-2 py-1 text-xs text-(--dash-muted)">
-                  {product.id}
-                </span>
-              </div>
-              <div className="mt-3 space-y-1 text-xs text-(--dash-muted)">
-                <p>المورد: {product.supplier}</p>
-                <p>رمز المنتج: {product.sku}</p>
-                <p>تاريخ الصلاحية: {product.expiryDate || "غير محدد"}</p>
-              </div>
-              <div className="my-3 border-t border-(--dash-border)" />
-              <div className="grid grid-cols-2 gap-4 text-xs text-(--dash-muted)">
-                <div>
-                  <p className="font-semibold text-(--dash-text)">المخزون</p>
-                  <p className={product.stock === 0 ? "text-(--dash-danger)" : "text-(--dash-success)"}>
-                    {product.stock} قطعة
-                  </p>
+              ) : null}
+
+              <div className="grid gap-3">
+                <label className="text-sm text-(--dash-muted)">
+                  <span className="mb-1 block font-semibold text-(--dash-text)">كود فئة *</span>
+                  <input
+                    type="text"
+                    value={form.code}
+                    onChange={(event) => setForm((prev) => ({ ...prev, code: event.target.value }))}
+                    className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-(--dash-text) focus:outline-none"
+                  />
+                </label>
+                <label className="text-sm text-(--dash-muted)">
+                  <span className="mb-1 block font-semibold text-(--dash-text)">اسم التصنيف *</span>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+                    className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-(--dash-text) focus:outline-none"
+                  />
+                </label>
+                <label className="text-sm text-(--dash-muted)">
+                  <span className="mb-1 block font-semibold text-(--dash-text)">Slug *</span>
+                  <input
+                    type="text"
+                    value={form.slug}
+                    onChange={(event) => setForm((prev) => ({ ...prev, slug: event.target.value }))}
+                    className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-(--dash-text) focus:outline-none"
+                  />
+                </label>
+                <label className="text-sm text-(--dash-muted)">
+                  <span className="mb-1 block font-semibold text-(--dash-text)">وصف</span>
+                  <textarea
+                    rows={3}
+                    value={form.description}
+                    onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
+                    className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-(--dash-text) focus:outline-none"
+                  />
+                </label>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="text-sm text-(--dash-muted)">
+                    <span className="mb-1 block font-semibold text-(--dash-text)">صورة الفئة</span>
+                    <div className="flex items-center gap-2">
+                      <input
+                        ref={imageInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) => handleFileChange(event, "image")}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => imageInputRef.current?.click()}
+                        className="rounded-lg bg-(--dash-primary) px-3 py-1 text-xs font-semibold text-white"
+                      >
+                        استعراض...
+                      </button>
+                      <span className="text-xs text-(--dash-muted-2)">{imageName || "لم يتم اختيار ملف"}</span>
+                    </div>
+                  </div>
+                  <div className="text-sm text-(--dash-muted)">
+                    <span className="mb-1 block font-semibold text-(--dash-text)">Category Banner</span>
+                    <div className="flex items-center gap-2">
+                      <input
+                        ref={bannerInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) => handleFileChange(event, "banner")}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => bannerInputRef.current?.click()}
+                        className="rounded-lg bg-(--dash-primary) px-3 py-1 text-xs font-semibold text-white"
+                      >
+                        استعراض...
+                      </button>
+                      <span className="text-xs text-(--dash-muted-2)">{bannerName || "لم يتم اختيار ملف"}</span>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold text-(--dash-text)">السعر</p>
-                  <p className="text-(--dash-primary)">{formatCurrency(product.price)}</p>
+                <label className="text-sm text-(--dash-muted)">
+                  <span className="mb-1 block font-semibold text-(--dash-text)">التصنيف الرئيسي</span>
+                  <select
+                    value={form.mainCategoryId}
+                    onChange={(event) => setForm((prev) => ({ ...prev, mainCategoryId: event.target.value }))}
+                    className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-(--dash-text) focus:outline-none"
+                  >
+                    <option value="">اختر التصنيف الرئيسي</option>
+                    {mainCategoryOptions.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex items-center gap-2 text-sm text-(--dash-muted)">
+                  <input
+                    type="checkbox"
+                    checked={showInPos}
+                    onChange={(event) => setShowInPos(event.target.checked)}
+                    className="h-4 w-4 rounded border border-(--dash-border)"
+                  />
+                  يظهر في نقاط البيع
+                </label>
+              </div>
+
+              <div className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) p-3">
+                <h4 className="mb-3 text-sm font-semibold text-(--dash-text)">إتاحة التصنيف في الفروع</h4>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-xs">
+                    <thead className="bg-(--dash-primary) text-white">
+                      <tr>
+                        <th className="px-3 py-2 text-right font-semibold">اسم الفرع</th>
+                        <th className="px-3 py-2 text-right font-semibold">الحالة</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {branchOptions.map((branch) => (
+                        <tr key={branch} className="border-t border-(--dash-border)">
+                          <td className="px-3 py-2 text-(--dash-text)">{branch}</td>
+                          <td className="px-3 py-2">
+                            <select
+                              value={branchAvailability[branch] ?? "yes"}
+                              onChange={(event) =>
+                                setBranchAvailability((prev) => ({ ...prev, [branch]: event.target.value as "yes" | "no" }))
+                              }
+                              className="rounded-lg border border-(--dash-border) bg-(--dash-panel) px-2 py-1 text-xs text-(--dash-text)"
+                            >
+                              <option value="yes">نعم</option>
+                              <option value="no">لا</option>
+                            </select>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-              <div className="mt-4 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => handleViewProduct(product.id)}
-                  className="flex-1 rounded-xl border border-(--dash-border) px-3 py-2 text-xs text-(--dash-text) hover:bg-(--dash-panel-soft)"
-                >
-                  عرض
-                </button>
-                <button
-                  type="button"
-                  className="flex-1 rounded-xl border border-(--dash-border) px-3 py-2 text-xs text-(--dash-text) hover:bg-(--dash-panel-soft)"
-                  onClick={() => handleEditProduct(product.id)}
-                >
-                  تعديل
-                </button>
-              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-(--dash-border) px-5 py-4">
+              <button
+                type="button"
+                onClick={handleCloseForm}
+                className="rounded-xl border border-(--dash-border) px-4 py-2 text-xs text-(--dash-text)"
+              >
+                إلغاء
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveCategory}
+                disabled={isSaving}
+                className="rounded-xl bg-(--dash-primary) px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
+              >
+                {formMode === "edit" ? "حفظ التعديلات" : "إضافة فئة"}
+              </button>
             </div>
           </div>
-        ))}
-      </section>
+        </div>
+      ) : null}
     </DashboardShell>
   );
 };
 
-export default page;
+export default Page;

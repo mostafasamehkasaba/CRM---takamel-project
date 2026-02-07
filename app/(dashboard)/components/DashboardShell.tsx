@@ -257,41 +257,6 @@ const sidebarIconMap: Record<string, ReactNode> = {
       />
     </svg>
   ),
-  "/item-types": (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-      <path fill="currentColor" d="M3 7 12 2l9 5-9 5-9-5Zm2 6 7 4 7-4v7l-7 4-7-4v-7Z" />
-    </svg>
-  ),
-  "/item-names": (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-      <path fill="currentColor" d="M3 7 12 2l9 5-9 5-9-5Zm2 6 7 4 7-4v7l-7 4-7-4v-7Z" />
-    </svg>
-  ),
-  "/item-codes": (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-      <path fill="currentColor" d="M3 7 12 2l9 5-9 5-9-5Zm2 6 7 4 7-4v7l-7 4-7-4v-7Z" />
-    </svg>
-  ),
-  "/item-brands": (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-      <path fill="currentColor" d="M3 7 12 2l9 5-9 5-9-5Zm2 6 7 4 7-4v7l-7 4-7-4v-7Z" />
-    </svg>
-  ),
-  "/item-costs": (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-      <path fill="currentColor" d="M3 7 12 2l9 5-9 5-9-5Zm2 6 7 4 7-4v7l-7 4-7-4v-7Z" />
-    </svg>
-  ),
-  "/item-max-qty": (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-      <path fill="currentColor" d="M3 7 12 2l9 5-9 5-9-5Zm2 6 7 4 7-4v7l-7 4-7-4v-7Z" />
-    </svg>
-  ),
-  "/item-units": (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-      <path fill="currentColor" d="M3 7 12 2l9 5-9 5-9-5Zm2 6 7 4 7-4v7l-7 4-7-4v-7Z" />
-    </svg>
-  ),
   "/item-display": (
     <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
       <path fill="currentColor" d="M3 7 12 2l9 5-9 5-9-5Zm2 6 7 4 7-4v7l-7 4-7-4v-7Z" />
@@ -519,13 +484,6 @@ const lucideIconMap: Record<string, ReactNode> = {
   "/suppliers": <Building2 className="h-5 w-5" aria-hidden="true" />,
   "/suppliers/new": iconPlus,
   "/products": <Boxes className="h-5 w-5" aria-hidden="true" />,
-  "/item-types": <Layers className="h-5 w-5" aria-hidden="true" />,
-  "/item-names": <Tag className="h-5 w-5" aria-hidden="true" />,
-  "/item-codes": <Barcode className="h-5 w-5" aria-hidden="true" />,
-  "/item-brands": <Tag className="h-5 w-5" aria-hidden="true" />,
-  "/item-costs": <Coins className="h-5 w-5" aria-hidden="true" />,
-  "/item-max-qty": <Gauge className="h-5 w-5" aria-hidden="true" />,
-  "/item-units": <Ruler className="h-5 w-5" aria-hidden="true" />,
   "/item-display": <Monitor className="h-5 w-5" aria-hidden="true" />,
   "/inventory": <Package className="h-5 w-5" aria-hidden="true" />,
   "/purchases": <ShoppingBag className="h-5 w-5" aria-hidden="true" />,
@@ -654,16 +612,9 @@ const sidebarNavigation: Array<SidebarItem> = [
     iconKey: "/products",
     children: [
       { label: "عرض الصنف", href: "/item-display" },
-      { label: "كود الصنف", href: "/item-codes" },
-      { label: "اسم الصنف", href: "/item-names" },
-      { label: "الماركة", href: "/item-brands" },
-        { label: "تكلفة الصنف", href: "/item-costs" },
-        { label: "وحدة الصنف", href: "/item-units" },
-        { label: "أقصى كمية للصنف", href: "/item-max-qty" },
-        { label: "نوع الصنف", href: "/item-types" },
-        { label: "إضافة الصنف", href: "/items/new" },
-      ],
-    },
+      { label: "إضافة الصنف", href: "/items/new" },
+    ],
+  },
   {
     label: "المبيعات",
     iconKey: "/invoices",

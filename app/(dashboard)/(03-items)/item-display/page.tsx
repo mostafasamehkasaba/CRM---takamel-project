@@ -1,10 +1,12 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
+import { listItems } from "@/app/services/items";
+import { extractList } from "@/app/services/http";
 
 type DisplayItem = {
-  id: string;
+  id: string | number;
   code: string;
   name: string;
   brand: string;
@@ -17,85 +19,54 @@ type DisplayItem = {
   alertQty: number;
 };
 
-const initialItems: DisplayItem[] = [
-  {
-    id: "DISP-001",
-    code: "6291100277919",
-    name: "غسول ناشير يونك 150 مل",
-    brand: "تكامل",
-    agent: "عام",
-    category: "عناية",
-    cost: 4.8,
-    salePrice: 8,
-    qty: 0,
-    unit: "حبة",
-    alertQty: 10,
-  },
-  {
-    id: "DISP-002",
-    code: "+00001",
-    name: "موز كيلو",
-    brand: "تكامل",
-    agent: "عام",
-    category: "فواكه",
-    cost: 0,
-    salePrice: 7,
-    qty: 0,
-    unit: "حبة",
-    alertQty: 0,
-  },
-  {
-    id: "DISP-003",
-    code: "+00002",
-    name: "رمان",
-    brand: "تكامل",
-    agent: "عام",
-    category: "فواكه",
-    cost: 0,
-    salePrice: 10,
-    qty: 0,
-    unit: "حبة",
-    alertQty: 0,
-  },
-  {
-    id: "DISP-004",
-    code: "+00004",
-    name: "خوخ",
-    brand: "تكامل",
-    agent: "عام",
-    category: "فواكه",
-    cost: 0,
-    salePrice: 12,
-    qty: 0,
-    unit: "حبة",
-    alertQty: 0,
-  },
-];
-
 const formatCurrency = (value: number) => `${value.toLocaleString()} ر.س`;
 
 const page = () => {
-  const [items, setItems] = useState<DisplayItem[]>(initialItems);
+  const [items, setItems] = useState<DisplayItem[]>([]);
   const [query, setQuery] = useState("");
   const [showCount, setShowCount] = useState("10");
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    const stored = window.localStorage.getItem("item-display-data");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          setItems(parsed);
-        }
-      } catch {
-        // Ignore invalid stored data.
-      }
+  const mapItem = (entry: any, index: number): DisplayItem => ({
+    id: entry.id ?? entry.uuid ?? entry.code ?? entry._id ?? `${index + 1}`,
+    code: entry.code ?? entry.sku ?? entry.barcode ?? "???",
+    name: entry.name ?? "غير محدد",
+    brand: entry.brand?.name ?? entry.brand_name ?? entry.brand ?? "غير محدد",
+    agent: entry.agent?.name ?? entry.agent_name ?? entry.agent ?? "عام",
+    category: entry.category?.name ?? entry.category_name ?? entry.category ?? "غير محدد",
+    cost: Number(entry.purchase_price ?? entry.cost ?? 0),
+    salePrice: Number(entry.sale_price ?? entry.salePrice ?? 0),
+    qty: Number(entry.current_stock ?? entry.stock ?? 0),
+    unit: entry.item_unit?.name ?? entry.unit?.name ?? entry.unit_name ?? entry.unit ?? "قطعة",
+    alertQty: Number(entry.notify_quantity ?? entry.alertQty ?? 0),
+  });
+
+  const fetchItems = async (searchValue = "") => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      const response = await listItems({
+        pagination: "on",
+        limit_per_page: 50,
+        search: searchValue || undefined,
+      });
+      const list = extractList<any>(response);
+      setItems(list.map(mapItem));
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("تعذر تحميل الأصناف.");
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
-    window.localStorage.setItem("item-display-data", JSON.stringify(items));
-  }, [items]);
+    const handle = window.setTimeout(() => {
+      fetchItems(query);
+    }, 300);
+    return () => window.clearTimeout(handle);
+  }, [query]);
 
   const filteredItems = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -122,6 +93,11 @@ const page = () => {
       subtitle="قائمة الأصناف مع التصنيفات والمخزون والإجراءات."
       hideHeaderFilters
     >
+      {errorMessage ? (
+        <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {errorMessage}
+        </div>
+      ) : null}
       <section className="rounded-3xl border border-(--dash-border) bg-(--dash-panel) p-6 shadow-(--dash-shadow)">
         <div className="flex flex-wrap items-center gap-3">
           <select
@@ -163,41 +139,49 @@ const page = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredItems.map((item) => (
-                <tr
-                  key={item.id}
-                  className="border-t border-(--dash-border) text-(--dash-text) odd:bg-(--dash-panel) even:bg-(--dash-panel-soft)"
-                >
-                  <td className="px-3 py-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-(--dash-border) bg-(--dash-panel-soft) text-(--dash-muted)">
-                      <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-                        <path
-                          fill="currentColor"
-                          d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5Zm4 10 3-3 4 4 3-3 2 2v2H6v-2l2-2Z"
-                        />
-                      </svg>
-                    </span>
-                  </td>
-                  <td className="px-3 py-3 text-(--dash-muted)">{item.code}</td>
-                  <td className="px-3 py-3 font-semibold">{item.name}</td>
-                  <td className="px-3 py-3 text-(--dash-muted)">{item.brand}</td>
-                  <td className="px-3 py-3 text-(--dash-muted)">{item.agent}</td>
-                  <td className="px-3 py-3 text-(--dash-muted)">{item.category}</td>
-                  <td className="px-3 py-3">{formatCurrency(item.cost)}</td>
-                  <td className="px-3 py-3">{formatCurrency(item.salePrice)}</td>
-                  <td className="px-3 py-3 text-(--dash-muted)">{item.qty.toFixed(2)}</td>
-                  <td className="px-3 py-3 text-(--dash-muted)">{item.unit}</td>
-                  <td className="px-3 py-3 text-(--dash-muted)">{item.alertQty.toFixed(2)}</td>
-                  <td className="px-3 py-3">
-                    <button
-                      type="button"
-                      className="rounded-full border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-1 text-xs text-(--dash-text)"
-                    >
-                      الإجراءات
-                    </button>
+              {isLoading ? (
+                <tr className="border-t border-(--dash-border)">
+                  <td className="px-4 py-6 text-center text-(--dash-muted)" colSpan={12}>
+                    جاري التحميل...
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredItems.map((item) => (
+                  <tr
+                    key={item.id}
+                    className="border-t border-(--dash-border) text-(--dash-text) odd:bg-(--dash-panel) even:bg-(--dash-panel-soft)"
+                  >
+                    <td className="px-3 py-3">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-(--dash-border) bg-(--dash-panel-soft) text-(--dash-muted)">
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                          <path
+                            fill="currentColor"
+                            d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5Zm4 10 3-3 4 4 3-3 2 2v2H6v-2l2-2Z"
+                          />
+                        </svg>
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-(--dash-muted)">{item.code}</td>
+                    <td className="px-3 py-3 font-semibold">{item.name}</td>
+                    <td className="px-3 py-3 text-(--dash-muted)">{item.brand}</td>
+                    <td className="px-3 py-3 text-(--dash-muted)">{item.agent}</td>
+                    <td className="px-3 py-3 text-(--dash-muted)">{item.category}</td>
+                    <td className="px-3 py-3">{formatCurrency(item.cost)}</td>
+                    <td className="px-3 py-3">{formatCurrency(item.salePrice)}</td>
+                    <td className="px-3 py-3 text-(--dash-muted)">{item.qty.toFixed(2)}</td>
+                    <td className="px-3 py-3 text-(--dash-muted)">{item.unit}</td>
+                    <td className="px-3 py-3 text-(--dash-muted)">{item.alertQty.toFixed(2)}</td>
+                    <td className="px-3 py-3">
+                      <button
+                        type="button"
+                        className="rounded-full border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-1 text-xs text-(--dash-text)"
+                      >
+                        الإجراءات
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
