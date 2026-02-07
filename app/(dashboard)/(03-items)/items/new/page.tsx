@@ -73,6 +73,54 @@ const mergeOptionsByName = (primary: Option[], fallback: Option[]) => {
   return merged;
 };
 
+const normalizeLookupName = (value: string) => value.trim().toLowerCase();
+
+const findOptionByName = <T extends { name: string }>(options: T[], name: string) =>
+  options.find((option) => normalizeLookupName(option.name) === normalizeLookupName(name));
+
+const parseApiError = (error: unknown) => {
+  if (!(error instanceof Error)) {
+    return { status: null as number | null, message: "" };
+  }
+  const match = error.message.match(/^API\s+(\d+)(?:\s*-\s*(.*))?$/);
+  if (!match) {
+    return { status: null as number | null, message: error.message };
+  }
+  const status = Number(match[1]);
+  const message = match[2]?.trim() ?? "";
+  return { status, message };
+};
+
+const getApiErrorMessage = (error: unknown, fallback: string) => {
+  const parsed = parseApiError(error);
+  if (parsed.message) {
+    return parsed.message;
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return fallback;
+};
+
+const isDuplicateNameMessage = (message: string) => {
+  if (!message) {
+    return false;
+  }
+  const lower = message.toLowerCase();
+  return (
+    message.includes("مستخدم") ||
+    lower.includes("already been taken") ||
+    lower.includes("already exists") ||
+    lower.includes("has already been taken") ||
+    lower.includes("unique")
+  );
+};
+
+const shouldRecoverFromDuplicate = (error: unknown) => {
+  const parsed = parseApiError(error);
+  return parsed.status === 422 && isDuplicateNameMessage(parsed.message);
+};
+
 const branchOptions = [
   "الإلكترونيات",
   "مغسلة سيارات",
@@ -163,6 +211,39 @@ const Page = () => {
       return current;
     }
     return options.length ? String(options[0].id) : "";
+  };
+
+  const refreshTypesByName = async (name: string) => {
+    const refreshed = mapOptionList(
+      await listItemTypes({ pagination: "on", limit_per_page: 100, search: name })
+    );
+    const match = findOptionByName(refreshed, name);
+    if (match) {
+      setTypes((prev) => mergeOptionsByName(prev, refreshed));
+    }
+    return match?.id;
+  };
+
+  const refreshUnitsByName = async (name: string) => {
+    const refreshed = mapOptionList(
+      await listItemUnits({ pagination: "on", limit_per_page: 100, search: name })
+    );
+    const match = findOptionByName(refreshed, name);
+    if (match) {
+      setUnits((prev) => mergeOptionsByName(prev, refreshed));
+    }
+    return match?.id;
+  };
+
+  const refreshCategoriesByName = async (name: string) => {
+    const refreshed = mapCategoryList(
+      await listCategories({ pagination: "on", limit_per_page: 100, search: name })
+    );
+    const match = findOptionByName(refreshed, name);
+    if (match) {
+      setCategories((prev) => mergeCategoriesByName(prev, refreshed));
+    }
+    return match?.id;
   };
 
   const fetchLookups = async () => {
@@ -296,14 +377,16 @@ const Page = () => {
       const normalizedType = itemForm.typeName.trim().toLowerCase();
       let typeId = types.find((type) => type.name.trim().toLowerCase() === normalizedType)?.id;
       if (!typeId) {
-        await createItemType({ name: itemForm.typeName.trim(), status: "active" });
-        const refreshed = mapOptionList(
-          await listItemTypes({ pagination: "on", limit_per_page: 100, search: itemForm.typeName.trim() })
-        );
-        const match = refreshed.find((type) => type.name.trim().toLowerCase() === normalizedType);
-        if (match) {
-          typeId = match.id;
-          setTypes((prev) => mergeOptionsByName(prev, refreshed));
+        try {
+          await createItemType({ name: itemForm.typeName.trim(), status: "active" });
+        } catch (error) {
+          if (!shouldRecoverFromDuplicate(error)) {
+            throw error;
+          }
+        }
+        const refreshedId = await refreshTypesByName(itemForm.typeName.trim());
+        if (refreshedId) {
+          typeId = refreshedId;
         }
       }
       if (!typeId) {
@@ -315,17 +398,19 @@ const Page = () => {
       const unitOption = units.find((unit) => String(unit.id) === String(form.unitId));
       if (unitOption && String(unitOption.id).startsWith("unit-")) {
         const unitName = unitOption.name.trim();
-        await createItemUnit({ name: unitName, code: `U-${Date.now().toString().slice(-4)}` });
-        const refreshedUnits = mapOptionList(
-          await listItemUnits({ pagination: "on", limit_per_page: 100, search: unitName })
-        );
-        const matchUnit = refreshedUnits.find((unit) => unit.name.trim().toLowerCase() === unitName.toLowerCase());
-        if (matchUnit) {
-          unitId = String(matchUnit.id);
-          setUnits((prev) => mergeOptionsByName(prev, refreshedUnits));
+        try {
+          await createItemUnit({ name: unitName, code: `U-${Date.now().toString().slice(-4)}` });
+        } catch (error) {
+          if (!shouldRecoverFromDuplicate(error)) {
+            throw error;
+          }
+        }
+        const refreshedId = await refreshUnitsByName(unitName);
+        if (refreshedId) {
+          unitId = String(refreshedId);
         }
       }
-      if (!unitId) {
+      if (!unitId || unitId.startsWith("unit-")) {
         setErrorMessage("تعذر إنشاء وحدة الصنف.");
         return;
       }
@@ -333,16 +418,16 @@ const Page = () => {
       let categoryId: string | number = rawCategoryId;
       const selectedCategory = categories.find((category) => String(category.id) === String(rawCategoryId));
       if (selectedCategory && String(selectedCategory.id).startsWith("product-category-")) {
-        await createCategory({ name: selectedCategory.name });
-        const refreshedCategories = mapCategoryList(
-          await listCategories({ pagination: "on", limit_per_page: 100, search: selectedCategory.name })
-        );
-        const matchCategory = refreshedCategories.find(
-          (category) => category.name.trim().toLowerCase() === selectedCategory.name.trim().toLowerCase()
-        );
-        if (matchCategory) {
-          categoryId = matchCategory.id;
-          setCategories((prev) => mergeCategoriesByName(prev, refreshedCategories));
+        try {
+          await createCategory({ name: selectedCategory.name });
+        } catch (error) {
+          if (!shouldRecoverFromDuplicate(error)) {
+            throw error;
+          }
+        }
+        const refreshedId = await refreshCategoriesByName(selectedCategory.name);
+        if (refreshedId) {
+          categoryId = refreshedId;
         }
       }
       if (String(categoryId).startsWith("product-category-")) {
@@ -391,8 +476,7 @@ const Page = () => {
       }
     } catch (error) {
       console.error(error);
-      const message = error instanceof Error && error.message ? error.message : "تعذر حفظ الصنف.";
-      setErrorMessage(message);
+      setErrorMessage(getApiErrorMessage(error, "تعذر حفظ الصنف."));
     } finally {
       setIsSaving(false);
     }
@@ -421,7 +505,7 @@ const Page = () => {
       setShowBrandForm(false);
     } catch (error) {
       console.error(error);
-      setBrandError("تعذر إضافة الماركة.");
+      setBrandError(getApiErrorMessage(error, "تعذر إضافة الماركة."));
     } finally {
       setBrandSaving(false);
     }
