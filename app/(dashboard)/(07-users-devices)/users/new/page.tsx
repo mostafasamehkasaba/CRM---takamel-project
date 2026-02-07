@@ -1,8 +1,54 @@
-"use client";
+﻿"use client";
 
+import { useEffect, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
+import { BRANCHES_STORAGE_KEY, defaultBranches, type BranchRow } from "@/app/(dashboard)/data/branches";
 
 const Page = () => {
+  const [groupOptions, setGroupOptions] = useState(["owner", "sales", "manager"]);
+  const [selectedGroup, setSelectedGroup] = useState(groupOptions[0]);
+  const [showGroupInput, setShowGroupInput] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [branches, setBranches] = useState<BranchRow[]>(defaultBranches);
+  const [selectedBranch, setSelectedBranch] = useState(defaultBranches[0]?.code ?? "");
+
+  const handleAddGroup = () => {
+    const name = newGroupName.trim();
+    if (!name) {
+      return;
+    }
+    setGroupOptions((prev) => (prev.includes(name) ? prev : [...prev, name]));
+    setSelectedGroup(name);
+    setNewGroupName("");
+    setShowGroupInput(false);
+  };
+
+  useEffect(() => {
+    const loadBranches = () => {
+      const raw = window.localStorage.getItem(BRANCHES_STORAGE_KEY);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw) as BranchRow[];
+          if (Array.isArray(parsed)) {
+            setBranches(parsed);
+            setSelectedBranch((prev) => (parsed.some((branch) => branch.code === prev) ? prev : parsed[0]?.code ?? ""));
+            return;
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      window.localStorage.setItem(BRANCHES_STORAGE_KEY, JSON.stringify(defaultBranches));
+      setBranches(defaultBranches);
+      setSelectedBranch(defaultBranches[0]?.code ?? "");
+    };
+
+    loadBranches();
+    const handleFocus = () => loadBranches();
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, []);
+
   return (
     <DashboardShell title="إضافة مستخدم" subtitle="البداية / المستخدمين / إضافة مستخدم" hideHeaderFilters>
       <section className="space-y-5">
@@ -39,18 +85,60 @@ const Page = () => {
               />
             </label>
             <label className="text-sm">
-              <span className="mb-2 block font-semibold text-(--dash-text)">مجموعة *</span>
-              <select className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
-                <option>owner</option>
-                <option>sales</option>
-                <option>manager</option>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="font-semibold text-(--dash-text)">مجموعة *</span>
+                <button
+                  type="button"
+                  onClick={() => setShowGroupInput((prev) => !prev)}
+                  className="rounded-lg border border-(--dash-border) px-2 py-1 text-xs text-(--dash-text)"
+                  aria-label="إضافة مجموعة جديدة"
+                >
+                  +
+                </button>
+              </div>
+              <select
+                value={selectedGroup}
+                onChange={(event) => setSelectedGroup(event.target.value)}
+                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+              >
+                {groupOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
               </select>
+              {showGroupInput ? (
+                <div className="mt-3 flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newGroupName}
+                    onChange={(event) => setNewGroupName(event.target.value)}
+                    placeholder="اسم المجموعة"
+                    className="flex-1 rounded-lg border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddGroup}
+                    className="rounded-lg bg-(--dash-primary) px-3 py-2 text-xs font-semibold text-white"
+                  >
+                    إضافة
+                  </button>
+                </div>
+              ) : null}
             </label>
             <label className="text-sm">
-              <span className="mb-2 block font-semibold text-(--dash-text)">النوع *</span>
-              <select className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
-                <option>ذكر</option>
-                <option>أنثى</option>
+              <span className="mb-2 block font-semibold text-(--dash-text)">الفرع *</span>
+              <select
+                value={selectedBranch}
+                onChange={(event) => setSelectedBranch(event.target.value)}
+                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+              >
+                {branches.length === 0 ? <option value="">لا توجد فروع</option> : null}
+                {branches.map((branch) => (
+                  <option key={branch.code} value={branch.code}>
+                    {branch.name}
+                  </option>
+                ))}
               </select>
             </label>
             <label className="text-sm">
@@ -84,7 +172,7 @@ const Page = () => {
               />
             </label>
             <label className="text-sm">
-              <span className="mb-2 block font-semibold text-(--dash-text)">نوع الفاتورة الافتراضي *</span>
+              <span className="mb-2 block font-semibold text-(--dash-text)">نوع الفاتورة الافتراضية *</span>
               <select className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
                 <option>توصيل</option>
                 <option>استلام</option>
@@ -137,3 +225,7 @@ const Page = () => {
 };
 
 export default Page;
+
+
+
+

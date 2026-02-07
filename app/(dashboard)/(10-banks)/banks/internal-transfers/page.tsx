@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
+import ConfirmModal from "@/app/(dashboard)/components/ConfirmModal";
 
 type InternalTransferRow = {
   id: string;
@@ -16,6 +17,7 @@ const Page = () => {
   const [rows, setRows] = useState<InternalTransferRow[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState({
     bankCode: "",
     bankName: "",
@@ -76,11 +78,15 @@ const Page = () => {
   };
 
   const handleDeleteRow = (rowId: string) => {
-    const confirmed = window.confirm("هل أنت متأكد من حذف التحويل؟");
-    if (!confirmed) {
+    setPendingDeleteId(rowId);
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDeleteId) {
       return;
     }
-    setRows((prev) => prev.filter((row) => row.id !== rowId));
+    setRows((prev) => prev.filter((row) => row.id !== pendingDeleteId));
+    setPendingDeleteId(null);
   };
 
   const cancelEdit = () => {
@@ -221,6 +227,13 @@ const Page = () => {
           </div>
         </div>
       </section>
+      <ConfirmModal
+        open={Boolean(pendingDeleteId)}
+        message="هل أنت متأكد من حذف التحويل؟"
+        confirmLabel="حذف"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDeleteId(null)}
+      />
     </DashboardShell>
   );
 };

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
+import ConfirmModal from "@/app/(dashboard)/components/ConfirmModal";
 
 type CustomerRow = {
   code: string;
@@ -110,6 +111,7 @@ const Page = () => {
   const [query, setQuery] = useState("");
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [rowsData, setRowsData] = useState(rows);
+  const [pendingDelete, setPendingDelete] = useState<CustomerRow | null>(null);
 
   const filteredRows = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -135,12 +137,21 @@ const Page = () => {
   }, [query, rowsData]);
 
   const handleDelete = (code: string) => {
-    const confirmed = window.confirm("هل أنت متأكد من حذف العميل؟");
-    if (!confirmed) {
+    const row = rowsData.find((entry) => entry.code === code);
+    if (!row) {
       return;
     }
+    setPendingDelete(row);
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete) {
+      return;
+    }
+    const code = pendingDelete.code;
     setRowsData((prev) => prev.filter((row) => row.code !== code));
     setSelectedRows((prev) => prev.filter((id) => id !== code));
+    setPendingDelete(null);
   };
 
   const allSelected = filteredRows.length > 0 && filteredRows.every((row) => selectedRows.includes(row.code));
@@ -320,6 +331,13 @@ const Page = () => {
           </div>
         </div>
       </section>
+      <ConfirmModal
+        open={Boolean(pendingDelete)}
+        message="هل أنت متأكد من حذف العميل؟"
+        confirmLabel="حذف"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </DashboardShell>
   );
 };

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
+import ConfirmModal from "@/app/(dashboard)/components/ConfirmModal";
 
 type StaffRow = {
   code: string;
@@ -20,6 +21,7 @@ const Page = () => {
   const [rows, setRows] = useState<StaffRow[]>(initialRows);
   const [showForm, setShowForm] = useState(false);
   const [editingCode, setEditingCode] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<StaffRow | null>(null);
   const [form, setForm] = useState({ code: "", name: "", phone: "", region: "عام" });
 
   const isEditing = editingCode !== null;
@@ -58,6 +60,20 @@ const Page = () => {
     setForm(emptyForm);
     setEditingCode(null);
     setShowForm(false);
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete) {
+      return;
+    }
+    const code = pendingDelete.code;
+    setRows((prev) => prev.filter((item) => item.code !== code));
+    if (editingCode === code) {
+      setEditingCode(null);
+      setForm(emptyForm);
+      setShowForm(false);
+    }
+    setPendingDelete(null);
   };
 
   return (
@@ -215,16 +231,7 @@ const Page = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            const confirmed = window.confirm("هل أنت متأكد من حذف الموظف؟");
-                            if (!confirmed) {
-                              return;
-                            }
-                            setRows((prev) => prev.filter((item) => item.code !== row.code));
-                            if (editingCode === row.code) {
-                              setEditingCode(null);
-                              setForm(emptyForm);
-                              setShowForm(false);
-                            }
+                            setPendingDelete(row);
                           }}
                           className="rounded-lg border border-(--dash-border) px-2 py-1 text-xs text-rose-500"
                         >
@@ -250,6 +257,13 @@ const Page = () => {
           </div>
         </div>
       </section>
+      <ConfirmModal
+        open={Boolean(pendingDelete)}
+        message="هل أنت متأكد من حذف الموظف؟"
+        confirmLabel="حذف"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </DashboardShell>
   );
 };

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
+import ConfirmModal from "@/app/(dashboard)/components/ConfirmModal";
 
 type InvoiceDevice = {
   id: string;
@@ -24,6 +25,7 @@ const devices: InvoiceDevice[] = [
 const Page = () => {
   const [deviceRows, setDeviceRows] = useState(devices);
   const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
+  const [pendingDelete, setPendingDelete] = useState<InvoiceDevice | null>(null);
   const allSelected = deviceRows.length > 0 && deviceRows.every((device) => selectedDevices.includes(device.id));
 
   const toggleAll = () => {
@@ -39,12 +41,16 @@ const Page = () => {
   };
 
   const handleDelete = (device: InvoiceDevice) => {
-    const confirmed = window.confirm("هل أنت متأكد من حذف الجهاز؟");
-    if (!confirmed) {
+    setPendingDelete(device);
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete) {
       return;
     }
-    setDeviceRows((prev) => prev.filter((item) => item.id !== device.id));
-    setSelectedDevices((prev) => prev.filter((id) => id !== device.id));
+    setDeviceRows((prev) => prev.filter((item) => item.id !== pendingDelete.id));
+    setSelectedDevices((prev) => prev.filter((id) => id !== pendingDelete.id));
+    setPendingDelete(null);
   };
 
   return (
@@ -167,6 +173,13 @@ const Page = () => {
           </div>
         </div>
       </section>
+      <ConfirmModal
+        open={Boolean(pendingDelete)}
+        message="هل أنت متأكد من حذف الجهاز؟"
+        confirmLabel="حذف"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </DashboardShell>
   );
 };

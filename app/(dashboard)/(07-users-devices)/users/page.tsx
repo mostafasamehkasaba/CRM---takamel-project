@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
+import ConfirmModal from "@/app/(dashboard)/components/ConfirmModal";
 
 type UserStatus = "نشط" | "غير نشط";
 
@@ -119,6 +120,7 @@ const Page = () => {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
   const [editForm, setEditForm] = useState<UserRow | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<UserRow | null>(null);
 
   const statusOptions = Object.keys(statusStyles) as UserStatus[];
 
@@ -146,14 +148,18 @@ const Page = () => {
   };
 
   const handleDelete = (user: UserRow) => {
-    const confirmed = window.confirm("هل أنت متأكد من حذف المستخدم؟");
-    if (!confirmed) {
+    setPendingDelete(user);
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete) {
       return;
     }
-    setUsers((prev) => prev.filter((item) => item.id !== user.id));
-    if (editingUser?.id === user.id) {
+    setUsers((prev) => prev.filter((item) => item.id !== pendingDelete.id));
+    if (editingUser?.id === pendingDelete.id) {
       closeEditModal();
     }
+    setPendingDelete(null);
   };
 
   const filteredUsers = useMemo(() => {
@@ -338,6 +344,14 @@ const Page = () => {
           </div>
         </div>
       </section>
+
+      <ConfirmModal
+        open={Boolean(pendingDelete)}
+        message="هل أنت متأكد من حذف المستخدم؟"
+        confirmLabel="حذف"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
 
       {editForm && (
         <div className="dash-modal">

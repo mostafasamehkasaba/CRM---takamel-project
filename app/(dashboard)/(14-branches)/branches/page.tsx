@@ -1,65 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
-
-type BranchRow = {
-  code: string;
-  name: string;
-  priceGroup: string;
-  phone: string;
-  email: string;
-  address: string;
-};
-
-const initialRows: BranchRow[] = [
-  {
-    code: "001",
-    name: "نشاط المطاعم",
-    priceGroup: "عام",
-    phone: "0500000000",
-    email: "info@example.com",
-    address: "الرياض - حي المروج",
-  },
-  {
-    code: "003",
-    name: "نشاط الصالون",
-    priceGroup: "عام",
-    phone: "0500000001",
-    email: "salon@example.com",
-    address: "الرياض - حي النرجس",
-  },
-  {
-    code: "004",
-    name: "نشاط الكوفي / الديوانية",
-    priceGroup: "عام",
-    phone: "0500000002",
-    email: "coffee@example.com",
-    address: "الرياض - حي الياسمين",
-  },
-  {
-    code: "008",
-    name: "مغسلة ملابس",
-    priceGroup: "عام",
-    phone: "0500000003",
-    email: "laundry@example.com",
-    address: "الرياض - حي الندى",
-  },
-  {
-    code: "WH009",
-    name: "مغسلة سيارات",
-    priceGroup: "عام",
-    phone: "0500000004",
-    email: "cars@example.com",
-    address: "الرياض - حي القادسية",
-  },
-];
+import ConfirmModal from "@/app/(dashboard)/components/ConfirmModal";
+import { BRANCHES_STORAGE_KEY, defaultBranches, type BranchRow } from "@/app/(dashboard)/data/branches";
 
 const Page = () => {
   const [query, setQuery] = useState("");
-  const [rows, setRows] = useState<BranchRow[]>(initialRows);
+  const [rows, setRows] = useState<BranchRow[]>(defaultBranches);
+  const [hasHydrated, setHasHydrated] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingCode, setEditingCode] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<BranchRow | null>(null);
   const [form, setForm] = useState({
     code: "",
     name: "",
@@ -70,6 +22,32 @@ const Page = () => {
   });
   const isEditing = editingCode !== null;
   const emptyForm = { code: "", name: "", priceGroup: "عام", phone: "", email: "", address: "" };
+
+  useEffect(() => {
+    const raw = window.localStorage.getItem(BRANCHES_STORAGE_KEY);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as BranchRow[];
+        if (Array.isArray(parsed)) {
+          setRows(parsed);
+          setHasHydrated(true);
+          return;
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    window.localStorage.setItem(BRANCHES_STORAGE_KEY, JSON.stringify(defaultBranches));
+    setRows(defaultBranches);
+    setHasHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hasHydrated) {
+      return;
+    }
+    window.localStorage.setItem(BRANCHES_STORAGE_KEY, JSON.stringify(rows));
+  }, [rows, hasHydrated]);
 
   const filteredRows = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -111,6 +89,20 @@ const Page = () => {
     setForm(emptyForm);
     setEditingCode(null);
     setShowForm(false);
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete) {
+      return;
+    }
+    const code = pendingDelete.code;
+    setRows((prev) => prev.filter((item) => item.code !== code));
+    if (editingCode === code) {
+      setEditingCode(null);
+      setForm(emptyForm);
+      setShowForm(false);
+    }
+    setPendingDelete(null);
   };
 
   return (
@@ -300,16 +292,7 @@ const Page = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            const confirmed = window.confirm("هل أنت متأكد من حذف الفرع؟");
-                            if (!confirmed) {
-                              return;
-                            }
-                            setRows((prev) => prev.filter((item) => item.code !== row.code));
-                            if (editingCode === row.code) {
-                              setEditingCode(null);
-                              setForm(emptyForm);
-                              setShowForm(false);
-                            }
+                            setPendingDelete(row);
                           }}
                           className="rounded-lg border border-(--dash-border) px-2 py-1 text-xs text-rose-500"
                         >
@@ -344,6 +327,13 @@ const Page = () => {
           </div>
         </div>
       </section>
+      <ConfirmModal
+        open={Boolean(pendingDelete)}
+        message="هل أنت متأكد من حذف الفرع؟"
+        confirmLabel="حذف"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </DashboardShell>
   );
 };

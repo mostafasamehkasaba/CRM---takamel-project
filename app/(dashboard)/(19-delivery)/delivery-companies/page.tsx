@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
+import ConfirmModal from "@/app/(dashboard)/components/ConfirmModal";
 
 type DeliveryRow = {
   name: string;
@@ -19,6 +20,7 @@ const Page = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingName, setEditingName] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "" });
+  const [pendingDelete, setPendingDelete] = useState<DeliveryRow | null>(null);
 
   const isEditing = editingName !== null;
   const emptyForm = { name: "" };
@@ -50,6 +52,20 @@ const Page = () => {
     setForm(emptyForm);
     setEditingName(null);
     setShowForm(false);
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete) {
+      return;
+    }
+    const name = pendingDelete.name;
+    setRows((prev) => prev.filter((item) => item.name !== name));
+    if (editingName === name) {
+      setEditingName(null);
+      setForm(emptyForm);
+      setShowForm(false);
+    }
+    setPendingDelete(null);
   };
 
   return (
@@ -168,16 +184,7 @@ const Page = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            const confirmed = window.confirm("هل أنت متأكد من حذف شركة التوصيل؟");
-                            if (!confirmed) {
-                              return;
-                            }
-                            setRows((prev) => prev.filter((item) => item.name !== row.name));
-                            if (editingName === row.name) {
-                              setEditingName(null);
-                              setForm(emptyForm);
-                              setShowForm(false);
-                            }
+                            setPendingDelete(row);
                           }}
                           className="rounded-lg border border-(--dash-border) px-2 py-1 text-xs text-rose-500"
                         >
@@ -201,6 +208,13 @@ const Page = () => {
           </div>
         </div>
       </section>
+      <ConfirmModal
+        open={Boolean(pendingDelete)}
+        message="هل أنت متأكد من حذف شركة التوصيل؟"
+        confirmLabel="حذف"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </DashboardShell>
   );
 };

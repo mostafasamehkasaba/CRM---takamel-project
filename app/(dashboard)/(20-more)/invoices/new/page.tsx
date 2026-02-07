@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
+import ConfirmModal from "@/app/(dashboard)/components/ConfirmModal";
 import { initialProducts } from "@/app/(dashboard)/data/products";
 
 const InvoiceNewPageContent = () => {
@@ -36,6 +37,7 @@ const InvoiceNewPageContent = () => {
     return Array.from(new Set([...initialProducts.map((item) => item.name), ...names]));
   }, [items]);
   const [toast, setToast] = useState<{ message: string; tone: "success" | "info" } | null>(null);
+  const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(null);
 
   const invoiceTypeOptions = [
     {
@@ -97,11 +99,15 @@ const InvoiceNewPageContent = () => {
   };
 
   const handleRemoveItem = (index: number) => {
-    const confirmed = window.confirm("هل أنت متأكد من حذف الصنف؟");
-    if (!confirmed) {
+    setPendingDeleteIndex(index);
+  };
+
+  const confirmDeleteItem = () => {
+    if (pendingDeleteIndex === null) {
       return;
     }
-    setItems((prev) => prev.filter((_, currentIndex) => currentIndex !== index));
+    setItems((prev) => prev.filter((_, currentIndex) => currentIndex !== pendingDeleteIndex));
+    setPendingDeleteIndex(null);
   };
 
   const handleItemChange = (index: number, field: "name", value: string) => {
@@ -696,6 +702,13 @@ const InvoiceNewPageContent = () => {
           </div>
         </div>
       ) : null}
+      <ConfirmModal
+        open={pendingDeleteIndex !== null}
+        message="هل أنت متأكد من حذف الصنف؟"
+        confirmLabel="حذف"
+        onConfirm={confirmDeleteItem}
+        onCancel={() => setPendingDeleteIndex(null)}
+      />
     </DashboardShell>
   );
 };

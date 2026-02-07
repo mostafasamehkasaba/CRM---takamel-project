@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
+import ConfirmModal from "@/app/(dashboard)/components/ConfirmModal";
 import ActionIconButton from "@/app/(dashboard)/components/ActionIconButton";
 import { EditIcon, TrashIcon } from "@/app/(dashboard)/components/icons/ActionIcons";
 
@@ -29,6 +30,7 @@ const accounts: AccountNode[] = [
 const Page = () => {
   const [search, setSearch] = useState("");
   const [rowsData, setRowsData] = useState(accounts);
+  const [pendingDelete, setPendingDelete] = useState<AccountNode | null>(null);
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -44,11 +46,15 @@ const Page = () => {
   }, [search, rowsData]);
 
   const handleDelete = (account: AccountNode) => {
-    const confirmed = window.confirm("هل أنت متأكد من حذف الحساب؟");
-    if (!confirmed) {
+    setPendingDelete(account);
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete) {
       return;
     }
-    setRowsData((prev) => prev.filter((row) => row.code !== account.code));
+    setRowsData((prev) => prev.filter((row) => row.code !== pendingDelete.code));
+    setPendingDelete(null);
   };
 
   return (
@@ -157,6 +163,13 @@ const Page = () => {
           ))}
         </div>
       </section>
+      <ConfirmModal
+        open={Boolean(pendingDelete)}
+        message="هل أنت متأكد من حذف الحساب؟"
+        confirmLabel="حذف"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </DashboardShell>
   );
 };

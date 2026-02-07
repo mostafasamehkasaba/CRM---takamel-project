@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
+import ConfirmModal from "@/app/(dashboard)/components/ConfirmModal";
 import ActionIconButton from "@/app/(dashboard)/components/ActionIconButton";
 import { EditIcon, TrashIcon } from "@/app/(dashboard)/components/icons/ActionIcons";
 
@@ -159,6 +160,7 @@ const Page = () => {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [rows, setRows] = useState<LinkRow[]>(initialRows);
+  const [pendingDelete, setPendingDelete] = useState<LinkRow | null>(null);
 
   useEffect(() => {
     try {
@@ -219,11 +221,15 @@ const Page = () => {
   }, [page, rowsPerPage, filteredRows]);
 
   const handleDelete = (row: LinkRow) => {
-    const confirmed = window.confirm("هل أنت متأكد من حذف الرابط؟");
-    if (!confirmed) {
+    setPendingDelete(row);
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete) {
       return;
     }
-    setRows((prev) => prev.filter((item) => item !== row));
+    setRows((prev) => prev.filter((item) => item !== pendingDelete));
+    setPendingDelete(null);
   };
 
   useEffect(() => {
@@ -433,6 +439,13 @@ const Page = () => {
           </div>
         </div>
       </section>
+      <ConfirmModal
+        open={Boolean(pendingDelete)}
+        message="هل أنت متأكد من حذف الرابط؟"
+        confirmLabel="حذف"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </DashboardShell>
   );
 };

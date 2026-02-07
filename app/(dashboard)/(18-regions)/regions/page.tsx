@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
+import ConfirmModal from "@/app/(dashboard)/components/ConfirmModal";
 
 type RegionRow = {
   country: string;
@@ -19,6 +20,7 @@ const Page = () => {
   const [rows, setRows] = useState<RegionRow[]>(initialRows);
   const [showForm, setShowForm] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<RegionRow | null>(null);
   const [form, setForm] = useState({ country: "", region: "", branch: "مغسلة سيارات" });
 
   const isEditing = editingKey !== null;
@@ -52,6 +54,20 @@ const Page = () => {
     setForm(emptyForm);
     setEditingKey(null);
     setShowForm(false);
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete) {
+      return;
+    }
+    const region = pendingDelete.region;
+    setRows((prev) => prev.filter((item) => item.region !== region));
+    if (editingKey === region) {
+      setEditingKey(null);
+      setForm(emptyForm);
+      setShowForm(false);
+    }
+    setPendingDelete(null);
   };
 
   return (
@@ -196,16 +212,7 @@ const Page = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            const confirmed = window.confirm("هل أنت متأكد من حذف المنطقة؟");
-                            if (!confirmed) {
-                              return;
-                            }
-                            setRows((prev) => prev.filter((item) => item.region !== row.region));
-                            if (editingKey === row.region) {
-                              setEditingKey(null);
-                              setForm(emptyForm);
-                              setShowForm(false);
-                            }
+                            setPendingDelete(row);
                           }}
                           className="rounded-lg border border-(--dash-border) px-2 py-1 text-xs text-rose-500"
                         >
@@ -236,6 +243,13 @@ const Page = () => {
           </div>
         </div>
       </section>
+      <ConfirmModal
+        open={Boolean(pendingDelete)}
+        message="هل أنت متأكد من حذف المنطقة؟"
+        confirmLabel="حذف"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </DashboardShell>
   );
 };
