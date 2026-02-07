@@ -266,7 +266,6 @@ const page = () => {
       }
       closeEditModal();
       fetchItems(query);
-      setEditingItem(refreshed);
     } catch (error) {
       console.error(error);
       setFormError("تعذر تحديث الصنف.");
