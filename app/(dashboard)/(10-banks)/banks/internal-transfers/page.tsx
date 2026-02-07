@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
@@ -92,7 +92,7 @@ const Page = () => {
 
   const loadBanks = async () => {
     try {
-      const response = await listBanks({ pagination: "on", limit_per_page: 200 });
+      const response = await listBanks({ pagination: "on", limit_per_page: 1000 });
       const list = extractList<any>(response);
       setBanks(
         list.map((entry: any, index: number) => ({
@@ -109,6 +109,13 @@ const Page = () => {
   useEffect(() => {
     loadBanks();
     loadTransfers();
+    const handleFocus = () => {
+      loadBanks();
+    };
+    window.addEventListener("focus", handleFocus);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+    };
   }, []);
 
   const handleFormChange = (field: keyof typeof form, value: string) => {
@@ -208,13 +215,13 @@ const Page = () => {
           <form onSubmit={handleSubmit} className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-5 shadow-(--dash-shadow)">
             <div className="grid gap-4 lg:grid-cols-3">
               <label className="text-sm">
-                <span className="mb-2 block font-semibold text-(--dash-text)">Sender bank *</span>
+                <span className="mb-2 block font-semibold text-(--dash-text)">البنك المرسل *</span>
                 <select
                   value={form.senderId}
                   onChange={(event) => handleFormChange("senderId", event.target.value)}
                   className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
                 >
-                  <option value="">Select sender</option>
+                  <option value="">اختر البنك المرسل</option>
                   {banks.map((bank) => (
                     <option key={bank.id} value={bank.id}>
                       {bank.name}
@@ -223,13 +230,13 @@ const Page = () => {
                 </select>
               </label>
               <label className="text-sm">
-                <span className="mb-2 block font-semibold text-(--dash-text)">Receiver bank *</span>
+                <span className="mb-2 block font-semibold text-(--dash-text)">البنك المستلم *</span>
                 <select
                   value={form.receiverId}
                   onChange={(event) => handleFormChange("receiverId", event.target.value)}
                   className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
                 >
-                  <option value="">Select receiver</option>
+                  <option value="">اختر البنك المستلم</option>
                   {banks.map((bank) => (
                     <option key={bank.id} value={bank.id}>
                       {bank.name}
@@ -238,7 +245,7 @@ const Page = () => {
                 </select>
               </label>
               <label className="text-sm">
-                <span className="mb-2 block font-semibold text-(--dash-text)">Amount *</span>
+                <span className="mb-2 block font-semibold text-(--dash-text)">المبلغ *</span>
                 <input
                   value={form.amount}
                   onChange={(event) => handleFormChange("amount", event.target.value)}
@@ -248,7 +255,7 @@ const Page = () => {
                 />
               </label>
               <label className="text-sm">
-                <span className="mb-2 block font-semibold text-(--dash-text)">Exchange rate</span>
+                <span className="mb-2 block font-semibold text-(--dash-text)">سعر الصرف</span>
                 <input
                   value={form.exchangeRate}
                   onChange={(event) => handleFormChange("exchangeRate", event.target.value)}
@@ -258,7 +265,7 @@ const Page = () => {
                 />
               </label>
               <label className="text-sm lg:col-span-3">
-                <span className="mb-2 block font-semibold text-(--dash-text)">Notes</span>
+                <span className="mb-2 block font-semibold text-(--dash-text)">ملاحظات</span>
                 <textarea
                   value={form.note}
                   onChange={(event) => handleFormChange("note", event.target.value)}
@@ -296,25 +303,25 @@ const Page = () => {
             <table className="min-w-full text-sm">
               <thead className="bg-(--dash-primary) text-white">
                 <tr>
-                  <th className="px-3 py-3 text-right font-semibold">Date</th>
-                  <th className="px-3 py-3 text-right font-semibold">Sender bank</th>
-                  <th className="px-3 py-3 text-right font-semibold">Receiver bank</th>
-                  <th className="px-3 py-3 text-right font-semibold">Amount</th>
-                  <th className="px-3 py-3 text-right font-semibold">Notes</th>
-                  <th className="px-3 py-3 text-right font-semibold">Actions</th>
+                  <th className="px-3 py-3 text-right font-semibold">التاريخ</th>
+                  <th className="px-3 py-3 text-right font-semibold">البنك المرسل</th>
+                  <th className="px-3 py-3 text-right font-semibold">البنك المستلم</th>
+                  <th className="px-3 py-3 text-right font-semibold">المبلغ</th>
+                  <th className="px-3 py-3 text-right font-semibold">ملاحظات</th>
+                  <th className="px-3 py-3 text-right font-semibold">الإجراءات</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr className="border-t border-(--dash-border) text-(--dash-muted)">
                     <td className="px-3 py-3" colSpan={6}>
-                      Loading transfers...
+                      جاري تحميل التحويلات...
                     </td>
                   </tr>
                 ) : filteredRows.length === 0 ? (
                   <tr className="border-t border-(--dash-border) text-(--dash-muted)">
                     <td className="px-3 py-3" colSpan={6}>
-                      No transfers found.
+                      لا توجد تحويلات.
                     </td>
                   </tr>
                 ) : (
@@ -331,13 +338,13 @@ const Page = () => {
                             onClick={() => handleEditRow(row)}
                             className="rounded-lg border border-(--dash-border) px-3 py-1 text-xs text-(--dash-text)"
                           >
-                            Edit
+                            تعديل
                           </button>
                           <button
                             onClick={() => handleDeleteRow(String(row.id))}
                             className="rounded-lg border border-(--dash-border) px-3 py-1 text-xs text-rose-500"
                           >
-                            Delete
+                            حذف
                           </button>
                         </div>
                       </td>
@@ -349,7 +356,7 @@ const Page = () => {
           </div>
           <div className="flex items-center justify-between gap-2 border-t border-(--dash-border) px-4 py-3 text-sm text-(--dash-muted)">
             <div className="flex items-center gap-2">
-              <button className="rounded-lg border border-(--dash-border) px-2 py-1 text-(--dash-text)">سابق</button>
+              <button className="rounded-lg border border-(--dash-border) px-2 py-1 text-(--dash-text)">السابق</button>
               <span className="rounded-lg border border-(--dash-border) px-2 py-1 text-(--dash-text)">1</span>
               <button className="rounded-lg border border-(--dash-border) px-2 py-1 text-(--dash-text)">التالي</button>
             </div>
@@ -369,4 +376,3 @@ const Page = () => {
 };
 
 export default Page;
-

@@ -184,7 +184,7 @@ const Page = () => {
   };
 
   return (
-    <DashboardShell title="طھط­ظˆظٹظ„ط§طھ ط¨ظ†ظƒظٹط© ط®ط§ط±ط¬ظٹط©" subtitle="ط§ظ„ط¨ط¯ط§ظٹط© / طھط­ظˆظٹظ„ط§طھ ط¨ظ†ظƒظٹط© ط®ط§ط±ط¬ظٹط©" hideHeaderFilters>
+    <DashboardShell title="تحويلات بنكية خارجية" subtitle="البداية / تحويلات بنكية خارجية" hideHeaderFilters>
       <section className="space-y-4">
         {errorMessage ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs text-rose-700">
@@ -193,7 +193,7 @@ const Page = () => {
         ) : null}
         <div className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-(--dash-text)">طھط­ظˆظٹظ„ط§طھ ط¨ظ†ظƒظٹط© ط®ط§ط±ط¬ظٹط©</h2>
+            <h2 className="text-sm font-semibold text-(--dash-text)">تحويلات بنكية خارجية</h2>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -202,16 +202,16 @@ const Page = () => {
               >
                 +
               </button>
-              <span className="text-xs text-(--dash-muted)">X</span>
+              <span className="text-xs text-(--dash-muted)">إضافة تحويل بنكي خارجي</span>
             </div>
           </div>
-          <p className="mt-3 text-sm text-(--dash-muted)">ط§ظ„ط±ط¬ط§ط، ط§ط³طھط®ط¯ط§ظ… ط§ظ„ط¬ط¯ظˆظ„ ط£ط¯ظ†ط§ظ‡ ظ„ظ„طھظ†ظ‚ظ„ ط£ظˆ طھطµظپظٹط© ط§ظ„ظ†طھط§ط¦ط¬.</p>
+          <p className="mt-3 text-sm text-(--dash-muted)">الرجاء استخدام الجدول أدناه للتنقل أو تصفية النتائج.</p>
         </div>
 
         <div className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-4">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 text-sm text-(--dash-muted)">
-              <span>ط§ط¸ظ‡ط§ط±</span>
+              <span>إظهار</span>
               <select
                 value={pageSize}
                 onChange={(event) => setPageSize(Number(event.target.value))}
@@ -229,7 +229,7 @@ const Page = () => {
                 type="text"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="ط¨ط­ط«"
+                placeholder="بحث"
                 className="w-full bg-transparent text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
               />
             </div>
@@ -241,12 +241,12 @@ const Page = () => {
             <table className="min-w-full text-sm">
               <thead className="bg-(--dash-primary) text-white">
                 <tr>
-                  <th className="px-3 py-3 text-right font-semibold">ط§ظ„طھط§ط±ظٹط®</th>
-                  <th className="px-3 py-3 text-right font-semibold">ظƒظˆط¯ ط§ظ„ط¨ظ†ظƒ</th>
-                  <th className="px-3 py-3 text-right font-semibold">ط§ط³ظ… ط§ظ„ط¨ظ†ظƒ</th>
-                  <th className="px-3 py-3 text-right font-semibold">ط§ظ„ظ…ط¯ظپظˆط¹</th>
-                  <th className="px-3 py-3 text-right font-semibold">ظ…ظ„ط§ط­ط¸ط§طھ</th>
-                  <th className="px-3 py-3 text-right font-semibold">ط§ظ„ط¥ط¬ط±ط§ط،ط§طھ</th>
+                  <th className="px-3 py-3 text-right font-semibold">التاريخ</th>
+                  <th className="px-3 py-3 text-right font-semibold">كود البنك</th>
+                  <th className="px-3 py-3 text-right font-semibold">اسم البنك</th>
+                  <th className="px-3 py-3 text-right font-semibold">المبلغ</th>
+                  <th className="px-3 py-3 text-right font-semibold">ملاحظات</th>
+                  <th className="px-3 py-3 text-right font-semibold">الإجراءات</th>
                 </tr>
               </thead>
               <tbody>
@@ -294,7 +294,7 @@ const Page = () => {
                 disabled={safePage === 1}
                 className="rounded-lg border border-(--dash-border) px-2 py-1 text-(--dash-text) disabled:opacity-50"
               >
-                ط³ط§ط¨ظ‚
+                السابق
               </button>
               <span className="rounded-lg border border-(--dash-border) px-2 py-1 text-(--dash-text)">{safePage}</span>
               <button
@@ -303,7 +303,7 @@ const Page = () => {
                 disabled={safePage === totalPages}
                 className="rounded-lg border border-(--dash-border) px-2 py-1 text-(--dash-text) disabled:opacity-50"
               >
-                ط§ظ„طھط§ظ„ظٹ
+                التالي
               </button>
             </div>
             <span>
