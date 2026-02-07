@@ -9,6 +9,7 @@ type DisplayItem = {
   id: string | number;
   code: string;
   name: string;
+  imageUrl?: string | null;
   brand: string;
   agent: string;
   category: string;
@@ -21,6 +22,22 @@ type DisplayItem = {
 
 const formatCurrency = (value: number) => `${value.toLocaleString()} ر.س`;
 
+const resolveAssetUrl = (value?: string | null) => {
+  if (!value) {
+    return null;
+  }
+  if (value.startsWith("http") || value.startsWith("blob:") || value.startsWith("data:")) {
+    return value;
+  }
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+  const root = base.replace(/\/api\/?$/, "");
+  const trimmed = value.replace(/^\/+/, "");
+  if (!root) {
+    return value;
+  }
+  return `${root}/${trimmed}`;
+};
+
 const page = () => {
   const [items, setItems] = useState<DisplayItem[]>([]);
   const [query, setQuery] = useState("");
@@ -32,6 +49,9 @@ const page = () => {
     id: entry.id ?? entry.uuid ?? entry.code ?? entry._id ?? `${index + 1}`,
     code: entry.code ?? entry.sku ?? entry.barcode ?? "???",
     name: entry.name ?? "غير محدد",
+    imageUrl: resolveAssetUrl(
+      entry.image_url ?? entry.imageUrl ?? entry.image ?? entry.photo ?? entry.photo_url ?? entry.photoUrl ?? null
+    ),
     brand: entry.brand?.name ?? entry.brand_name ?? entry.brand ?? "غير محدد",
     agent: entry.agent?.name ?? entry.agent_name ?? entry.agent ?? "عام",
     category: entry.category?.name ?? entry.category_name ?? entry.category ?? "غير محدد",
@@ -152,14 +172,25 @@ const page = () => {
                     className="border-t border-(--dash-border) text-(--dash-text) odd:bg-(--dash-panel) even:bg-(--dash-panel-soft)"
                   >
                     <td className="px-3 py-3">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-(--dash-border) bg-(--dash-panel-soft) text-(--dash-muted)">
-                        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-                          <path
-                            fill="currentColor"
-                            d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5Zm4 10 3-3 4 4 3-3 2 2v2H6v-2l2-2Z"
-                          />
-                        </svg>
-                      </span>
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.name}
+                          loading="lazy"
+                          decoding="async"
+                          referrerPolicy="no-referrer"
+                          className="h-8 w-8 rounded-lg border border-(--dash-border) object-cover"
+                        />
+                      ) : (
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-(--dash-border) bg-(--dash-panel-soft) text-(--dash-muted)">
+                          <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                            <path
+                              fill="currentColor"
+                              d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5Zm4 10 3-3 4 4 3-3 2 2v2H6v-2l2-2Z"
+                            />
+                          </svg>
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-3 text-(--dash-muted)">{item.code}</td>
                     <td className="px-3 py-3 font-semibold">{item.name}</td>

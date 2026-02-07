@@ -75,9 +75,10 @@ const Page = () => {
             </label>
             <label className="text-sm">
               <span className="mb-2 block font-semibold text-(--dash-text)">كود الحساب *</span>
-              <select className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
-                <option value="">اختر</option>
-              </select>
+              <input
+                type="text"
+                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+              />
             </label>
             <label className="text-sm">
               <span className="mb-2 block font-semibold text-(--dash-text)">رصيد افتتاحي * (المديونية بالسالب)</span>

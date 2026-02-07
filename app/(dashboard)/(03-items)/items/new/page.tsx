@@ -86,6 +86,8 @@ const branchOptions = [
 const Page = () => {
   const [itemImageName, setItemImageName] = useState("");
   const [catalogName, setCatalogName] = useState("");
+  const [itemImageFile, setItemImageFile] = useState<File | null>(null);
+  const [catalogFile, setCatalogFile] = useState<File | null>(null);
   const itemImageInputRef = useRef<HTMLInputElement | null>(null);
   const catalogInputRef = useRef<HTMLInputElement | null>(null);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
@@ -254,11 +256,13 @@ const Page = () => {
   const handleItemImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
     setItemImageName(file ? file.name : "");
+    setItemImageFile(file);
   };
 
   const handleCatalogChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
     setCatalogName(file ? file.name : "");
+    setCatalogFile(file);
   };
 
   const updateItemForm = (field: keyof typeof itemForm, value: string | boolean) => {
@@ -352,6 +356,7 @@ const Page = () => {
         sale_price: itemForm.price ? Number(itemForm.price) : undefined,
         max_bill_quantity: itemForm.minQty ? Number(itemForm.minQty) : 0,
         notify_quantity: itemForm.minQty ? Number(itemForm.minQty) : 0,
+        image: itemImageFile ?? undefined,
       });
       setSuccessMessage("تم إضافة الصنف بنجاح.");
       setItemForm((prev) => ({
@@ -369,6 +374,14 @@ const Page = () => {
       }));
       setItemImageName("");
       setCatalogName("");
+      setItemImageFile(null);
+      setCatalogFile(null);
+      if (itemImageInputRef.current) {
+        itemImageInputRef.current.value = "";
+      }
+      if (catalogInputRef.current) {
+        catalogInputRef.current.value = "";
+      }
     } catch (error) {
       console.error(error);
       const message = error instanceof Error && error.message ? error.message : "تعذر حفظ الصنف.";
