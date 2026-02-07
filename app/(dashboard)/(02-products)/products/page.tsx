@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
 import ActionIconButton from "@/app/(dashboard)/components/ActionIconButton";
 import { EditIcon, TrashIcon } from "@/app/(dashboard)/components/icons/ActionIcons";
+import ConfirmModal from "@/app/(dashboard)/components/ConfirmModal";
 import { createCategory, deleteCategory, listCategories, updateCategory } from "@/app/services/categories";
 import { extractList } from "@/app/services/http";
 
@@ -231,6 +232,7 @@ const Page = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [formMode, setFormMode] = useState<"new" | "edit">("new");
   const [editingRow, setEditingRow] = useState<CategoryRow | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<CategoryRow | null>(null);
   const [form, setForm] = useState({
     code: "",
     name: "",
@@ -436,21 +438,24 @@ const Page = () => {
     setShowForm(true);
   };
 
-  const handleDeleteRow = async (row: CategoryRow) => {
-    if (!confirm("هل تريد حذف التصنيف؟")) {
+  const handleDeleteRow = (row: CategoryRow) => {
+    setPendingDelete(row);
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) {
       return;
     }
     setIsSaving(true);
     try {
-      await deleteCategory(row.id);
+      await deleteCategory(pendingDelete.id);
       await loadCategories();
     } catch (error) {
       console.error(error);
-      setErrorMessage(
-        error instanceof Error && error.message ? error.message : "تعذر حذف التصنيف من الخادم."
-      );
+      setErrorMessage(error instanceof Error && error.message ? error.message : "تعذر حذف التصنيف من الخادم.");
     } finally {
       setIsSaving(false);
+      setPendingDelete(null);
     }
   };
 
@@ -803,6 +808,13 @@ const Page = () => {
           </div>
         </div>
       ) : null}
+      <ConfirmModal
+        open={Boolean(pendingDelete)}
+        message="هل تريد حذف التصنيف؟"
+        confirmLabel="حذف"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </DashboardShell>
   );
 };

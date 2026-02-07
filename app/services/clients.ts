@@ -8,4 +8,10 @@ export const createClient = (data: FormPayload) => postForm("/clients", data);
 
 export const updateClient = (id: string | number, data: FormPayload) => putForm(`/clients/${id}`, data);
 
-export const deleteClient = (id: string | number) => deleteRequest(`/clients/${id}`);
+export const deleteClient = async (id: string | number) => {
+  try {
+    return await deleteRequest(`/clients/${id}`);
+  } catch (error) {
+    return postForm(`/clients/${id}`, { _method: "delete" });
+  }
+};

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
 import { initialProducts } from "@/app/(dashboard)/data/products";
 import { createCategory, listCategories } from "@/app/services/categories";
-import { listItemBrands } from "@/app/services/itemBrands";
+import { createItemBrand, listItemBrands } from "@/app/services/itemBrands";
 import { createItemType, listItemTypes } from "@/app/services/itemTypes";
 import { createItemUnit, listItemUnits } from "@/app/services/itemUnits";
 import { createItem } from "@/app/services/items";
@@ -98,6 +98,10 @@ const Page = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showBrandForm, setShowBrandForm] = useState(false);
+  const [brandName, setBrandName] = useState("");
+  const [brandError, setBrandError] = useState<string | null>(null);
+  const [brandSaving, setBrandSaving] = useState(false);
   const [form, setForm] = useState({
     mainCategoryId: "",
     subCategoryId: "",
@@ -115,6 +119,7 @@ const Page = () => {
     altCode: "",
     cost: "0",
     price: "",
+    stockQty: "0",
     minQty: "0",
     summary: "",
     details: "",
@@ -354,6 +359,7 @@ const Page = () => {
         code: itemForm.code.trim() || undefined,
         purchase_price: itemForm.cost ? Number(itemForm.cost) : 0,
         sale_price: itemForm.price ? Number(itemForm.price) : undefined,
+        current_stock: itemForm.stockQty ? Number(itemForm.stockQty) : 0,
         max_bill_quantity: itemForm.minQty ? Number(itemForm.minQty) : 0,
         notify_quantity: itemForm.minQty ? Number(itemForm.minQty) : 0,
         image: itemImageFile ?? undefined,
@@ -368,6 +374,7 @@ const Page = () => {
         altCode: "",
         cost: "0",
         price: "",
+        stockQty: "0",
         minQty: "0",
         summary: "",
         details: "",
@@ -388,6 +395,35 @@ const Page = () => {
       setErrorMessage(message);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleAddBrand = async () => {
+    const name = brandName.trim();
+    if (!name) {
+      setBrandError("يرجى إدخال اسم الماركة.");
+      return;
+    }
+    setBrandSaving(true);
+    setBrandError(null);
+    try {
+      await createItemBrand({ name });
+      const refreshed = mapOptionList(
+        await listItemBrands({ pagination: "on", limit_per_page: 100, search: name })
+      );
+      const merged = mergeOptionsByName(brands, refreshed);
+      setBrands(merged);
+      const match = merged.find((brand) => brand.name.trim().toLowerCase() === name.toLowerCase());
+      if (match) {
+        setForm((prev) => ({ ...prev, brandId: String(match.id) }));
+      }
+      setBrandName("");
+      setShowBrandForm(false);
+    } catch (error) {
+      console.error(error);
+      setBrandError("تعذر إضافة الماركة.");
+    } finally {
+      setBrandSaving(false);
     }
   };
 
@@ -674,8 +710,20 @@ const Page = () => {
                     className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
                   />
                 </label>
-                <label className="text-sm">
-                  <span className="mb-2 block font-semibold text-(--dash-text)">الماركة</span>
+                <div className="text-sm">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="font-semibold text-(--dash-text)">الماركة</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowBrandForm((prev) => !prev);
+                        setBrandError(null);
+                      }}
+                      className="rounded-full border border-(--dash-border) px-2 py-0.5 text-xs text-(--dash-text)"
+                    >
+                      +
+                    </button>
+                  </div>
                   <select
                     value={form.brandId}
                     onChange={(event) => setForm((prev) => ({ ...prev, brandId: event.target.value }))}
@@ -692,7 +740,33 @@ const Page = () => {
                       ))
                     )}
                   </select>
-                </label>
+                  {showBrandForm ? (
+                    <div className="mt-3 rounded-xl border border-(--dash-border) bg-(--dash-panel) p-3">
+                      <label className="text-sm">
+                        <span className="mb-2 block font-semibold text-(--dash-text)">اسم الماركة</span>
+                        <input
+                          type="text"
+                          value={brandName}
+                          onChange={(event) => setBrandName(event.target.value)}
+                          className="w-full rounded-lg border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+                        />
+                      </label>
+                      {brandError ? (
+                        <div className="mt-2 text-xs text-rose-600">{brandError}</div>
+                      ) : null}
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleAddBrand}
+                          disabled={brandSaving}
+                          className="rounded-lg bg-(--dash-primary) px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
+                        >
+                          {brandSaving ? "جارٍ الإضافة..." : "إضافة الماركة"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
                 <label className="text-sm">
                   <span className="mb-2 block font-semibold text-(--dash-text)">تكلفة الصنف بدون ضريبة *</span>
                   <input
@@ -743,6 +817,15 @@ const Page = () => {
                     type="text"
                     value={itemForm.minQty}
                     onChange={(event) => updateItemForm("minQty", event.target.value)}
+                    className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+                  />
+                </label>
+                <label className="text-sm">
+                  <span className="mb-2 block font-semibold text-(--dash-text)">كمية المخزون</span>
+                  <input
+                    type="text"
+                    value={itemForm.stockQty}
+                    onChange={(event) => updateItemForm("stockQty", event.target.value)}
                     className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
                   />
                 </label>

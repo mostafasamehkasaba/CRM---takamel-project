@@ -1,10 +1,14 @@
-"use client";
+﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
 import ConfirmModal from "@/app/(dashboard)/components/ConfirmModal";
+import { deleteClient, listClients } from "@/app/services/clients";
+import { extractList } from "@/app/services/http";
 
 type CustomerRow = {
+  id: string | number;
+  apiId?: string | number;
   code: string;
   name: string;
   email: string;
@@ -16,8 +20,9 @@ type CustomerRow = {
   points: string;
 };
 
-const rows: CustomerRow[] = [
+const fallbackRows: CustomerRow[] = [
   {
+    id: "103",
     code: "103",
     name: "test010",
     email: "",
@@ -29,6 +34,7 @@ const rows: CustomerRow[] = [
     points: "0.00",
   },
   {
+    id: "104",
     code: "104",
     name: "test",
     email: "admin@solution.com",
@@ -40,6 +46,7 @@ const rows: CustomerRow[] = [
     points: "0.00",
   },
   {
+    id: "105",
     code: "105",
     name: "new55",
     email: "",
@@ -51,6 +58,7 @@ const rows: CustomerRow[] = [
     points: "3.25",
   },
   {
+    id: "106",
     code: "106",
     name: "محمد",
     email: "",
@@ -62,6 +70,7 @@ const rows: CustomerRow[] = [
     points: "129.25",
   },
   {
+    id: "110",
     code: "110",
     name: "123",
     email: "",
@@ -73,6 +82,7 @@ const rows: CustomerRow[] = [
     points: "0.00",
   },
   {
+    id: "109",
     code: "109",
     name: "تكامل البيانات",
     email: "gmail.com@966540283038",
@@ -84,6 +94,7 @@ const rows: CustomerRow[] = [
     points: "0.00",
   },
   {
+    id: "1",
     code: "1",
     name: "عميل افتراضي",
     email: "info@posit.sa",
@@ -95,8 +106,9 @@ const rows: CustomerRow[] = [
     points: "0.00",
   },
   {
+    id: "108",
     code: "108",
-    name: "محمددد",
+    name: "محمدددد",
     email: "",
     phone: "966592128972",
     pricingGroup: "عام",
@@ -110,8 +122,58 @@ const rows: CustomerRow[] = [
 const Page = () => {
   const [query, setQuery] = useState("");
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [rowsData, setRowsData] = useState(rows);
+  const [rowsData, setRowsData] = useState(fallbackRows);
   const [pendingDelete, setPendingDelete] = useState<CustomerRow | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const mapCustomerRow = (entry: any, index: number): CustomerRow => {
+    const apiId = entry.id ?? entry.client_id ?? entry.customer_id ?? entry.uuid ?? entry._id;
+    const id = apiId ?? entry.code ?? entry.client_code ?? entry.customer_code ?? `${index + 1}`;
+    const code = entry.code ?? entry.client_code ?? entry.customer_code ?? (apiId ?? id) ?? `${id}`;
+    const name = entry.name ?? entry.full_name ?? "غير محدد";
+    const email = entry.email ?? "";
+    const phone = entry.phone ?? "";
+    const pricingGroup = entry.pricing_type ?? entry.pricingGroup ?? "عام";
+    const customerGroup = entry.group_type ?? entry.customer_group ?? entry.customerGroup ?? "عام";
+    const taxNumber = entry.tax_number ?? entry.taxNumber ?? "";
+    const actualBalance = entry.balance ?? entry.actual_balance ?? entry.actualBalance ?? "0.00";
+    const points = entry.points ?? "0.00";
+    return {
+      id,
+      apiId,
+      code: String(code),
+      name: String(name),
+      email: String(email),
+      phone: String(phone),
+      pricingGroup: String(pricingGroup),
+      customerGroup: String(customerGroup),
+      taxNumber: String(taxNumber),
+      actualBalance: String(actualBalance),
+      points: String(points),
+    };
+  };
+
+  const loadCustomers = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      const response = await listClients({ pagination: "on", limit_per_page: 200 });
+      const list = extractList<any>(response);
+      const mapped = list.map(mapCustomerRow);
+      setRowsData(mapped.length ? mapped : fallbackRows);
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("تعذر تحميل العملاء من الخادم، يتم عرض بيانات تجريبية.");
+      setRowsData(fallbackRows);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCustomers();
+  }, []);
 
   const filteredRows = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -136,40 +198,47 @@ const Page = () => {
     );
   }, [query, rowsData]);
 
-  const handleDelete = (code: string) => {
-    const row = rowsData.find((entry) => entry.code === code);
-    if (!row) {
+  const handleDelete = (row: CustomerRow) => {
+    if (!row.apiId) {
+      setErrorMessage("لا يمكن حذف هذا العميل لأن رقم التعريف غير متوفر من الخادم.");
       return;
     }
     setPendingDelete(row);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!pendingDelete) {
       return;
     }
-    const code = pendingDelete.code;
-    setRowsData((prev) => prev.filter((row) => row.code !== code));
-    setSelectedRows((prev) => prev.filter((id) => id !== code));
+    const targetId = String(pendingDelete.apiId ?? pendingDelete.id);
     setPendingDelete(null);
+    try {
+      await deleteClient(targetId);
+      setRowsData((prev) => prev.filter((row) => String(row.id) !== targetId));
+      setSelectedRows((prev) => prev.filter((id) => id !== targetId));
+    } catch (error) {
+      console.error(error);
+      const message = error instanceof Error && error.message ? ` ${error.message}` : "";
+      setErrorMessage(`تعذر حذف العميل.${message}`);
+    }
   };
 
-  const allSelected = filteredRows.length > 0 && filteredRows.every((row) => selectedRows.includes(row.code));
+  const allSelected = filteredRows.length > 0 && filteredRows.every((row) => selectedRows.includes(String(row.id)));
 
   const toggleAll = () => {
     if (allSelected) {
-      setSelectedRows((prev) => prev.filter((code) => !filteredRows.some((row) => row.code === code)));
+      setSelectedRows((prev) => prev.filter((id) => !filteredRows.some((row) => String(row.id) === id)));
       return;
     }
     setSelectedRows((prev) => {
       const next = new Set(prev);
-      filteredRows.forEach((row) => next.add(row.code));
+      filteredRows.forEach((row) => next.add(String(row.id)));
       return Array.from(next);
     });
   };
 
-  const toggleRow = (code: string) => {
-    setSelectedRows((prev) => (prev.includes(code) ? prev.filter((id) => id !== code) : [...prev, code]));
+  const toggleRow = (id: string) => {
+    setSelectedRows((prev) => (prev.includes(id) ? prev.filter((entry) => entry !== id) : [...prev, id]));
   };
 
   return (
@@ -205,7 +274,7 @@ const Page = () => {
         <div className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2 text-sm text-(--dash-muted)">
-              <span>اظهار</span>
+              <span>إظهار</span>
               <select className="rounded-lg border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-1 text-(--dash-text) focus:outline-none">
                 <option>10</option>
                 <option>20</option>
@@ -223,6 +292,12 @@ const Page = () => {
             </div>
           </div>
         </div>
+
+        {errorMessage ? (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs text-rose-700">
+            {errorMessage}
+          </div>
+        ) : null}
 
         <div className="overflow-hidden rounded-2xl border border-(--dash-border) bg-(--dash-panel) shadow-(--dash-shadow)">
           <div className="overflow-x-auto">
@@ -251,13 +326,27 @@ const Page = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredRows.map((row) => (
-                  <tr key={row.code} className="border-t border-(--dash-border) text-(--dash-text)">
+                {isLoading ? (
+                  <tr className="border-t border-(--dash-border) text-(--dash-muted)">
+                    <td className="px-3 py-6 text-center" colSpan={11}>
+                      جاري تحميل العملاء...
+                    </td>
+                  </tr>
+                ) : null}
+                {!isLoading && filteredRows.length === 0 ? (
+                  <tr className="border-t border-(--dash-border) text-(--dash-muted)">
+                    <td className="px-3 py-6 text-center" colSpan={11}>
+                      لا توجد بيانات لعرضها.
+                    </td>
+                  </tr>
+                ) : null}
+                {!isLoading && filteredRows.map((row) => (
+                  <tr key={row.id} className="border-t border-(--dash-border) text-(--dash-text)">
                     <td className="px-3 py-3">
                       <input
                         type="checkbox"
-                        checked={selectedRows.includes(row.code)}
-                        onChange={() => toggleRow(row.code)}
+                        checked={selectedRows.includes(String(row.id))}
+                        onChange={() => toggleRow(String(row.id))}
                         className="h-4 w-4 rounded border border-(--dash-border)"
                         aria-label={`تحديد العميل ${row.name}`}
                       />
@@ -289,7 +378,7 @@ const Page = () => {
                         <button
                           type="button"
                           className="rounded-lg border border-(--dash-border) p-2 text-rose-500"
-                          onClick={() => handleDelete(row.code)}
+                          onClick={() => handleDelete(row)}
                           aria-label={`حذف العميل ${row.name}`}
                         >
                           <svg viewBox="0 0 24 24" className="h-4 w-4">
@@ -304,21 +393,7 @@ const Page = () => {
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="border-t border-(--dash-border) text-(--dash-muted)">
-                <tr>
-                  <td className="px-3 py-3">الإجراءات</td>
-                  <td className="px-3 py-3">[إجمالي النقاط]</td>
-                  <td className="px-3 py-3">[الرصيد الفعلي]</td>
-                  <td className="px-3 py-3">[الرقم الضريبي]</td>
-                  <td className="px-3 py-3">[مجموعة العملاء]</td>
-                  <td className="px-3 py-3">[مجموعة التسعير]</td>
-                  <td className="px-3 py-3">[هاتف]</td>
-                  <td className="px-3 py-3">[عنوان البريد الإلكتروني]</td>
-                  <td className="px-3 py-3">[اسم]</td>
-                  <td className="px-3 py-3">[كود]</td>
-                  <td className="px-3 py-3" />
-                </tr>
-              </tfoot>
+             
             </table>
           </div>
           <div className="flex items-center justify-between gap-2 border-t border-(--dash-border) px-4 py-3 text-sm text-(--dash-muted)">
@@ -343,3 +418,6 @@ const Page = () => {
 };
 
 export default Page;
+
+
+

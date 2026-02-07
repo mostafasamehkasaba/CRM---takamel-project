@@ -1,15 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
 import { useRouter } from "next/navigation";
+import { createBank, listBanks, updateBank } from "@/app/services/banks";
+import { listCurrencies } from "@/app/services/currencies";
+import { extractList } from "@/app/services/http";
 
 type BankAccount = {
   id: string;
+  code?: string;
   name: string;
   bankName: string;
   type: string;
   currency: string;
+  currencyId?: string | number;
   balance: number;
   iban: string;
   branch: string;
@@ -26,6 +31,12 @@ type BankTransaction = {
   description: string;
   reference: string;
   status: "مكتمل" | "قيد المعالجة";
+};
+
+type CurrencyOption = {
+  id: string | number;
+  code: string;
+  name: string;
 };
 
 const accountTypes = ["حساب جاري", "حساب توفير"];
@@ -127,6 +138,12 @@ const page = () => {
   const [query, setQuery] = useState("");
   const [accountFilter, setAccountFilter] = useState("كل الحسابات");
   const [typeFilter, setTypeFilter] = useState("كل المعاملات");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [currencyOptions, setCurrencyOptions] = useState<CurrencyOption[]>([]);
+  const [currencyCodeById, setCurrencyCodeById] = useState<Record<string, string>>({});
+  const [currencyIdByCode, setCurrencyIdByCode] = useState<Record<string, string>>({});
   const [showNewAccount, setShowNewAccount] = useState(false);
   const [showNewTransaction, setShowNewTransaction] = useState(false);
   const router = useRouter();
@@ -142,6 +159,7 @@ const page = () => {
     currency: currencies[0].value,
     openingBalance: "0.00",
     branch: "",
+    accountCode: "",
   });
   const [transactionForm, setTransactionForm] = useState({
     account: "",
@@ -150,6 +168,95 @@ const page = () => {
     description: "",
     reference: "",
   });
+
+  const mapAccountTypeFromApi = (value: string | undefined) => {
+    if (value === "saving") {
+      return "حساب توفير";
+    }
+    if (value === "current") {
+      return "حساب جاري";
+    }
+    return value || "حساب جاري";
+  };
+
+  const mapAccountTypeToApi = (value: string) => {
+    if (value.includes("توفير")) {
+      return "saving";
+    }
+    return "current";
+  };
+
+  const loadCurrencies = async () => {
+    try {
+      const response = await listCurrencies({ pagination: "on", limit_per_page: 200 });
+      const list = extractList<any>(response);
+      const mapped = list.map((entry: any, index: number) => ({
+        id: entry.id ?? entry.uuid ?? entry.code ?? entry._id ?? `${index + 1}`,
+        code: entry.code ?? "",
+        name: entry.name ?? entry.code ?? "عملة",
+      }));
+      const codeById: Record<string, string> = {};
+      const idByCode: Record<string, string> = {};
+      mapped.forEach((currency) => {
+        if (currency.id) {
+          codeById[String(currency.id)] = currency.code;
+        }
+        if (currency.code) {
+          idByCode[String(currency.code)] = String(currency.id);
+        }
+      });
+      setCurrencyOptions(mapped);
+      setCurrencyCodeById(codeById);
+      setCurrencyIdByCode(idByCode);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const mapBankAccount = (entry: any, index: number): BankAccount => {
+    const id = entry.id ?? entry.uuid ?? entry.code ?? entry._id ?? `${index + 1}`;
+    const currencyId = entry.currency_id ?? entry.currency?.id ?? entry.currencyId;
+    const currencyCode =
+      entry.currency?.code ??
+      entry.currency_code ??
+      entry.currency ??
+      (currencyId ? currencyCodeById[String(currencyId)] : undefined) ??
+      "SAR";
+    return {
+      id: String(id),
+      code: entry.code ?? entry.bank_code ?? entry.account_code ?? undefined,
+      name: entry.name ?? entry.account_name ?? entry.bank_name ?? "حساب بنكي",
+      bankName: entry.bank_name ?? entry.bankName ?? entry.name ?? "بنك",
+      type: mapAccountTypeFromApi(entry.type),
+      currency: currencyCode,
+      currencyId,
+      balance: Number(entry.balance ?? entry.opening_balance ?? 0),
+      iban: entry.iban ?? "-",
+      branch: entry.branch ?? "-",
+    };
+  };
+
+  const loadBanks = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      const response = await listBanks({ pagination: "on", limit_per_page: 200 });
+      const list = extractList<any>(response);
+      const mapped = list.map(mapBankAccount);
+      setAccounts(mapped.length ? mapped : initialAccounts);
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("تعذر تحميل البنوك من الخادم، يتم عرض بيانات تجريبية.");
+      setAccounts(initialAccounts);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCurrencies();
+    loadBanks();
+  }, []);
 
   const stats = useMemo(() => {
     const totalBalance = accounts
@@ -220,6 +327,7 @@ const page = () => {
         currency: account.currency,
         openingBalance: account.balance.toFixed(2),
         branch: account.branch,
+        accountCode: account.code ?? "",
       });
     }
   };
@@ -248,9 +356,10 @@ const page = () => {
     setActiveTransaction(null);
   };
 
-  const handleAccountSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleAccountSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const balanceValue = Number.parseFloat(accountForm.openingBalance);
+    const bankCode = accountForm.accountCode.trim() || `BNK-${Date.now().toString().slice(-4)}`;
     if (
       !accountForm.accountName.trim() ||
       !accountForm.bankName.trim() ||
@@ -259,37 +368,47 @@ const page = () => {
     ) {
       return;
     }
-
-    const newAccount: BankAccount = {
-      id: `BANK-${String(accounts.length + 1).padStart(3, "0")}`,
-      name: accountForm.accountName.trim(),
-      bankName: accountForm.bankName.trim(),
-      type: accountForm.accountType,
-      currency: accountForm.currency,
-      balance: balanceValue,
-      iban: accountForm.iban.trim() || "-",
-      branch: accountForm.branch.trim() || "-",
-    };
-
-    setAccounts((prev) => [newAccount, ...prev]);
-    setShowNewAccount(false);
-    setAccountForm({
-      accountName: "",
-      bankName: "",
-      iban: "",
-      accountType: "",
-      currency: currencies[0].value,
-      openingBalance: "0.00",
-      branch: "",
-    });
+    setIsSaving(true);
+    try {
+      const currencyId = currencyIdByCode[accountForm.currency] ?? currencyOptions[0]?.id ?? "";
+      await createBank({
+        code: bankCode,
+        name: accountForm.accountName.trim(),
+        bank_name: accountForm.bankName.trim(),
+        type: mapAccountTypeToApi(accountForm.accountType),
+        branch: accountForm.branch.trim() || undefined,
+        balance: balanceValue,
+        note: undefined,
+        currency_id: currencyId || undefined,
+        iban: accountForm.iban.trim() || undefined,
+      });
+      await loadBanks();
+      setShowNewAccount(false);
+      setAccountForm({
+        accountName: "",
+        bankName: "",
+        iban: "",
+        accountType: "",
+        currency: currencies[0].value,
+        openingBalance: "0.00",
+        branch: "",
+        accountCode: "",
+      });
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("تعذر حفظ الحساب البنكي.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleAccountEditSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleAccountEditSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!activeAccount) {
       return;
     }
     const balanceValue = Number.parseFloat(accountForm.openingBalance);
+    const bankCode = accountForm.accountCode.trim() || activeAccount.code || `BNK-${Date.now().toString().slice(-4)}`;
     if (
       !accountForm.accountName.trim() ||
       !accountForm.bankName.trim() ||
@@ -298,34 +417,38 @@ const page = () => {
     ) {
       return;
     }
-
-    const nextName = accountForm.accountName.trim();
-    const previousName = activeAccount.name;
-    setAccounts((prev) =>
-      prev.map((account) =>
-        account.id === activeAccount.id
-          ? {
-              ...account,
-              name: nextName,
-              bankName: accountForm.bankName.trim(),
-              iban: accountForm.iban.trim() || "-",
-              type: accountForm.accountType,
-              currency: accountForm.currency,
-              balance: balanceValue,
-              branch: accountForm.branch.trim() || "-",
-            }
-          : account
-      )
-    );
-    if (previousName !== nextName) {
-      setTransactions((prev) =>
-        prev.map((item) => (item.account === previousName ? { ...item, account: nextName } : item))
-      );
-      if (accountFilter === previousName) {
-        setAccountFilter(nextName);
+    setIsSaving(true);
+    try {
+      const currencyId = currencyIdByCode[accountForm.currency] ?? activeAccount.currencyId ?? "";
+      await updateBank(activeAccount.id, {
+        code: bankCode,
+        name: accountForm.accountName.trim(),
+        bank_name: accountForm.bankName.trim(),
+        type: mapAccountTypeToApi(accountForm.accountType),
+        branch: accountForm.branch.trim() || undefined,
+        balance: balanceValue,
+        note: undefined,
+        currency_id: currencyId || undefined,
+        iban: accountForm.iban.trim() || undefined,
+      });
+      const nextName = accountForm.accountName.trim();
+      const previousName = activeAccount.name;
+      await loadBanks();
+      if (previousName !== nextName) {
+        setTransactions((prev) =>
+          prev.map((item) => (item.account === previousName ? { ...item, account: nextName } : item))
+        );
+        if (accountFilter === previousName) {
+          setAccountFilter(nextName);
+        }
       }
+      closeAccountModal();
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("تعذر تحديث الحساب البنكي.");
+    } finally {
+      setIsSaving(false);
     }
-    closeAccountModal();
   };
 
   const handleTransactionSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -470,6 +593,12 @@ const page = () => {
         </div>
       }
     >
+      {errorMessage ? (
+        <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
+          {errorMessage}
+        </div>
+      ) : null}
+
       <section className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
           <div key={stat.label} className="dash-card flex items-center justify-between">
@@ -749,6 +878,15 @@ const page = () => {
                     placeholder="مثال: الرياض - المركز"
                   />
                 </label>
+                <label className="dash-label">
+                  Bank code
+                  <input
+                    value={accountForm.accountCode}
+                    onChange={(event) => handleAccountChange("accountCode", event.target.value)}
+                    className="dash-input mt-2"
+                    placeholder="BNK-1001"
+                  />
+                </label>
               </div>
               <div className="mt-4 flex justify-end gap-2">
                 <button
@@ -856,6 +994,15 @@ const page = () => {
                       placeholder="مثال: الرياض - المركز"
                     />
                   </label>
+                <label className="dash-label">
+                  Bank code
+                  <input
+                    value={accountForm.accountCode}
+                    onChange={(event) => handleAccountChange("accountCode", event.target.value)}
+                    className="dash-input mt-2"
+                    placeholder="BNK-1001"
+                  />
+                </label>
                   <label className="dash-label">
                     نوع الحساب
                     <select

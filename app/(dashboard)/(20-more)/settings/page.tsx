@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
+import { createCurrency, listCurrencies, updateCurrency } from "@/app/services/currencies";
+import { extractList } from "@/app/services/http";
 
 const tabs = [
   { id: "company", label: "بيانات الشركة" },
@@ -12,8 +14,18 @@ const tabs = [
   { id: "notifications", label: "الإشعارات" },
 ];
 
-const initialCurrencies = [
+type CurrencyRow = {
+  id: string | number;
+  name: string;
+  code: string;
+  symbol: string;
+  isDefault: boolean;
+  enabled: boolean;
+};
+
+const initialCurrencies: CurrencyRow[] = [
   {
+    id: "currency-1",
     name: "الريال السعودي",
     code: "SAR",
     symbol: "ر.س",
@@ -21,6 +33,7 @@ const initialCurrencies = [
     enabled: true,
   },
   {
+    id: "currency-2",
     name: "الدولار الأمريكي",
     code: "USD",
     symbol: "$",
@@ -28,6 +41,7 @@ const initialCurrencies = [
     enabled: true,
   },
   {
+    id: "currency-3",
     name: "اليورو",
     code: "EUR",
     symbol: "€",
@@ -38,9 +52,12 @@ const initialCurrencies = [
 
 const page = () => {
   const [activeTab, setActiveTab] = useState("company");
-  const [currencies, setCurrencies] = useState(initialCurrencies);
+  const [currencies, setCurrencies] = useState<CurrencyRow[]>(initialCurrencies);
   const [showCurrencyForm, setShowCurrencyForm] = useState(false);
-  const [editingCode, setEditingCode] = useState<string | null>(null);
+  const [editingCurrencyId, setEditingCurrencyId] = useState<string | number | null>(null);
+  const [isCurrencyLoading, setIsCurrencyLoading] = useState(true);
+  const [isCurrencySaving, setIsCurrencySaving] = useState(false);
+  const [currencyError, setCurrencyError] = useState<string | null>(null);
   const [sslEnabled, setSslEnabled] = useState(true);
   const [showInvoiceLogo, setShowInvoiceLogo] = useState(true);
   const [showInvoiceBarcode, setShowInvoiceBarcode] = useState(true);
@@ -70,26 +87,39 @@ const page = () => {
     if (storedTab) {
       setActiveTab(storedTab);
     }
-    const storedCurrencies = window.localStorage.getItem("settings-currencies");
-    if (storedCurrencies) {
-      try {
-        const parsed = JSON.parse(storedCurrencies);
-        if (Array.isArray(parsed)) {
-          setCurrencies(parsed);
-        }
-      } catch {
-        // Ignore invalid stored data.
-      }
-    }
   }, []);
 
   useEffect(() => {
     window.localStorage.setItem("settings-active-tab", activeTab);
   }, [activeTab]);
+  
+  const loadCurrencies = async () => {
+    setIsCurrencyLoading(true);
+    setCurrencyError(null);
+    try {
+      const response = await listCurrencies({ pagination: "on", limit_per_page: 200 });
+      const list = extractList<any>(response);
+      const mapped: CurrencyRow[] = list.map((entry: any, index: number) => ({
+        id: entry.id ?? entry.uuid ?? entry.code ?? entry._id ?? `${index + 1}`,
+        name: entry.name ?? "عملة",
+        code: entry.code ?? "",
+        symbol: entry.symbol ?? "",
+        isDefault: Boolean(entry.is_default ?? entry.isDefault ?? false),
+        enabled: Boolean(entry.is_active ?? entry.enabled ?? true),
+      }));
+      setCurrencies(mapped.length ? mapped : initialCurrencies);
+    } catch (error) {
+      console.error(error);
+      setCurrencyError("تعذر تحميل العملات من الخادم.");
+      setCurrencies(initialCurrencies);
+    } finally {
+      setIsCurrencyLoading(false);
+    }
+  };
 
   useEffect(() => {
-    window.localStorage.setItem("settings-currencies", JSON.stringify(currencies));
-  }, [currencies]);
+    loadCurrencies();
+  }, []);
 
   const renderCompanySection = () => (
     <section className="mt-6 rounded-3xl border border-(--dash-border) bg-(--dash-panel) p-6 shadow-(--dash-shadow)">
@@ -201,53 +231,50 @@ const page = () => {
     setCurrencyForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleAddCurrency = () => {
+  const handleAddCurrency = async () => {
     const name = currencyForm.name.trim();
     const code = currencyForm.code.trim().toUpperCase();
     const symbol = currencyForm.symbol.trim();
     if (!name || !code || !symbol) {
       return;
     }
-
-    setCurrencies((prev) => {
-      const normalized = currencyForm.isDefault
-        ? prev.map((item) => ({ ...item, isDefault: false }))
-        : prev;
-      if (editingCode) {
-        return normalized.map((item) =>
-          item.code === editingCode
-            ? { ...item, name, code, symbol, isDefault: currencyForm.isDefault, enabled: currencyForm.enabled }
-            : item
-        );
+    setIsCurrencySaving(true);
+    setCurrencyError(null);
+    try {
+      const payload = {
+        name,
+        code,
+        symbol,
+        is_default: currencyForm.isDefault ? 1 : 0,
+        is_active: currencyForm.enabled ? 1 : 0,
+      };
+      if (editingCurrencyId) {
+        await updateCurrency(editingCurrencyId, payload);
+      } else {
+        await createCurrency(payload);
       }
-      return [
-        ...normalized,
-        {
-          name,
-          code,
-          symbol,
-          isDefault: currencyForm.isDefault,
-          enabled: currencyForm.enabled,
-        },
-      ];
-    });
-
-    setCurrencyForm({
-      name: "",
-      code: "",
-      symbol: "",
-      isDefault: false,
-      enabled: true,
-    });
-    setEditingCode(null);
-    setShowCurrencyForm(false);
+      await loadCurrencies();
+      setCurrencyForm({
+        name: "",
+        code: "",
+        symbol: "",
+        isDefault: false,
+        enabled: true,
+      });
+      setEditingCurrencyId(null);
+      setShowCurrencyForm(false);
+    } catch (error) {
+      console.error(error);
+      setCurrencyError("تعذر حفظ العملة.");
+    } finally {
+      setIsCurrencySaving(false);
+    }
   };
 
   const handleResetStorage = () => {
     window.localStorage.removeItem("settings-active-tab");
-    window.localStorage.removeItem("settings-currencies");
     setActiveTab("company");
-    setCurrencies(initialCurrencies);
+    loadCurrencies();
     setCurrencyForm({
       name: "",
       code: "",
@@ -255,24 +282,43 @@ const page = () => {
       isDefault: false,
       enabled: true,
     });
-    setEditingCode(null);
+    setEditingCurrencyId(null);
     setShowCurrencyForm(false);
   };
 
-  const handleEditCurrency = (code: string) => {
-    const target = currencies.find((item) => item.code === code);
-    if (!target) {
-      return;
-    }
+  const handleEditCurrency = (currency: CurrencyRow) => {
     setCurrencyForm({
-      name: target.name,
-      code: target.code,
-      symbol: target.symbol,
-      isDefault: target.isDefault,
-      enabled: target.enabled,
+      name: currency.name,
+      code: currency.code,
+      symbol: currency.symbol,
+      isDefault: currency.isDefault,
+      enabled: currency.enabled,
     });
-    setEditingCode(target.code);
+    setEditingCurrencyId(currency.id);
     setShowCurrencyForm(true);
+  };
+
+  const handleToggleCurrency = async (currency: CurrencyRow) => {
+    const nextEnabled = !currency.enabled;
+    setIsCurrencySaving(true);
+    setCurrencyError(null);
+    try {
+      await updateCurrency(currency.id, {
+        name: currency.name,
+        code: currency.code,
+        symbol: currency.symbol,
+        is_default: currency.isDefault ? 1 : 0,
+        is_active: nextEnabled ? 1 : 0,
+      });
+      setCurrencies((prev) =>
+        prev.map((item) => (item.id === currency.id ? { ...item, enabled: nextEnabled } : item))
+      );
+    } catch (error) {
+      console.error(error);
+      setCurrencyError("تعذر تحديث حالة العملة.");
+    } finally {
+      setIsCurrencySaving(false);
+    }
   };
 
   const handleCancelCurrencyForm = () => {
@@ -283,7 +329,7 @@ const page = () => {
       isDefault: false,
       enabled: true,
     });
-    setEditingCode(null);
+    setEditingCurrencyId(null);
     setShowCurrencyForm(false);
   };
 
@@ -309,6 +355,12 @@ const page = () => {
           Reset storage
         </button>
       </div>
+
+      {currencyError ? (
+        <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
+          {currencyError}
+        </div>
+      ) : null}
 
       {showCurrencyForm ? (
         <div className="mt-6 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) p-4">
@@ -373,11 +425,18 @@ const page = () => {
             <button
               type="button"
               onClick={handleAddCurrency}
-              className="mr-auto rounded-xl bg-(--dash-primary) px-4 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft)"
+              disabled={isCurrencySaving}
+              className="mr-auto rounded-xl bg-(--dash-primary) px-4 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft) disabled:opacity-60"
             >
-              {editingCode ? "تحديث العملة" : "حفظ العملة"}
+              {editingCurrencyId ? "تحديث العملة" : "حفظ العملة"}
             </button>
           </div>
+        </div>
+      ) : null}
+
+      {isCurrencyLoading ? (
+        <div className="mt-4 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-4 py-3 text-sm text-(--dash-muted)">
+          جاري تحميل العملات...
         </div>
       ) : null}
 
@@ -401,22 +460,17 @@ const page = () => {
               <p className="mt-2 text-xs text-(--dash-muted)">الرمز: {currency.symbol}</p>
             </div>
             <div className="flex items-center gap-6 text-sm text-(--dash-muted)">
-              <button type="button" className="text-(--dash-primary)" onClick={() => handleEditCurrency(currency.code)}>
+              <button type="button" className="text-(--dash-primary)" onClick={() => handleEditCurrency(currency)}>
                 تعديل
               </button>
               <button
                 type="button"
                 className={`relative h-6 w-12 rounded-full transition ${
                   currency.enabled ? "bg-(--dash-primary)" : "bg-slate-200"
-                }`}
-                onClick={() =>
-                  setCurrencies((prev) =>
-                    prev.map((item) =>
-                      item.code === currency.code ? { ...item, enabled: !item.enabled } : item
-                    )
-                  )
-                }
+                } ${isCurrencySaving ? "opacity-60" : ""}`}
+                onClick={() => handleToggleCurrency(currency)}
                 aria-label="تفعيل العملة"
+                disabled={isCurrencySaving}
               >
                 <span
                   className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition ${
@@ -872,5 +926,3 @@ const page = () => {
 };
 
 export default page;
-
-

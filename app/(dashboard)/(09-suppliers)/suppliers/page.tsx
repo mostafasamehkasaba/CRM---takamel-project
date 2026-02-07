@@ -1,10 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
 import ConfirmModal from "@/app/(dashboard)/components/ConfirmModal";
+import { deleteSupplier, listSuppliers, updateSupplier } from "@/app/services/suppliers";
+import { extractList } from "@/app/services/http";
 
 type SupplierRow = {
+  id: string | number;
   name: string;
   email: string;
   phone: string;
@@ -12,10 +15,12 @@ type SupplierRow = {
   commercialRegistration: string;
   accountCode: string;
   balance: string;
+  address?: string;
 };
 
-const rows: SupplierRow[] = [
+const fallbackRows: SupplierRow[] = [
   {
+    id: "supplier-1",
     name: "string",
     email: "user@example.com",
     phone: "201555544545",
@@ -23,8 +28,10 @@ const rows: SupplierRow[] = [
     commercialRegistration: "1010123456",
     accountCode: "2101-001",
     balance: "0.00",
+    address: "",
   },
   {
+    id: "supplier-2",
     name: "مورد",
     email: "",
     phone: "",
@@ -32,19 +39,58 @@ const rows: SupplierRow[] = [
     commercialRegistration: "",
     accountCode: "",
     balance: "0.00",
+    address: "",
   },
 ];
 
-const getRowId = (row: SupplierRow) =>
-  `${row.name}-${row.email}-${row.phone}-${row.taxNumber}-${row.commercialRegistration}-${row.accountCode}-${row.balance}`;
+const getRowId = (row: SupplierRow) => String(row.id);
 
 const Page = () => {
   const [query, setQuery] = useState("");
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [rowsData, setRowsData] = useState(rows);
+  const [rowsData, setRowsData] = useState(fallbackRows);
   const [editingRowId, setEditingRowId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<SupplierRow | null>(null);
   const [pendingDelete, setPendingDelete] = useState<SupplierRow | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const mapSupplierRow = (entry: any, index: number): SupplierRow => {
+    const id = entry.id ?? entry.uuid ?? entry.code ?? entry._id ?? `${index + 1}`;
+    return {
+      id,
+      name: entry.name ?? "غير محدد",
+      email: entry.email ?? "",
+      phone: entry.phone ?? "",
+      taxNumber: entry.tax_number ?? entry.taxNumber ?? "",
+      commercialRegistration: entry.commercial_number ?? entry.commercialRegistration ?? "",
+      accountCode: entry.account_code ?? entry.accountCode ?? "",
+      balance: String(entry.balance ?? "0.00"),
+      address: entry.address ?? "",
+    };
+  };
+
+  const loadSuppliers = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      const response = await listSuppliers({ pagination: "on", limit_per_page: 200 });
+      const list = extractList<any>(response);
+      const mapped = list.map(mapSupplierRow);
+      setRowsData(mapped.length ? mapped : fallbackRows);
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("تعذر تحميل الموردين من الخادم، يتم عرض بيانات تجريبية.");
+      setRowsData(fallbackRows);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSuppliers();
+  }, []);
 
   const filteredRows = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -81,31 +127,53 @@ const Page = () => {
     setEditForm((prev) => (prev ? { ...prev, [field]: value } : prev));
   };
 
-  const handleEditSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleEditSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!editForm || !editingRowId) {
       return;
     }
-    const nextId = getRowId(editForm);
-    setRowsData((prev) =>
-      prev.map((row) => (getRowId(row) === editingRowId ? { ...editForm } : row)),
-    );
-    setSelectedRows((prev) => prev.map((id) => (id === editingRowId ? nextId : id)));
-    closeEditModal();
+    setIsSaving(true);
+    try {
+      await updateSupplier(editingRowId, {
+        name: editForm.name.trim(),
+        email: editForm.email.trim() || undefined,
+        phone: editForm.phone.trim() || undefined,
+        tax_number: editForm.taxNumber.trim() || undefined,
+        commercial_number: editForm.commercialRegistration.trim() || undefined,
+        address: editForm.address?.trim() || undefined,
+        balance: editForm.balance.trim() || "0",
+      });
+      await loadSuppliers();
+      closeEditModal();
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("تعذر تحديث المورد.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDelete = (row: SupplierRow) => {
     setPendingDelete(row);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!pendingDelete) {
       return;
     }
     const rowId = getRowId(pendingDelete);
-    setRowsData((prev) => prev.filter((item) => getRowId(item) !== rowId));
-    setSelectedRows((prev) => prev.filter((id) => id !== rowId));
     setPendingDelete(null);
+    setIsSaving(true);
+    try {
+      await deleteSupplier(rowId);
+      setRowsData((prev) => prev.filter((item) => getRowId(item) !== rowId));
+      setSelectedRows((prev) => prev.filter((id) => id !== rowId));
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("تعذر حذف المورد.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const allSelected = filteredRows.length > 0 && filteredRows.every((row) => selectedRows.includes(getRowId(row)));
@@ -163,6 +231,12 @@ const Page = () => {
           </div>
         </div>
 
+        {errorMessage ? (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs text-rose-700">
+            {errorMessage}
+          </div>
+        ) : null}
+
         <div className="overflow-hidden rounded-2xl border border-(--dash-border) bg-(--dash-panel) shadow-(--dash-shadow)">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
@@ -188,7 +262,21 @@ const Page = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredRows.map((row) => (
+                {isLoading ? (
+                  <tr className="border-t border-(--dash-border) text-(--dash-muted)">
+                    <td className="px-3 py-6 text-center" colSpan={9}>
+                      جاري تحميل الموردين...
+                    </td>
+                  </tr>
+                ) : null}
+                {!isLoading && filteredRows.length === 0 ? (
+                  <tr className="border-t border-(--dash-border) text-(--dash-muted)">
+                    <td className="px-3 py-6 text-center" colSpan={9}>
+                      لا توجد بيانات لعرضها.
+                    </td>
+                  </tr>
+                ) : null}
+                {!isLoading && filteredRows.map((row) => (
                   <tr key={getRowId(row)} className="border-t border-(--dash-border) text-(--dash-text)">
                     <td className="px-3 py-3">
                       <input
