@@ -164,7 +164,6 @@ const Page = () => {
                 >
                   <option>عام</option>
                   <option>جملة</option>
-                  <option>مميز</option>
                 </select>
               </label>
               <label className="text-sm text-(--dash-muted)">

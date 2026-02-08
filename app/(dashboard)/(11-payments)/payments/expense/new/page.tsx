@@ -40,11 +40,11 @@ const page = () => {
                 className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
               />
             </label>
-            <label className="text-sm text-(--dash-muted) lg:col-span-2">
-              <span className="mb-2 block font-semibold text-(--dash-text)">البيان</span>
+            <label className="text-sm text-(--dash-muted)">
+              <span className="mb-2 block font-semibold text-(--dash-text)">رقم السند</span>
               <input
                 type="text"
-                placeholder="البيان"
+                placeholder="رقم السند"
                 className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
               />
             </label>
@@ -54,6 +54,14 @@ const page = () => {
                 <option>الصندوق</option>
                 <option>البنك الأهلي</option>
                 <option>بنك الراجحي</option>
+              </select>
+            </label>
+                <label className="text-sm text-(--dash-muted)">
+              <span className="mb-2 block font-semibold text-(--dash-text)">الحاله</span>
+              <select className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel) px-4 py-2 text-(--dash-text) focus:outline-none">
+                <option>معتمد</option>
+                <option> قيد المراجعه</option>
+                <option> غير معتمد</option>
               </select>
             </label>
           </div>

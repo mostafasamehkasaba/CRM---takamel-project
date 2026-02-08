@@ -48,6 +48,14 @@ const page = () => {
                 className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
               />
             </label>
+            <label className="text-sm text-(--dash-muted)">
+              <span className="mb-2 block font-semibold text-(--dash-text)">رقم السند</span>
+              <input
+                type="text"
+                placeholder="رقم السند"
+                className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel) px-4 py-2 text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
+              />
+            </label>
           </div>
 
           <div className="mt-6 flex justify-end gap-3">
