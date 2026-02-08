@@ -53,6 +53,22 @@ const Page = () => {
               />
             </label>
             <label className="text-sm">
+              <span className="mb-2 block font-semibold text-(--dash-text)">مرجع *</span>
+              <input
+                type="text"
+                
+                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+              />
+            </label>
+               <label className="text-sm">
+              <span className="mb-2 block font-semibold text-(--dash-text)"> مدخل البيانات </span>
+              <select className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
+                <option>مدير النظام </option>
+                <option>كاشير </option>
+              </select>
+            </label>
+
+            <label className="text-sm">
               <span className="mb-2 block font-semibold text-(--dash-text)">نوع الدفع</span>
               <select className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
                 <option>نقدي</option>
@@ -81,7 +97,7 @@ const Page = () => {
               </div>
             </label>
             <label className="text-sm lg:col-span-2">
-              <span className="mb-2 block font-semibold text-(--dash-text)">بيان المصروف</span>
+              <span className="mb-2 block font-semibold text-(--dash-text)">وصف المصروف</span>
               <textarea className="min-h-[160px] w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm" />
             </label>
           </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
-
+import Link from "next/link";
 type Payment = {
   id: string;
   invoice: string;
@@ -391,14 +391,18 @@ const page = () => {
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <button
+          
+        <Link href="/payments/new">
+            <button
             type="button"
             className="flex items-center gap-2 rounded-2xl bg-(--dash-primary) px-5 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft)"
-            onClick={() => setShowForm(true)}
+            // onClick={() => setShowForm(true)}
+            
           >
             <span className="text-lg">+</span>
             سند قبض جديد
           </button>
+        </Link>
           <div className="relative flex-1 min-w-[220px]">
             <svg viewBox="0 0 24 24" className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-(--dash-muted-2)">
               <path

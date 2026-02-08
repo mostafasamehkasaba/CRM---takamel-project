@@ -238,19 +238,7 @@ const Page = () => {
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="border-t border-(--dash-border) text-(--dash-muted)">
-                <tr>
-                  <td className="px-3 py-3">الإجراءات</td>
-                  <td className="px-3 py-3" />
-                  <td className="px-3 py-3">[التاريخ]</td>
-                  <td className="px-3 py-3">[الرقم المرجعي]</td>
-                  <td className="px-3 py-3">[كاشير]</td>
-                  <td className="px-3 py-3">[عميل]</td>
-                  <td className="px-3 py-3">[المجموع]</td>
-                  <td className="px-3 py-3">[الحالة]</td>
-                  <td className="px-3 py-3" />
-                </tr>
-              </tfoot>
+            
             </table>
           </div>
           <div className="flex items-center justify-between gap-2 border-t border-(--dash-border) px-4 py-3 text-sm text-(--dash-muted)">
@@ -258,7 +246,7 @@ const Page = () => {
               <button type="button" className="rounded-lg border border-(--dash-border) px-2 py-1">التالي</button>
               <button type="button" className="rounded-lg border border-(--dash-border) px-2 py-1">سابق</button>
             </div>
-            <span>عرض 1 إلى 7 من 7 سجلات</span>
+            <span>عرض 1 إلى 1 من 1 سجلات</span>
           </div>
         </div>
       </section>

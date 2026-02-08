@@ -5,8 +5,7 @@ import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
 
 const tabs = [
   { id: "receipt", label: "سندات قبض نقدية" },
-  { id: "deposit", label: "سندات إيداع نقدية في البنك" },
-  { id: "withdraw", label: "سحوبات نقدية من البنك" },
+ 
 ];
 
 const page = () => {
@@ -38,6 +37,15 @@ const page = () => {
         <div className="mt-6 rounded-3xl border border-(--dash-border) bg-(--dash-panel-soft) p-6 shadow-(--dash-shadow)">
           <div className="grid gap-4">
             <label className="text-sm text-(--dash-muted)">
+              <span className="mb-2 block font-semibold text-(--dash-text)">العميل</span>
+              <select className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel) px-4 py-2 text-(--dash-text) focus:outline-none">
+                <option>شركه النور</option>
+                <option>شركه المستقبل </option>
+                <option> مؤسسة الامل</option>
+              </select>
+            </label>
+            
+            <label className="text-sm text-(--dash-muted)">
               <span className="mb-2 block font-semibold text-(--dash-text)">المبلغ</span>
               <input
                 type="number"
@@ -53,14 +61,24 @@ const page = () => {
                 <option>بنك الراجحي</option>
               </select>
             </label>
-            <label className="text-sm text-(--dash-muted)">
-              <span className="mb-2 block font-semibold text-(--dash-text)">التاريخ</span>
+           
+               <label className="text-sm">
+              <span className="mb-2 block font-semibold text-(--dash-text)">التاريخ *</span>
               <input
-                type="date"
-                className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel) px-4 py-2 text-(--dash-text) focus:outline-none"
+                type="datetime-local"
+                name="date"
+                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
               />
             </label>
           </div>
+           <label className="text-sm text-(--dash-muted)">
+              <span className="mb-2 block font-semibold text-(--dash-text)">الحاله</span>
+              <select className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel) px-4 py-2 text-(--dash-text) focus:outline-none">
+                <option>معتمد</option>
+                <option> غير معتمد</option>
+                <option> قيد المراجعه</option>
+              </select>
+            </label>
 
           <div className="mt-6 flex justify-end">
             <button

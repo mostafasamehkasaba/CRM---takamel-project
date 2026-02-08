@@ -1,7 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
+import ActionIconButton from "@/app/(dashboard)/components/ActionIconButton";
+import { EditIcon, TrashIcon, ViewIcon } from "@/app/(dashboard)/components/icons/ActionIcons";
+import ConfirmModal from "@/app/(dashboard)/components/ConfirmModal";
 
 type PurchaseStatus = "تم الاستلام" | "معلقة";
 
@@ -20,7 +23,7 @@ type PurchaseRow = {
   paymentStatus: PaymentStatus;
 };
 
-const rows: PurchaseRow[] = [
+const initialRows: PurchaseRow[] = [
   {
     id: 2533,
     date: "07/01/2026",
@@ -74,8 +77,21 @@ const formatNumber = (value: number) => value.toLocaleString("en-US", { minimumF
 const Page = () => {
   const [query, setQuery] = useState("");
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  const [purchaseRows, setPurchaseRows] = useState<PurchaseRow[]>(initialRows);
+  const [viewRow, setViewRow] = useState<PurchaseRow | null>(null);
+  const [editingRow, setEditingRow] = useState<PurchaseRow | null>(null);
+  const [editForm, setEditForm] = useState({
+    reference: "",
+    supplier: "",
+    total: "",
+    paid: "",
+    balance: "",
+    purchaseStatus: "طھظ… ط§ظ„ط§ط³طھظ„ط§ظ…" as PurchaseStatus,
+    paymentStatus: "ظ…ط¯ظپظˆط¹" as PaymentStatus,
+  });
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
 
-  const filteredRows = rows.filter((row) => {
+  const filteredRows = purchaseRows.filter((row) => {
     if (!query.trim()) {
       return true;
     }
@@ -102,6 +118,72 @@ const Page = () => {
 
   const toggleRow = (rowId: number) => {
     setSelectedRows((prev) => (prev.includes(rowId) ? prev.filter((id) => id !== rowId) : [...prev, rowId]));
+  };
+
+  const openViewModal = (row: PurchaseRow) => {
+    setViewRow(row);
+  };
+
+  const openEditModal = (row: PurchaseRow) => {
+    setEditingRow(row);
+    setEditForm({
+      reference: row.reference,
+      supplier: row.supplier,
+      total: String(row.total),
+      paid: String(row.paid),
+      balance: String(row.balance),
+      purchaseStatus: row.purchaseStatus,
+      paymentStatus: row.paymentStatus,
+    });
+  };
+
+  const closeEditModal = () => {
+    setEditingRow(null);
+  };
+
+  const handleEditChange = <K extends keyof typeof editForm>(field: K, value: (typeof editForm)[K]) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const confirmDelete = () => {
+    if (pendingDeleteId === null) {
+      return;
+    }
+    setPurchaseRows((prev) => prev.filter((row) => row.id !== pendingDeleteId));
+    setSelectedRows((prev) => prev.filter((id) => id !== pendingDeleteId));
+    if (viewRow?.id === pendingDeleteId) {
+      setViewRow(null);
+    }
+    if (editingRow?.id === pendingDeleteId) {
+      setEditingRow(null);
+    }
+    setPendingDeleteId(null);
+  };
+
+  const handleEditSave = () => {
+    if (!editingRow) {
+      return;
+    }
+    const total = Number(editForm.total);
+    const paid = Number(editForm.paid);
+    const balance = Number(editForm.balance);
+    setPurchaseRows((prev) =>
+      prev.map((row) =>
+        row.id === editingRow.id
+          ? {
+              ...row,
+              reference: editForm.reference.trim(),
+              supplier: editForm.supplier.trim(),
+              total: Number.isFinite(total) ? total : row.total,
+              paid: Number.isFinite(paid) ? paid : row.paid,
+              balance: Number.isFinite(balance) ? balance : row.balance,
+              purchaseStatus: editForm.purchaseStatus,
+              paymentStatus: editForm.paymentStatus,
+            }
+          : row
+      )
+    );
+    setEditingRow(null);
   };
 
   return (
@@ -161,7 +243,7 @@ const Page = () => {
                   <th className="px-3 py-3 text-right font-semibold">المجموع الكلي</th>
                   <th className="px-3 py-3 text-right font-semibold">حالة الدفع</th>
                   <th className="px-3 py-3 text-right font-semibold">حالة عملية الشراء</th>
-                  <th className="px-3 py-3 text-right font-semibold">الإجراءات</th>
+                  <th className="px-3 py-3 text-center font-semibold">الإجراءات</th>
                 </tr>
               </thead>
               <tbody>
@@ -197,28 +279,30 @@ const Page = () => {
                         {row.purchaseStatus}
                       </span>
                     </td>
-                    <td className="px-3 py-3">
-                      <button type="button" className="rounded-full bg-(--dash-primary) px-3 py-1 text-xs font-semibold text-white">
-                        الإجراءات
-                      </button>
+                    <td className="px-3 py-3 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <ActionIconButton
+                          label="تعديل"
+                          icon={<EditIcon className="h-4 w-4" />}
+                          onClick={() => openEditModal(row)}
+                        />
+                        <ActionIconButton
+                          label="حذف"
+                          icon={<TrashIcon className="h-4 w-4" />}
+                          tone="danger"
+                          onClick={() => setPendingDeleteId(row.id)}
+                        />
+                        <ActionIconButton
+                          label="عرض"
+                          icon={<ViewIcon className="h-4 w-4" />}
+                          onClick={() => openViewModal(row)}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="border-t border-(--dash-border) text-(--dash-muted)">
-                <tr>
-                  <td className="px-3 py-3" />
-                  <td className="px-3 py-3">[yyyy-mm-dd]</td>
-                  <td className="px-3 py-3">[الرقم المرجعي]</td>
-                  <td className="px-3 py-3">[مورد]</td>
-                  <td className="px-3 py-3">{formatNumber(517.5)}</td>
-                  <td className="px-3 py-3">{formatNumber(500.01)}</td>
-                  <td className="px-3 py-3">{formatNumber(1017.51)}</td>
-                  <td className="px-3 py-3">[حالة الدفع]</td>
-                  <td className="px-3 py-3">[حالة الشراء]</td>
-                  <td className="px-3 py-3">الإجراءات</td>
-                </tr>
-              </tfoot>
+              
             </table>
           </div>
           <div className="flex items-center justify-between gap-2 border-t border-(--dash-border) px-4 py-3 text-sm text-(--dash-muted)">
@@ -230,8 +314,153 @@ const Page = () => {
           </div>
         </div>
       </section>
+      {viewRow ? (
+        <div className="dash-modal">
+          <div className="dash-modal-body max-w-xl p-6">
+            <div className="flex items-center justify-between border-b border-(--dash-border) pb-3">
+              <div>
+                <h3 className="text-sm font-semibold text-(--dash-text)">عرض عملية الشراء</h3>
+                <p className="mt-1 text-xs text-(--dash-muted)">{viewRow.reference}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewRow(null)}
+                className="rounded-lg border border-(--dash-border) px-2 py-1 text-xs text-(--dash-muted)"
+              >
+                إغلاق
+              </button>
+            </div>
+            <div className="mt-4 grid gap-3 text-sm">
+              <div className="rounded-xl border border-(--dash-border) p-3">
+                <p className="text-xs text-(--dash-muted)">المورد</p>
+                <p className="mt-1 font-semibold text-(--dash-text)">{viewRow.supplier}</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-xl border border-(--dash-border) p-3">
+                  <p className="text-xs text-(--dash-muted)">الإجمالي</p>
+                  <p className="mt-1 font-semibold text-(--dash-text)">{formatNumber(viewRow.total)}</p>
+                </div>
+                <div className="rounded-xl border border-(--dash-border) p-3">
+                  <p className="text-xs text-(--dash-muted)">المدفوع</p>
+                  <p className="mt-1 font-semibold text-(--dash-text)">{formatNumber(viewRow.paid)}</p>
+                </div>
+                <div className="rounded-xl border border-(--dash-border) p-3">
+                  <p className="text-xs text-(--dash-muted)">الرصيد</p>
+                  <p className="mt-1 font-semibold text-(--dash-text)">{formatNumber(viewRow.balance)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {editingRow ? (
+        <div className="dash-modal">
+          <div className="dash-modal-body max-w-xl p-6">
+            <div className="flex items-center justify-between border-b border-(--dash-border) pb-3">
+              <div>
+                <h3 className="text-sm font-semibold text-(--dash-text)">تعديل عملية الشراء</h3>
+                <p className="mt-1 text-xs text-(--dash-muted)">{editingRow.reference}</p>
+              </div>
+              <button
+                type="button"
+                onClick={closeEditModal}
+                className="rounded-lg border border-(--dash-border) px-2 py-1 text-xs text-(--dash-muted)"
+              >
+                إغلاق
+              </button>
+            </div>
+            <div className="mt-4 grid gap-3">
+              <label className="text-sm">
+                <span className="mb-2 block font-semibold text-(--dash-text)">الرقم المرجعي</span>
+                <input
+                  value={editForm.reference}
+                  onChange={(event) => handleEditChange("reference", event.target.value)}
+                  className="dash-input"
+                />
+              </label>
+              <label className="text-sm">
+                <span className="mb-2 block font-semibold text-(--dash-text)">المورد</span>
+                <input
+                  value={editForm.supplier}
+                  onChange={(event) => handleEditChange("supplier", event.target.value)}
+                  className="dash-input"
+                />
+              </label>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label className="text-sm">
+                  <span className="mb-2 block font-semibold text-(--dash-text)">الإجمالي</span>
+                  <input
+                    type="number"
+                    value={editForm.total}
+                    onChange={(event) => handleEditChange("total", event.target.value)}
+                    className="dash-input"
+                  />
+                </label>
+                <label className="text-sm">
+                  <span className="mb-2 block font-semibold text-(--dash-text)">المدفوع</span>
+                  <input
+                    type="number"
+                    value={editForm.paid}
+                    onChange={(event) => handleEditChange("paid", event.target.value)}
+                    className="dash-input"
+                  />
+                </label>
+                <label className="text-sm">
+                  <span className="mb-2 block font-semibold text-(--dash-text)">الرصيد</span>
+                  <input
+                    type="number"
+                    value={editForm.balance}
+                    onChange={(event) => handleEditChange("balance", event.target.value)}
+                    className="dash-input"
+                  />
+                </label>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-sm">
+                  <span className="mb-2 block font-semibold text-(--dash-text)">حالة الدفع</span>
+                  <select
+                    value={editForm.paymentStatus}
+                    onChange={(event) => handleEditChange("paymentStatus", event.target.value as PaymentStatus)}
+                    className="dash-input"
+                  >
+                    <option value="ظ…ط¯ظپظˆط¹">مدفوع</option>
+                    <option value="ظ…ط¹ظ„ظ‚ط©">معلقة</option>
+                  </select>
+                </label>
+                <label className="text-sm">
+                  <span className="mb-2 block font-semibold text-(--dash-text)">حالة عملية الشراء</span>
+                  <select
+                    value={editForm.purchaseStatus}
+                    onChange={(event) => handleEditChange("purchaseStatus", event.target.value as PurchaseStatus)}
+                    className="dash-input"
+                  >
+                    <option value="طھظ… ط§ظ„ط§ط³طھظ„ط§ظ…">تم الاستلام</option>
+                    <option value="ظ…ط¹ظ„ظ‚ط©">معلقة</option>
+                  </select>
+                </label>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={closeEditModal} className="rounded-lg border border-(--dash-border) px-4 py-2 text-xs text-(--dash-muted)">
+                  إلغاء
+                </button>
+                <button type="button" onClick={handleEditSave} className="rounded-lg bg-(--dash-primary) px-4 py-2 text-xs font-semibold text-white">
+                  حفظ
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      <ConfirmModal
+        open={pendingDeleteId !== null}
+        message="هل أنت متأكد من حذف عملية الشراء؟"
+        confirmLabel="حذف"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDeleteId(null)}
+      />
     </DashboardShell>
   );
 };
 
 export default Page;
+

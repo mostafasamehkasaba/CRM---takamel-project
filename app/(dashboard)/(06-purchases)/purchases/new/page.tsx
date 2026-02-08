@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
@@ -69,7 +69,7 @@ const Page = () => {
             </select>
           </label>
           <label className="text-sm">
-            <span className="mb-2 block font-semibold text-(--dash-text)">الحالة *</span>
+            <span className="mb-2 block font-semibold text-(--dash-text)">حالة عملية الشراء *</span>
             <select className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
               <option>تم الاستلام</option>
               <option>معلقة</option>
@@ -187,6 +187,21 @@ const Page = () => {
               />
             </label>
             <label className="text-sm">
+              <span className="mb-2 block font-semibold text-(--dash-text)">الرصيد</span>
+              <input
+                type="number"
+                defaultValue={0}
+                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="text-sm">
+              <span className="mb-2 block font-semibold text-(--dash-text)">حالة الدفع</span>
+              <select className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
+                <option>مدفوع</option>
+                <option>معلقة</option>
+              </select>
+            </label>
+            <label className="text-sm">
               <span className="mb-2 block font-semibold text-(--dash-text)">خصم بالنسبة أو بالمبلغ (بعد الضريبة)</span>
               <input
                 type="text"
@@ -251,3 +266,5 @@ const Page = () => {
 };
 
 export default Page;
+
+
