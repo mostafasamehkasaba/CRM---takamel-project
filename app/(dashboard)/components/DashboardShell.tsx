@@ -626,7 +626,7 @@ const sidebarNavigation: Array<SidebarItem> = [
         label: "عملية بيع جديدة",
         iconKey: "/sales/new",
         children: [
-          { label: "إضافة فاتورة ضريبية", href: "/sales/new/tax-invoice" },
+          { label: "إضافة فاتورة بسيطة", href: "/sales/new/tax-invoice" },
           { label: "إضافة فاتورة ضريبية مبسطة", href: "/sales/new/simplified-tax-invoice" },
           { label: "إضافة بيع من ملف CSV", href: "/sales/new/import-csv" },
         ],

@@ -5,7 +5,7 @@ import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
 const Page = () => {
   return (
     <DashboardShell
-      title="إضافة فاتورة ضريبية"
+      title="إضافة فاتورة بسيطه"
       subtitle="البيع / المبيعات / إضافة عملية بيع"
       hideHeaderFilters
       layout="compact"
