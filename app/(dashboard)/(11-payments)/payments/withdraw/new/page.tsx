@@ -40,6 +40,13 @@ const page = () => {
                 <option>بنك الرياض</option>
               </select>
             </label>
+               <label className="text-sm text-(--dash-muted)">
+              <span className="mb-2 block font-semibold text-(--dash-text)">الحاله</span>
+              <select className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel) px-4 py-2 text-(--dash-text) focus:outline-none">
+                <option>جاري </option>
+                <option> مكتمل</option>
+              </select>
+            </label>
             <label className="text-sm text-(--dash-muted) lg:col-span-2">
               <span className="mb-2 block font-semibold text-(--dash-text)">الغرض</span>
               <input

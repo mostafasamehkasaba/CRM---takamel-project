@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import {useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
 
@@ -36,18 +36,39 @@ const statusStyles: Record<ExpenseVoucher["status"], string> = {
 
 const formatCurrency = (value: number) => `${value.toLocaleString()} ر.س`;
 
+
 const page = () => {
+  const [vouchers, setVouchers] = useState<ExpenseVoucher[]>(() => {
+  if (typeof window !== "undefined") {
+    const stored = localStorage.getItem("expense_vouchers");
+    return stored ? JSON.parse(stored) : initialVouchers;
+  }
+  return initialVouchers;
+});
   const [query, setQuery] = useState("");
 
-  const filteredVouchers = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (!needle) {
-      return initialVouchers;
-    }
-    return initialVouchers.filter((item) =>
-      [item.id, item.recipient, item.amount, item.date, item.status].join(" ").toLowerCase().includes(needle),
-    );
-  }, [query]);
+const filteredVouchers = useMemo(() => {
+  const needle = query.trim().toLowerCase();
+
+  if (!needle) {
+    return vouchers;
+  }
+
+  return vouchers.filter((item) =>
+    [item.id, item.recipient, item.amount, item.date, item.status]
+      .join(" ")
+      .toLowerCase()
+      .includes(needle)
+  );
+}, [query, vouchers]);
+
+useEffect(() => {
+  const stored = localStorage.getItem("expense_vouchers");
+
+  if (stored) {
+    setVouchers(JSON.parse(stored));
+  }
+}, []);
 
   return (
     <DashboardShell title="سندات صرف نقدية" subtitle="عرض سندات الصرف ومراجعتها.">

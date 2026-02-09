@@ -502,7 +502,7 @@ const page = () => {
                     <span className={`rounded-full px-3 py-1 text-xs font-semibold ${item.statusTone}`}>{item.status}</span>
                   </span>
                   <span className="text-(--dash-muted)">{item.date}</span>
-                  <button type="button" className="text-xs text-(--dash-primary) hover:underline">
+                  <button type="button" className=" relative text-right text-xs text-(--dash-primary) hover:underline">
                     عرض
                   </button>
                 </div>
