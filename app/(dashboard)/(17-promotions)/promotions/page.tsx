@@ -1,8 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
 import ConfirmModal from "@/app/(dashboard)/components/ConfirmModal";
+import { listItems } from "@/app/services/items";
+import { extractList } from "@/app/services/http";
+
+type ItemOption = {
+  id: string;
+  label: string;
+};
 
 type PromoRow = {
   name: string;
@@ -22,6 +29,9 @@ const Page = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingName, setEditingName] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<PromoRow | null>(null);
+  const [items, setItems] = useState<ItemOption[]>([]);
+  const [itemsLoading, setItemsLoading] = useState(true);
+  const [itemsError, setItemsError] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
     startDate: "",
@@ -49,6 +59,39 @@ const Page = () => {
     details: "",
   };
 
+  const mapItemOption = (entry: any, index: number): ItemOption => {
+    const id = entry.id ?? entry.uuid ?? entry.code ?? entry._id ?? `${index + 1}`;
+    const code = entry.code ?? entry.sku ?? entry.barcode ?? "";
+    const name = entry.name ?? "غير محدد";
+    const label = code ? `${code} - ${name}` : name;
+    return {
+      id: String(id),
+      label,
+    };
+  };
+
+  const loadItems = async () => {
+    setItemsLoading(true);
+    setItemsError(null);
+    try {
+      const response = await listItems({ pagination: "on", limit_per_page: 200 });
+      const list = extractList<any>(response);
+      setItems(list.map(mapItemOption));
+    } catch (error) {
+      console.error(error);
+      setItems([]);
+      setItemsError("تعذر تحميل الأصناف.");
+    } finally {
+      setItemsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadItems();
+    window.addEventListener("focus", loadItems);
+    return () => window.removeEventListener("focus", loadItems);
+  }, []);
+
   const filteredRows = useMemo(() => {
     const needle = query.trim().toLowerCase();
     if (!needle) {
@@ -71,10 +114,16 @@ const Page = () => {
     if (!name) {
       return;
     }
+    const resolveLabel = (value: string) => {
+      if (!value) {
+        return "";
+      }
+      return items.find((item) => item.label === value)?.label ?? value;
+    };
     const nextRow = {
       name,
-      mainItem: form.mainItem.trim(),
-      freeItem: form.freeItem.trim(),
+      mainItem: resolveLabel(form.mainItem.trim()),
+      freeItem: resolveLabel(form.freeItem.trim()),
       startDate: form.startDate,
       endDate: form.endDate,
       discount: form.discount.trim(),
@@ -166,12 +215,26 @@ const Page = () => {
               </label>
               <label className="text-sm text-(--dash-muted) md:col-span-2">
                 <span className="mb-2 block font-semibold text-(--dash-text)">الصنف الأساسي *</span>
-                <input
-                  type="text"
+                <select
                   value={form.mainItem}
                   onChange={(event) => handleFormChange("mainItem", event.target.value)}
                   className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-(--dash-text) focus:outline-none"
-                />
+                >
+                  <option value="">
+                    {itemsLoading ? "جاري تحميل الأصناف..." : "اختر الصنف الأساسي"}
+                  </option>
+                  {form.mainItem && !items.some((item) => item.label === form.mainItem) ? (
+                    <option value={form.mainItem}>{form.mainItem}</option>
+                  ) : null}
+                  {items.map((item) => (
+                    <option key={item.id} value={item.label}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+                {itemsError ? (
+                  <p className="mt-2 text-xs text-rose-600">{itemsError}</p>
+                ) : null}
               </label>
               <label className="text-sm text-(--dash-muted)">
                 <span className="mb-2 block font-semibold text-(--dash-text)">كمية الصنف الأساسي</span>
@@ -185,12 +248,26 @@ const Page = () => {
               </label>
               <label className="text-sm text-(--dash-muted) md:col-span-2">
                 <span className="mb-2 block font-semibold text-(--dash-text)">الصنف المجاني *</span>
-                <input
-                  type="text"
+                <select
                   value={form.freeItem}
                   onChange={(event) => handleFormChange("freeItem", event.target.value)}
                   className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-(--dash-text) focus:outline-none"
-                />
+                >
+                  <option value="">
+                    {itemsLoading ? "جاري تحميل الأصناف..." : "اختر الصنف المجاني"}
+                  </option>
+                  {form.freeItem && !items.some((item) => item.label === form.freeItem) ? (
+                    <option value={form.freeItem}>{form.freeItem}</option>
+                  ) : null}
+                  {items.map((item) => (
+                    <option key={item.id} value={item.label}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+                {itemsError ? (
+                  <p className="mt-2 text-xs text-rose-600">{itemsError}</p>
+                ) : null}
               </label>
               <label className="text-sm text-(--dash-muted)">
                 <span className="mb-2 block font-semibold text-(--dash-text)">كمية الصنف المجاني</span>

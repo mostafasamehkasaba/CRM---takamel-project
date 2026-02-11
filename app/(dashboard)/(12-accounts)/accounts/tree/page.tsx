@@ -122,7 +122,7 @@ const Page = () => {
                       <td className="px-3 py-3">{account.debit.toFixed(2)}</td>
                       <td className="px-3 py-3">{account.credit.toFixed(2)}</td>
                       <td className="px-3 py-3">
-                        <div className="flex items-center gap-2 justify-end">
+                        <div className=" relative left-8 flex items-center gap-2 justify-end">
                           <ActionIconButton
                             label="تعديل الحساب"
                             icon={<EditIcon className="h-4 w-4" />}

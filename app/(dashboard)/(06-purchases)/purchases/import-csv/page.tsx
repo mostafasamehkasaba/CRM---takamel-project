@@ -1,13 +1,49 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
+import { listSuppliers } from "@/app/services/suppliers";
+import { extractList } from "@/app/services/http";
+
+type SupplierOption = {
+  id: string;
+  name: string;
+};
 
 const Page = () => {
   const [csvName, setCsvName] = useState("");
   const [attachmentName, setAttachmentName] = useState("");
+  const [supplierId, setSupplierId] = useState("");
+  const [suppliers, setSuppliers] = useState<SupplierOption[]>([]);
+  const [isSuppliersLoading, setIsSuppliersLoading] = useState(true);
+  const [suppliersError, setSuppliersError] = useState("");
   const csvInputRef = useRef<HTMLInputElement | null>(null);
   const attachmentInputRef = useRef<HTMLInputElement | null>(null);
+
+  const mapSupplierOption = (entry: any, index: number): SupplierOption => {
+    const id = entry.id ?? entry.uuid ?? entry.code ?? entry._id ?? `${index + 1}`;
+    return {
+      id: String(id),
+      name: entry.name ?? "غير محدد",
+    };
+  };
+
+  const loadSuppliers = async () => {
+    setIsSuppliersLoading(true);
+    setSuppliersError("");
+    try {
+      const response = await listSuppliers({ pagination: "on", limit_per_page: 200 });
+      const list = extractList<any>(response);
+      setSuppliers(list.map(mapSupplierOption));
+    } catch (error) {
+      console.error(error);
+      setSuppliers([]);
+      setSuppliersError("تعذر تحميل الموردين.");
+    } finally {
+      setIsSuppliersLoading(false);
+    }
+  };
 
   const handleCsvChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
@@ -50,6 +86,12 @@ const Page = () => {
     URL.revokeObjectURL(url);
   };
 
+  useEffect(() => {
+    loadSuppliers();
+    window.addEventListener("focus", loadSuppliers);
+    return () => window.removeEventListener("focus", loadSuppliers);
+  }, []);
+
   return (
     <DashboardShell title="إضافة شراء من ملف CSV" hideHeaderFilters>
       <section className="space-y-5">
@@ -89,13 +131,31 @@ const Page = () => {
           <label className="text-sm lg:col-span-2">
             <span className="mb-2 block font-semibold text-(--dash-text)">مورد *</span>
             <div className="flex items-center gap-2">
-              <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg border border-(--dash-border) bg-(--dash-panel-soft)">
+              <Link
+                href="/suppliers/new"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-(--dash-border) bg-(--dash-panel-soft)"
+                aria-label="إضافة مورد جديد"
+              >
                 +
-              </button>
-              <select className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
-                <option>اختر مورد</option>
+              </Link>
+              <select
+                value={supplierId}
+                onChange={(event) => setSupplierId(event.target.value)}
+                className="w-full rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm"
+              >
+                <option value="">
+                  {isSuppliersLoading ? "جاري تحميل الموردين..." : "اختر مورد"}
+                </option>
+                {suppliers.map((supplier) => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.name}
+                  </option>
+                ))}
               </select>
             </div>
+            {suppliersError ? (
+              <p className="mt-2 text-xs text-rose-600">{suppliersError}</p>
+            ) : null}
           </label>
         </div>
 

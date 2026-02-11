@@ -1,7 +1,7 @@
 "use client";
 
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
-
+import Link from "next/link";
 const page = () => {
   return (
     <DashboardShell title="إضافة سند إيداع نقدية في البنك" subtitle="تسجيل إيداع نقدي جديد.">
@@ -67,12 +67,14 @@ const page = () => {
           </div>
 
           <div className="mt-6 flex justify-end gap-3">
-            <button
+            <Link href='/payments/deposit'>
+                 <button
               type="button"
               className="rounded-2xl border border-(--dash-border) bg-(--dash-panel) px-5 py-2 text-sm font-semibold text-(--dash-text)"
             >
               إلغاء
             </button>
+            </Link>
             <button
               type="button"
               className="rounded-2xl bg-(--dash-primary) px-5 py-2 text-sm font-semibold text-white shadow-(--dash-primary-soft)"

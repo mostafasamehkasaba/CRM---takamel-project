@@ -16,22 +16,39 @@ const Page = () => {
   const [amount, setAmount] = useState("");
   const [account, setAccount] = useState("الصندوق");
   const [date, setDate] = useState("");
-  const [status, setStatus] = useState("معتمد");
+  const [status, setStatus] = useState("مكتملة");
+  const [error, setError] = useState("");
 
   const handleAddPayment = () => {
-    if (!amount || !date) return;
+    if (!amount || !date) {
+      setError("يرجى إدخال المبلغ والتاريخ قبل الحفظ.");
+      return;
+    }
 
     const newPayment = {
-      id: Date.now(),
+      id: `REC-${Date.now()}`,
+      invoice: "",
       client,
-      amount,
-      account,
+      amount: Number(amount),
+      method: "نقدي",
+      wallet: account,
       date,
       status,
+      reference: "",
     };
 
-    const stored = window.localStorage.getItem("payments-data");
-    const payments = stored ? JSON.parse(stored) : [];
+    let payments: typeof newPayment[] = [];
+    try {
+      const stored = window.localStorage.getItem("payments-data");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          payments = parsed;
+        }
+      }
+    } catch {
+      payments = [];
+    }
 
     payments.push(newPayment);
 
@@ -40,8 +57,8 @@ const Page = () => {
       JSON.stringify(payments)
     );
 
+    setError("");
     router.push("/payments");
-    router.refresh();
   };
 
   return (
@@ -138,9 +155,8 @@ const Page = () => {
               onChange={(e) => setStatus(e.target.value)}
               className="w-full rounded-2xl border border-(--dash-border) bg-(--dash-panel) px-4 py-2 text-(--dash-text) focus:outline-none"
             >
-              <option>معتمد</option>
-              <option>غير معتمد</option>
-              <option>قيد المراجعه</option>
+              <option value="مكتملة">معتمد</option>
+              <option value="قيد المعالجة">قيد المراجعة</option>
             </select>
           </label>
 
@@ -153,6 +169,9 @@ const Page = () => {
               إضافة سند
             </button>
           </div>
+          {error ? (
+            <p className="mt-3 text-sm text-rose-600">{error}</p>
+          ) : null}
         </div>
       </section>
     </DashboardShell>
