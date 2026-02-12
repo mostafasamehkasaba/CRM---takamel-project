@@ -18,6 +18,7 @@ const initialRows: StaffRow[] = [
 
 const Page = () => {
   const [query, setQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
   const [rows, setRows] = useState<StaffRow[]>(initialRows);
   const [showForm, setShowForm] = useState(false);
   const [editingCode, setEditingCode] = useState<string | null>(null);
@@ -184,18 +185,56 @@ const Page = () => {
                 <option>50</option>
               </select>
             </div>
-            <div className="flex min-w-60 flex-1 items-center gap-2 rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
-              <input
-                type="text"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="بحث"
-                className="w-full bg-transparent text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
-              />
+            <div className="ms-auto flex flex-wrap items-center gap-2">
+              <div className="flex items-center rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) p-1">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("cards")}
+                  className={`flex h-9 w-9 items-center justify-center rounded-lg transition ${
+                    viewMode === "cards"
+                      ? "bg-(--dash-primary) text-white"
+                      : "text-(--dash-muted) hover:bg-(--dash-panel-glass)"
+                  }`}
+                  aria-pressed={viewMode === "cards"}
+                  aria-label="عرض البطاقات"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("table")}
+                  className={`flex h-9 w-9 items-center justify-center rounded-lg transition ${
+                    viewMode === "table"
+                      ? "bg-(--dash-primary) text-white"
+                      : "text-(--dash-muted) hover:bg-(--dash-panel-glass)"
+                  }`}
+                  aria-pressed={viewMode === "table"}
+                  aria-label="عرض الجدول"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                    <path fill="currentColor" d="M4 6h16v2H4V6Zm0 6h16v2H4v-2Zm0 6h16v2H4v-2Z" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex min-w-60 flex-1 items-center gap-2 rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="بحث"
+                  className="w-full bg-transparent text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
+                />
+              </div>
             </div>
           </div>
         </div>
 
+        {viewMode === "table" ? (
         <div className="overflow-hidden rounded-2xl border border-(--dash-border) bg-(--dash-panel) shadow-(--dash-shadow)">
           <div className="overflow-x-hidden overflow-y-hidden">
             <table className="min-w-full text-sm">
@@ -256,6 +295,60 @@ const Page = () => {
             <span>عرض {filteredRows.length} سجلات</span>
           </div>
         </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {filteredRows.map((row) => (
+                <div
+                  key={row.code}
+                  className="group relative overflow-hidden rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-4 shadow-(--dash-shadow) transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_rgba(0,0,0,0.2)]"
+                >
+                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-l from-(--dash-primary) via-emerald-400/60 to-transparent" />
+                  <div className="space-y-1">
+                    <p className="text-xs text-(--dash-muted)">الموظف</p>
+                    <p className="text-base font-semibold text-(--dash-text)">{row.name}</p>
+                    <span className="inline-flex items-center rounded-full border border-(--dash-border) bg-(--dash-panel-soft) px-2 py-0.5 text-xs text-(--dash-muted)">
+                      كود {row.code}
+                    </span>
+                  </div>
+                  <div className="mt-4 grid gap-2 text-xs text-(--dash-muted)">
+                    <div className="flex items-center justify-between gap-3">
+                      <span>الهاتف</span>
+                      <span className="text-(--dash-text)">{row.phone}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span>المنطقة</span>
+                      <span className="text-(--dash-text)">{row.region}</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between border-t border-(--dash-border) pt-3">
+                    <span className="text-xs text-(--dash-muted)">إجراءات</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingCode(row.code);
+                          setForm({ code: row.code, name: row.name, phone: row.phone, region: row.region });
+                          setShowForm(true);
+                        }}
+                        className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-1.5 text-xs text-(--dash-muted) transition hover:text-(--dash-text)"
+                      >
+                        تعديل
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPendingDelete(row)}
+                        className="rounded-xl border border-rose-200/60 bg-rose-50/60 px-3 py-1.5 text-xs text-rose-600 transition hover:bg-rose-100"
+                      >
+                        حذف
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
       <ConfirmModal
         open={Boolean(pendingDelete)}

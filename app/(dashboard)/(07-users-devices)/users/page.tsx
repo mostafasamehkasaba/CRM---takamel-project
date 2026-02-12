@@ -116,6 +116,7 @@ const statusStyles: Record<UserStatus, string> = {
 
 const Page = () => {
   const [query, setQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
   const [users, setUsers] = useState(usersData);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
@@ -224,18 +225,56 @@ const Page = () => {
                 <option>50</option>
               </select>
             </div>
-            <div className="ms-auto flex min-w-60 items-center gap-2 rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
-              <input
-                type="text"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="بحث"
-                className="w-full bg-transparent text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
-              />
+            <div className="ms-auto flex flex-wrap items-center gap-2">
+              <div className="flex items-center rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) p-1">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("cards")}
+                  className={`flex h-9 w-9 items-center justify-center rounded-lg transition ${
+                    viewMode === "cards"
+                      ? "bg-(--dash-primary) text-white"
+                      : "text-(--dash-muted) hover:bg-(--dash-panel-glass)"
+                  }`}
+                  aria-pressed={viewMode === "cards"}
+                  aria-label="عرض البطاقات"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("table")}
+                  className={`flex h-9 w-9 items-center justify-center rounded-lg transition ${
+                    viewMode === "table"
+                      ? "bg-(--dash-primary) text-white"
+                      : "text-(--dash-muted) hover:bg-(--dash-panel-glass)"
+                  }`}
+                  aria-pressed={viewMode === "table"}
+                  aria-label="عرض الجدول"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                    <path fill="currentColor" d="M4 6h16v2H4V6Zm0 6h16v2H4v-2Zm0 6h16v2H4v-2Z" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex min-w-60 items-center gap-2 rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-sm">
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="بحث"
+                  className="w-full bg-transparent text-(--dash-text) placeholder:text-(--dash-muted-2) focus:outline-none"
+                />
+              </div>
             </div>
           </div>
         </div>
 
+        {viewMode === "table" ? (
         <div className="overflow-hidden rounded-2xl border border-(--dash-border) bg-(--dash-panel) shadow-(--dash-shadow)">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
@@ -343,6 +382,89 @@ const Page = () => {
             <span>عرض 1 إلى {filteredUsers.length} من {filteredUsers.length} سجلات</span>
           </div>
         </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {filteredUsers.map((user) => (
+                <div
+                  key={user.id}
+                  className="group relative overflow-hidden rounded-2xl border border-(--dash-border) bg-(--dash-panel) p-4 shadow-(--dash-shadow) transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_rgba(0,0,0,0.2)]"
+                >
+                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-l from-(--dash-primary) via-emerald-400/60 to-transparent" />
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-xs text-(--dash-muted)">المستخدم</p>
+                      <p className="text-base font-semibold text-(--dash-text)">{user.firstName} {user.lastName}</p>
+                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[user.status]}`}>
+                        {user.status}
+                      </span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={selectedUsers.includes(user.id)}
+                      onChange={() => toggleRow(user.id)}
+                      className="h-4 w-4 rounded border border-(--dash-border)"
+                      aria-label={`تحديد المستخدم ${user.firstName}`}
+                    />
+                  </div>
+                  <div className="mt-4 grid gap-2 text-xs text-(--dash-muted)">
+                    <div className="flex items-center justify-between gap-3">
+                      <span>الفرع</span>
+                      <span className="text-(--dash-text)">{user.branch}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span>البريد</span>
+                      <span className="text-(--dash-text)">{user.email}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span>المجموعة</span>
+                      <span className="text-(--dash-text)">{user.group}</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between border-t border-(--dash-border) pt-3">
+                    <span className="text-xs text-(--dash-muted)">إجراءات</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) p-2 text-(--dash-muted) transition hover:text-(--dash-text)"
+                        onClick={() => openEditModal(user)}
+                        aria-label="تعديل المستخدم"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-4 w-4">
+                          <path
+                            fill="currentColor"
+                            d="M4 16.8V20h3.2l9.4-9.4-3.2-3.2L4 16.8zm15.7-9.5c.4-.4.4-1 0-1.4l-1.6-1.6c-.4-.4-1-.4-1.4 0l-1.3 1.3 3.2 3.2z"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-xl border border-rose-200/60 bg-rose-50/60 p-2 text-rose-600 transition hover:bg-rose-100"
+                        onClick={() => handleDelete(user)}
+                        aria-label="حذف المستخدم"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-4 w-4">
+                          <path
+                            fill="currentColor"
+                            d="M6 7h12v2H6zm2 3h8l-1 10H9L8 10Zm3-6h2l1 2H10z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between gap-2 rounded-2xl border border-(--dash-border) bg-(--dash-panel) px-4 py-3 text-sm text-(--dash-muted)">
+              <div className="flex items-center gap-2">
+                <button type="button" className="rounded-lg border border-(--dash-border) px-2 py-1">سابق</button>
+                <span className="rounded-lg border border-(--dash-border) px-2 py-1 text-(--dash-text)">1</span>
+                <button type="button" className="rounded-lg border border-(--dash-border) px-2 py-1">التالي</button>
+              </div>
+              <span>عرض 1 إلى {filteredUsers.length} من {filteredUsers.length} سجلات</span>
+            </div>
+          </div>
+        )}
       </section>
 
       <ConfirmModal

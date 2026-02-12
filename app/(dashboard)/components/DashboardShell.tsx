@@ -81,6 +81,7 @@ const sidebarItems = [
 type SidebarLink = { label: string; href: string; badge?: string };
 type SidebarGroup = { label: string; children: Array<SidebarLink | SidebarGroup>; iconKey?: string };
 type SidebarItem = SidebarLink | SidebarGroup;
+type BreadcrumbItem = { label: string; href: string };
 
 const iconPlus = <Plus className="h-5 w-5" aria-hidden="true" />;
 
@@ -482,8 +483,10 @@ const lucideIconMap: Record<string, ReactNode> = {
   "/payments/withdraw/new": iconPlus,
   "/customers": <Users className="h-5 w-5" aria-hidden="true" />,
   "/customers/new": <UserPlus className="h-5 w-5" aria-hidden="true" />,
+  "/customers/allowed-discount": <Percent className="h-5 w-5" aria-hidden="true" />,
   "/suppliers": <Building2 className="h-5 w-5" aria-hidden="true" />,
   "/suppliers/new": iconPlus,
+  "/suppliers/earned-discount": <Percent className="h-5 w-5" aria-hidden="true" />,
   "/products": <Boxes className="h-5 w-5" aria-hidden="true" />,
   "/item-display": <Monitor className="h-5 w-5" aria-hidden="true" />,
   "/inventory": <Package className="h-5 w-5" aria-hidden="true" />,
@@ -551,6 +554,37 @@ const collectSidebarLinks = (items: SidebarItem[]): SidebarLink[] => {
   return links;
 };
 
+const getFirstLink = (item: SidebarItem): SidebarLink | null => {
+  if ("href" in item) {
+    return item;
+  }
+  for (const child of item.children) {
+    const first = getFirstLink(child as SidebarItem);
+    if (first) {
+      return first;
+    }
+  }
+  return null;
+};
+
+const findBreadcrumbTrail = (items: SidebarItem[], targetHref: string): BreadcrumbItem[] | null => {
+  for (const item of items) {
+    if ("href" in item) {
+      if (item.href === targetHref) {
+        return [{ label: item.label, href: item.href }];
+      }
+      continue;
+    }
+    const childTrail = findBreadcrumbTrail(item.children as SidebarItem[], targetHref);
+    if (childTrail) {
+      const groupLink = getFirstLink(item);
+      const groupHref = groupLink ? groupLink.href : targetHref;
+      return [{ label: item.label, href: groupHref }, ...childTrail];
+    }
+  }
+  return null;
+};
+
 /* 
 const legacySidebarNavigation: Array<SidebarLink | SidebarGroup> = [
   { label: "لوحة التحكم", href: "/dashboard" },
@@ -562,6 +596,7 @@ const legacySidebarNavigation: Array<SidebarLink | SidebarGroup> = [
     children: [
       { label: "قائمة العملاء", href: "/customers" },
       { label: "إضافة العملاء", href: "/customers/new" },
+      { label: "خصم مسموح به", href: "/customers/allowed-discount" },
     ],
   },
   {
@@ -570,6 +605,7 @@ const legacySidebarNavigation: Array<SidebarLink | SidebarGroup> = [
     children: [
       { label: "قائمة الموردين", href: "/suppliers" },
       { label: "إضافة مورد", href: "/suppliers/new" },
+      { label: "خصم مكتسب", href: "/suppliers/earned-discount" },
     ],
   },
   { label: "التصنيفات الرئيسية", href: "/products" },
@@ -671,6 +707,7 @@ const sidebarNavigation: Array<SidebarItem> = [
     children: [
       { label: "قائمة العملاء", href: "/customers" },
       { label: "إضافة العملاء", href: "/customers/new" },
+      { label: "خصم مسموح به", href: "/customers/allowed-discount" },
     ],
   },
   {
@@ -679,6 +716,7 @@ const sidebarNavigation: Array<SidebarItem> = [
     children: [
       { label: "قائمة الموردين", href: "/suppliers" },
       { label: "إضافة مورد", href: "/suppliers/new" },
+      { label: "خصم مكتسب", href: "/suppliers/earned-discount" },
     ],
   },
   {
@@ -843,6 +881,14 @@ const DashboardShell = ({
         .filter((item: SidebarLink) => `${item.label} ${item.href}`.toLowerCase().includes(needle))
         .slice(0, 8);
     }, [currentSearchValue, searchableLinks, isExternalSearch]);
+    const breadcrumbTrail = useMemo(() => {
+      const base: BreadcrumbItem[] = [{ label: "الرئيسية", href: "/dashboard" }];
+      const trail = findBreadcrumbTrail(sidebarNavigation, pathname);
+      if (trail && trail.length) {
+        return [...base, ...trail];
+      }
+      return title ? [...base, { label: title, href: pathname }] : base;
+    }, [pathname, title]);
 
   const showToast = (message: string, tone: "success" | "info" | "warning" = "info") => {
     setToast({ message, tone });
@@ -937,6 +983,104 @@ const DashboardShell = ({
           const isActive = hasActiveChild(item.children);
           const isNested = depth > 0;
           const hideLabels = isDesktopSidebarCollapsed && !isNested;
+          if (!isNested) {
+            const showSectionHeader = item.label !== "المزيد";
+            if (!showSectionHeader) {
+              return (
+                <details
+                  key={item.label}
+                  open={isActive}
+                  className={`group rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 ${
+                    isNested ? "text-xs" : "text-sm"
+                  }`}
+                >
+                  <summary
+                    className={`flex cursor-pointer list-none items-center rounded-lg px-2 py-2 transition ${
+                      hideLabels ? "justify-center" : "justify-between"
+                    } ${isActive ? "text-(--dash-text)" : "text-(--dash-muted)"}`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span
+                        className={`flex items-center justify-center rounded-lg ${
+                          isNested ? "h-7 w-7" : "h-8 w-8"
+                        } ${
+                          isActive
+                            ? "bg-(--dash-primary) text-white"
+                            : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
+                        }`}
+                      >
+                        {getSidebarIcon(item.iconKey ?? "wallets-group")}
+                      </span>
+                      <span className={hideLabels ? "sr-only" : isNested ? "text-xs font-medium" : "font-medium"}>{item.label}</span>
+                    </span>
+                    {hideLabels ? null : (
+                      <svg
+                        viewBox="0 0 24 24"
+                        className={`${isNested ? "h-3 w-3" : "h-4 w-4"} text-(--dash-muted-2) transition group-open:rotate-180`}
+                        aria-hidden="true"
+                      >
+                        <path fill="currentColor" d="M7 10l5 5 5-5H7Z" />
+                      </svg>
+                    )}
+                  </summary>
+                  <div className={`mt-2 space-y-2 pb-2 ${isNested ? "ps-3" : ""}`}>
+                    {renderSidebarItems(item.children, depth + 1)}
+                  </div>
+                </details>
+              );
+            }
+            return (
+              <div key={item.label} className="space-y-2 pb-4">
+                {hideLabels ? null : (
+                  <div className="relative my-3">
+                    <div className="h-px w-full bg-(--dash-border)" />
+                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-(--dash-panel) px-3 text-[11px] font-semibold text-(--dash-muted)">
+                      {item.label}
+                    </span>
+                  </div>
+                )}
+                <details
+                  open={isActive}
+                  className={`group mt-5 rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 ${
+                    isNested ? "text-xs" : "text-sm"
+                  }`}
+                >
+                  <summary
+                    className={`flex cursor-pointer list-none items-center rounded-lg px-2 py-2 transition ${
+                      hideLabels ? "justify-center" : "justify-between"
+                    } ${isActive ? "text-(--dash-text)" : "text-(--dash-muted)"}`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span
+                        className={`flex items-center justify-center rounded-lg ${
+                          isNested ? "h-7 w-7" : "h-8 w-8"
+                        } ${
+                          isActive
+                            ? "bg-(--dash-primary) text-white"
+                            : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
+                        }`}
+                      >
+                        {getSidebarIcon(item.iconKey ?? "wallets-group")}
+                      </span>
+                      <span className={hideLabels ? "sr-only" : isNested ? "text-xs font-medium" : "font-medium"}>{item.label}</span>
+                    </span>
+                    {hideLabels ? null : (
+                      <svg
+                        viewBox="0 0 24 24"
+                        className={`${isNested ? "h-3 w-3" : "h-4 w-4"} text-(--dash-muted-2) transition group-open:rotate-180`}
+                        aria-hidden="true"
+                      >
+                        <path fill="currentColor" d="M7 10l5 5 5-5H7Z" />
+                      </svg>
+                    )}
+                  </summary>
+                  <div className={`mt-2 space-y-2 pb-2 ${isNested ? "ps-3" : ""}`}>
+                    {renderSidebarItems(item.children, depth + 1)}
+                  </div>
+                </details>
+              </div>
+            );
+          }
           return (
             <details
               key={item.label}
@@ -984,7 +1128,7 @@ const DashboardShell = ({
         const isActive = pathname === item.href;
         const isNested = depth > 0;
         const hideLabels = isDesktopSidebarCollapsed && !isNested;
-        return (
+        const linkNode = (
           <Link
             key={item.label}
             href={item.href}
@@ -1019,6 +1163,22 @@ const DashboardShell = ({
             ) : null}
           </Link>
         );
+        if (!isNested) {
+          return (
+            <div key={item.label} className="space-y-2 pb-4">
+              {hideLabels ? null : (
+                <div className="relative my-3">
+                  <div className="h-px w-full bg-(--dash-border)" />
+                  <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-(--dash-panel) px-3 text-[11px] font-semibold text-(--dash-muted)">
+                    {item.label}
+                  </span>
+                </div>
+              )}
+              <div className="mt-5">{linkNode}</div>
+            </div>
+          );
+        }
+        return linkNode;
       });
 
   const sidebarContent = (
@@ -1098,16 +1258,43 @@ const DashboardShell = ({
   {isFullscreen ? null : (
   <div className={`flex flex-wrap items-center ${hideTopSearch ? "gap-2 justify-between" : "gap-3 justify-between"}`}>
     {hideTopSearch ? (
-      topSearchLabel ? (
-        <div className="shrink-0 text-right text-lg font-semibold text-(--dash-text)">
-          {topSearchLabel}
-        </div>
-      ) : null
-    ) : (
-      <div
-        ref={searchRef}
-        className={`relative flex w-full max-w-xl flex-1 items-center gap-3 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) ${controlPadding}`}
+  topSearchLabel ? (
+    <div className="shrink-0 text-right text-lg font-semibold text-(--dash-text)">
+      {topSearchLabel}
+    </div>
+  ) : null
+) : (
+  <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+    {breadcrumbTrail.length ? (
+      <nav
+        aria-label="مسار الصفحة"
+        className="flex min-w-0 items-center gap-2 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 text-xs text-(--dash-text) sm:text-sm"
       >
+        {breadcrumbTrail.map((item, index) => (
+          <span key={`${item.label}-${index}`} className="flex min-w-0 items-center gap-2">
+            <Link
+              href={item.href}
+              className={`min-w-0 truncate transition ${
+                index === breadcrumbTrail.length - 1
+                  ? "font-semibold text-(--dash-text)"
+                  : "text-(--dash-muted-2) hover:text-(--dash-text)"
+              }`}
+            >
+              {item.label}
+            </Link>
+            {index < breadcrumbTrail.length - 1 ? (
+              <svg viewBox="0 0 24 24" className="h-3 w-3 text-(--dash-muted-2)" aria-hidden="true">
+                <path fill="currentColor" d="M15 6l-6 6 6 6" />
+              </svg>
+            ) : null}
+          </span>
+        ))}
+      </nav>
+    ) : null}
+    <div
+      ref={searchRef}
+      className={`relative flex w-full max-w-xl flex-1 items-center gap-3 rounded-2xl border border-(--dash-border) bg-(--dash-panel-soft) ${controlPadding}`}
+    >
       <button
         type="button"
         onClick={() => setIsSidebarOpen(true)}
@@ -1180,7 +1367,8 @@ const DashboardShell = ({
         </div>
       ) : null}
     </div>
-    )}
+  </div>
+)}
 
     <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
       <div className="relative" ref={quickActionsRef}>
@@ -1444,3 +1632,7 @@ const DashboardShell = ({
 };
 
 export default DashboardShell;
+
+
+
+
