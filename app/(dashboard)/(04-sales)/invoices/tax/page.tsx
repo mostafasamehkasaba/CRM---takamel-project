@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import DashboardShell from "@/app/(dashboard)/components/DashboardShell";
+import ActionIconButton from "@/app/(dashboard)/components/ActionIconButton";
+import { EditIcon, TrashIcon, ViewIcon } from "@/app/(dashboard)/components/icons/ActionIcons";
 
 type PaymentStatus = "مدفوع" | "معلق" | "جزئي";
 
@@ -202,9 +204,6 @@ const formatNumber = (value: number) =>
 
 const Page = () => {
   const [selectedRows, setSelectedRows] = useState<Record<number, boolean>>({});
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
   const allSelected = rows.length > 0 && rows.every((row) => selectedRows[row.id]);
 
   const toggleAll = () => {
@@ -217,200 +216,6 @@ const Page = () => {
       return next;
     });
   };
-
-  const actionItems = [
-    {
-      label: "تفاصيل فاتورة المبيعات",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5ZM7 12h10v2H7v-2Zm0 4h10v2H7v-2Z"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "تكرار فاتورة المبيعات",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M7 7h10a2 2 0 0 1 2 2v8h-2V9H7V7Zm-2 3h10a2 2 0 0 1 2 2v8H5a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2Z"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "عرض المدفوعات",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M12 5c5 0 9 4 9 7s-4 7-9 7-9-4-9-7 4-7 9-7Zm0 2c-3.86 0-7 2.9-7 5s3.14 5 7 5 7-2.9 7-5-3.14-5-7-5Zm0 2.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Z"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "إضافة الدفع",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M12 3a1 1 0 0 1 1 1v2h2a1 1 0 1 1 0 2h-2v2h2a1 1 0 1 1 0 2h-2v2h2a1 1 0 1 1 0 2h-2v2a1 1 0 1 1-2 0v-2H9a1 1 0 1 1 0-2h2v-2H9a1 1 0 1 1 0-2h2V8H9a1 1 0 1 1 0-2h2V4a1 1 0 0 1 1-1Z"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "إرجاع مبيع",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M7 7h9l-1.5-1.5a1 1 0 1 1 1.4-1.4l3.2 3.2a1 1 0 0 1 0 1.4l-3.2 3.2a1 1 0 0 1-1.4-1.4L16 9H7a1 1 0 1 1 0-2Z"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "سند مخزني",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-          <path fill="currentColor" d="M3 7 12 2l9 5-9 5-9-5Zm2 6 7 4 7-4v7l-7 4-7-4v-7Z" />
-        </svg>
-      ),
-    },
-    {
-      label: "سند مطالبة",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5ZM7 12h10v2H7v-2Zm0 4h6v2H7v-2Z"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "إضافة تسليم",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M3 7h11v6h2V9h3l2 3v3h-2a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H3V7Zm5 10a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm10 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "تحميل ملف PDF",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5ZM8 12h8v2H8v-2Zm0 4h6v2H8v-2Z"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "تحميل ملف إكسل",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M4 3h10l6 6v12H4V3Zm10 1.5V9h4.5L14 4.5ZM7 12h2l1.5 2 1.5-2h2l-2.5 3 2.5 3h-2l-1.5-2-1.5 2H7l2.5-3L7 12Z"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "تحميل بصيغة CSV",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5ZM7 12h10v2H7v-2Zm0 4h10v2H7v-2Z"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "إرسال الفاتورة بالبريد الإلكتروني",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Zm0 2 8 5 8-5H4Z"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "إرسال الفاتورة عبر الواتس",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M12 3a9 9 0 0 1 7.8 13.5L21 21l-4.7-1.2A9 9 0 1 1 12 3Zm-4 5.5c0 4 3 6.5 6.5 6.5 1 0 1.7-.2 2.5-.6l-1.2-1.2c-.3.2-.8.3-1.3.3-1.5 0-3.4-1-4.3-2.9-.2-.4-.3-1-.3-1.4 0-.3 0-.7.2-1l-1.3-1.3c-.4.7-.8 1.5-.8 1.6Z"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "سند مسح",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5ZM8 13h8v2H8v-2Z"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "تعديل المندوب / الموظف",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm6 8H6a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4Zm-6.3-6.6 5.1-5.1 1.4 1.4-5.1 5.1-2 .6.6-2Z"
-          />
-        </svg>
-      ),
-    },
-  ];
-
-  useEffect(() => {
-    if (openMenuId === null) {
-      return;
-    }
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && menuRef.current.contains(event.target as Node)) {
-        return;
-      }
-      if (menuButtonRef.current && menuButtonRef.current.contains(event.target as Node)) {
-        return;
-      }
-      setOpenMenuId(null);
-    };
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpenMenuId(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [openMenuId]);
 
   const totals = useMemo(() => {
     return rows.reduce(
@@ -521,35 +326,16 @@ const Page = () => {
                     </span>
                   </td>
                   <td className="px-3 py-3">{row.paymentType}</td>
-                  <td className="relative px-3 py-3">
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        menuButtonRef.current = event.currentTarget;
-                        setOpenMenuId((prev) => (prev === row.id ? null : row.id));
-                      }}
-                      className="rounded-full bg-(--dash-primary) px-3 py-1 text-xs font-semibold text-white"
-                    >
-                      الإجراءات
-                    </button>
-                    {openMenuId === row.id ? (
-                      <div
-                        ref={menuRef}
-                        className="absolute end-3 top-12 z-20 w-56 rounded-xl border border-(--dash-border) bg-(--dash-panel) p-2 text-xs shadow-(--dash-shadow)"
-                      >
-                        {actionItems.map((item) => (
-                          <button
-                            key={item.label}
-                            type="button"
-                            onClick={() => setOpenMenuId(null)}
-                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-(--dash-text) hover:bg-(--dash-panel-soft)"
-                          >
-                            <span className="text-(--dash-muted-2)">{item.icon}</span>
-                            <span className="flex-1 text-right">{item.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
+                  <td className="px-3 py-3">
+                    <div className="flex items-center justify-end gap-2">
+                      <ActionIconButton label="عرض الفاتورة" icon={<ViewIcon className="h-4 w-4" />} />
+                      <ActionIconButton label="تعديل الفاتورة" icon={<EditIcon className="h-4 w-4" />} />
+                      <ActionIconButton
+                        label="حذف الفاتورة"
+                        icon={<TrashIcon className="h-4 w-4" />}
+                        tone="danger"
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}
