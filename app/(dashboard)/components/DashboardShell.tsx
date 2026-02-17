@@ -997,101 +997,47 @@ const DashboardShell = ({
           const isNested = depth > 0;
           const hideLabels = isDesktopSidebarCollapsed && !isNested;
           if (!isNested) {
-            const showSectionHeader = item.label !== "المزيد";
-            if (!showSectionHeader) {
-              return (
-                <details
-                  key={item.label}
-                  open={isActive}
-                  className={`group rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 ${
-                    isNested ? "text-xs" : "text-sm"
-                  }`}
-                >
-                  <summary
-                    className={`flex cursor-pointer list-none items-center rounded-lg px-2 py-2 transition ${
-                      hideLabels ? "justify-center" : "justify-between"
-                    } ${isActive ? "text-(--dash-text)" : "text-(--dash-muted)"}`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span
-                        className={`flex items-center justify-center rounded-lg ${
-                          isNested ? "h-7 w-7" : "h-8 w-8"
-                        } ${
-                          isActive
-                            ? "bg-(--dash-primary) text-white"
-                            : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
-                        }`}
-                      >
-                        {getSidebarIcon(item.iconKey ?? "wallets-group")}
-                      </span>
-                      <span className={hideLabels ? "sr-only" : isNested ? "text-xs font-medium" : "font-medium"}>{item.label}</span>
-                    </span>
-                    {hideLabels ? null : (
-                      <svg
-                        viewBox="0 0 24 24"
-                        className={`${isNested ? "h-3 w-3" : "h-4 w-4"} text-(--dash-muted-2) transition group-open:rotate-180`}
-                        aria-hidden="true"
-                      >
-                        <path fill="currentColor" d="M7 10l5 5 5-5H7Z" />
-                      </svg>
-                    )}
-                  </summary>
-                  <div className={`mt-2 space-y-2 pb-2 ${isNested ? "ps-3" : ""}`}>
-                    {renderSidebarItems(item.children, depth + 1)}
-                  </div>
-                </details>
-              );
-            }
             return (
-              <div key={item.label} className="space-y-2 pb-4">
-                {hideLabels ? null : (
-                  <div className="relative my-3">
-                    <div className="h-px w-full bg-(--dash-border)" />
-                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-(--dash-panel) px-3 text-[11px] font-semibold text-(--dash-muted)">
-                      {item.label}
-                    </span>
-                  </div>
-                )}
-                <details
-                  open={isActive}
-                  className={`group mt-5 rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 ${
-                    isNested ? "text-xs" : "text-sm"
-                  }`}
+              <details
+                key={item.label}
+                open={isActive}
+                className={`group rounded-xl border border-(--dash-border) bg-(--dash-panel-soft) px-3 py-2 ${
+                  isNested ? "text-xs" : "text-sm"
+                }`}
+              >
+                <summary
+                  className={`flex cursor-pointer list-none items-center rounded-lg px-2 py-2 transition ${
+                    hideLabels ? "justify-center" : "justify-between"
+                  } ${isActive ? "text-(--dash-text)" : "text-(--dash-muted)"}`}
                 >
-                  <summary
-                    className={`flex cursor-pointer list-none items-center rounded-lg px-2 py-2 transition ${
-                      hideLabels ? "justify-center" : "justify-between"
-                    } ${isActive ? "text-(--dash-text)" : "text-(--dash-muted)"}`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span
-                        className={`flex items-center justify-center rounded-lg ${
-                          isNested ? "h-7 w-7" : "h-8 w-8"
-                        } ${
-                          isActive
-                            ? "bg-(--dash-primary) text-white"
-                            : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
-                        }`}
-                      >
-                        {getSidebarIcon(item.iconKey ?? "wallets-group")}
-                      </span>
-                      <span className={hideLabels ? "sr-only" : isNested ? "text-xs font-medium" : "font-medium"}>{item.label}</span>
+                  <span className="flex items-center gap-2">
+                    <span
+                      className={`flex items-center justify-center rounded-lg ${
+                        isNested ? "h-7 w-7" : "h-8 w-8"
+                      } ${
+                        isActive
+                          ? "bg-(--dash-primary) text-white"
+                          : "bg-(--dash-panel-glass) text-(--dash-muted-2)"
+                      }`}
+                    >
+                      {getSidebarIcon(item.iconKey ?? "wallets-group")}
                     </span>
-                    {hideLabels ? null : (
-                      <svg
-                        viewBox="0 0 24 24"
-                        className={`${isNested ? "h-3 w-3" : "h-4 w-4"} text-(--dash-muted-2) transition group-open:rotate-180`}
-                        aria-hidden="true"
-                      >
-                        <path fill="currentColor" d="M7 10l5 5 5-5H7Z" />
-                      </svg>
-                    )}
-                  </summary>
-                  <div className={`mt-2 space-y-2 pb-2 ${isNested ? "ps-3" : ""}`}>
-                    {renderSidebarItems(item.children, depth + 1)}
-                  </div>
-                </details>
-              </div>
+                    <span className={hideLabels ? "sr-only" : isNested ? "text-xs font-medium" : "font-medium"}>{item.label}</span>
+                  </span>
+                  {hideLabels ? null : (
+                    <svg
+                      viewBox="0 0 24 24"
+                      className={`${isNested ? "h-3 w-3" : "h-4 w-4"} text-(--dash-muted-2) transition group-open:rotate-180`}
+                      aria-hidden="true"
+                    >
+                      <path fill="currentColor" d="M7 10l5 5 5-5H7Z" />
+                    </svg>
+                  )}
+                </summary>
+                <div className={`mt-2 space-y-2 pb-2 ${isNested ? "ps-3" : ""}`}>
+                  {renderSidebarItems(item.children, depth + 1)}
+                </div>
+              </details>
             );
           }
           return (
@@ -1176,21 +1122,6 @@ const DashboardShell = ({
             ) : null}
           </Link>
         );
-        if (!isNested) {
-          return (
-            <div key={item.label} className="space-y-2 pb-4">
-              {hideLabels ? null : (
-                <div className="relative my-3">
-                  <div className="h-px w-full bg-(--dash-border)" />
-                  <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-(--dash-panel) px-3 text-[11px] font-semibold text-(--dash-muted)">
-                    {item.label}
-                  </span>
-                </div>
-              )}
-              <div className="mt-5">{linkNode}</div>
-            </div>
-          );
-        }
         return linkNode;
       });
 
